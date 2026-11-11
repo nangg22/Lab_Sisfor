@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react'
 import type { RoleCode } from '@/db/schema'
+import { Search, AlertTriangle, ShieldCheck, Check, X } from 'lucide-react'
 
 interface User {
   id: string
@@ -25,9 +26,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  mahasiswa: 'bg-blue-100 text-blue-700',
-  dosen: 'bg-purple-100 text-purple-700',
-  admin: 'bg-red-100 text-red-700',
+  mahasiswa: 'bg-blue-50 text-blue-800 border-blue-200',
+  dosen: 'bg-purple-50 text-purple-800 border-purple-200',
+  admin: 'bg-orange-50 text-orange-800 border-orange-200',
 }
 
 export function UserManagementTable({ users: initialUsers, currentUserId }: Props) {
@@ -38,12 +39,18 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
 
+  // State untuk modal konfirmasi ganti role
+  const [pendingRoleChange, setPendingRoleChange] = useState<{
+    user: User
+    newRole: string
+  } | null>(null)
+
   function showToast(msg: string, type: 'success' | 'error') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3500)
   }
 
-  async function handleUpdate(userId: string, field: 'role' | 'isActive', value: string | boolean) {
+  async function executeUpdate(userId: string, field: 'role' | 'isActive', value: string | boolean) {
     if (userId === currentUserId) {
       showToast('Tidak dapat mengubah akun Anda sendiri.', 'error')
       return
@@ -78,6 +85,16 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
     }
   }
 
+  function handleRoleSelect(user: User, newRole: string) {
+    if (user.id === currentUserId) {
+      showToast('Tidak dapat mengubah akun Anda sendiri.', 'error')
+      return
+    }
+    if (user.role === newRole) return
+    // Buka modal konfirmasi
+    setPendingRoleChange({ user, newRole })
+  }
+
   const filtered = userList.filter((u) => {
     const matchSearch =
       u.fullName.toLowerCase().includes(search.toLowerCase()) ||
@@ -92,44 +109,77 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 rounded-xl px-4 py-3 text-sm font-medium shadow-lg transition-all ${
+          className={`fixed top-4 right-4 z-50 rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-all ${
             toast.type === 'success'
-              ? 'bg-green-50 text-green-800 border border-green-200'
-              : 'bg-red-50 text-red-800 border border-red-200'
+              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+              : 'bg-rose-50 text-rose-800 border border-rose-300'
           }`}
         >
           {toast.msg}
         </div>
       )}
 
+      {/* Confirmation Modal */}
+      {pendingRoleChange && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
+          <div className="glass-card max-w-md w-full rounded-2xl p-6 shadow-2xl border border-white">
+            <div className="flex items-center gap-3 text-amber-600 mb-3">
+              <div className="p-2 rounded-xl bg-amber-100">
+                <AlertTriangle className="h-6 w-6" strokeWidth={2} />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900">Konfirmasi Perubahan Hak Akses</h3>
+            </div>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Apakah Anda yakin ingin mengubah peran pengguna{' '}
+              <strong className="text-slate-900">{pendingRoleChange.user.fullName}</strong> dari{' '}
+              <span className="font-semibold text-slate-800 uppercase text-xs">{pendingRoleChange.user.role}</span> menjadi{' '}
+              <span className="font-semibold text-blue-700 uppercase text-xs">{pendingRoleChange.newRole}</span>?
+            </p>
+            {pendingRoleChange.newRole === 'admin' && (
+              <p className="mt-2 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-200">
+                ⚠️ Peran Admin memiliki akses penuh terhadap manajemen laboratorium, persetujuan jadwal, dan hak pengguna.
+              </p>
+            )}
+            <div className="mt-6 flex items-center justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setPendingRoleChange(null)}
+                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+              >
+                Batal
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  const { user, newRole } = pendingRoleChange
+                  setPendingRoleChange(null)
+                  await executeUpdate(user.id, 'role', newRole)
+                }}
+                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+              >
+                Ya, Ubah Peran
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <svg
-            className="absolute left-3 top-2.5 h-4 w-4 text-gray-400"
-            fill="none"
-            viewBox="0 0 24 24"
-            stroke="currentColor"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={2}
-              d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-            />
-          </svg>
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" strokeWidth={2} />
           <input
             type="text"
             placeholder="Cari nama, email, NIM/NIP..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 pl-9 pr-4 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-xl border border-slate-300 bg-white/70 pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+          className="rounded-xl border border-slate-300 bg-white/70 px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:outline-none"
         >
           <option value="all">Semua Role</option>
           <option value="mahasiswa">Mahasiswa</option>
@@ -139,30 +189,30 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       </div>
 
       {/* Stats summary */}
-      <div className="flex gap-3 text-xs text-gray-500">
-        <span>Total: <strong className="text-gray-800">{userList.length}</strong></span>
+      <div className="flex gap-3 text-xs text-slate-600 font-medium">
+        <span>Total: <strong className="text-slate-900">{userList.length}</strong></span>
         <span>·</span>
-        <span>Aktif: <strong className="text-green-700">{userList.filter(u => u.isActive).length}</strong></span>
+        <span>Aktif: <strong className="text-emerald-700">{userList.filter(u => u.isActive).length}</strong></span>
         <span>·</span>
-        <span>Nonaktif: <strong className="text-red-600">{userList.filter(u => !u.isActive).length}</strong></span>
+        <span>Nonaktif: <strong className="text-rose-700">{userList.filter(u => !u.isActive).length}</strong></span>
       </div>
 
       {/* Table */}
-      <div className="overflow-x-auto rounded-xl border border-gray-200 bg-white shadow-sm">
+      <div className="overflow-x-auto rounded-2xl glass-card shadow-sm">
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b border-gray-100 bg-gray-50 text-left">
-              <th className="px-4 py-3 font-medium text-gray-600">Nama</th>
-              <th className="px-4 py-3 font-medium text-gray-600 hidden md:table-cell">NIM/NIP</th>
-              <th className="px-4 py-3 font-medium text-gray-600">Role</th>
-              <th className="px-4 py-3 font-medium text-gray-600 text-center">Status</th>
-              <th className="px-4 py-3 font-medium text-gray-600 text-right hidden sm:table-cell">Aksi</th>
+            <tr className="border-b border-slate-200/80 bg-slate-50/50 text-left">
+              <th className="px-4 py-3 font-semibold text-slate-700">Nama</th>
+              <th className="px-4 py-3 font-semibold text-slate-700 hidden md:table-cell">NIM/NIP</th>
+              <th className="px-4 py-3 font-semibold text-slate-700">Role</th>
+              <th className="px-4 py-3 font-semibold text-slate-700 text-center">Status</th>
+              <th className="px-4 py-3 font-semibold text-slate-700 text-right hidden sm:table-cell">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-50">
+          <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-gray-400">
+                <td colSpan={5} className="px-4 py-10 text-center text-slate-500 font-medium">
                   Tidak ada pengguna ditemukan.
                 </td>
               </tr>
@@ -171,41 +221,41 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                 const isSelf = user.id === currentUserId
                 const isLoading = loadingId === user.id && isPending
                 return (
-                  <tr key={user.id} className={`hover:bg-gray-50 transition-colors ${!user.isActive ? 'opacity-60' : ''}`}>
+                  <tr key={user.id} className={`hover:bg-white/50 transition-colors ${!user.isActive ? 'opacity-60' : ''}`}>
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-xs font-bold">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
                           {user.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-medium text-gray-900 truncate max-w-[180px]">
+                          <p className="font-semibold text-slate-900 truncate max-w-[180px]">
                             {user.fullName}
                             {isSelf && (
-                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded-full font-semibold">
+                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">
                                 Anda
                               </span>
                             )}
                           </p>
-                          <p className="text-xs text-gray-400 truncate max-w-[180px]">{user.email}</p>
+                          <p className="text-xs text-slate-600 truncate max-w-[180px] font-medium">{user.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-gray-500 hidden md:table-cell">
+                    <td className="px-4 py-3 text-slate-700 font-medium hidden md:table-cell">
                       {user.institutionalId ?? '—'}
                     </td>
                     <td className="px-4 py-3">
                       {isSelf ? (
-                        <span className={`inline-block rounded-full px-2.5 py-0.5 text-xs font-medium ${ROLE_COLORS[user.role] ?? 'bg-gray-100 text-gray-600'}`}>
+                        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold border ${ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>
                           {ROLE_LABELS[user.role] ?? user.role}
                         </span>
                       ) : (
                         <select
                           value={user.role}
                           disabled={loadingId === user.id}
-                          onChange={(e) => handleUpdate(user.id, 'role', e.target.value)}
-                          className={`rounded-lg border px-2 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 ${
-                            ROLE_COLORS[user.role] ?? 'bg-gray-100 text-gray-600'
-                          } border-transparent`}
+                          onChange={(e) => handleRoleSelect(user, e.target.value)}
+                          className={`rounded-xl border px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer ${
+                            ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700 border-slate-300'
+                          }`}
                         >
                           <option value="mahasiswa">Mahasiswa</option>
                           <option value="dosen">Dosen</option>
@@ -215,27 +265,27 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                     </td>
                     <td className="px-4 py-3 text-center">
                       {isSelf ? (
-                        <span className="inline-block rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
+                        <span className="inline-block rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold">
                           Aktif
                         </span>
                       ) : (
                         <button
                           disabled={loadingId === user.id}
-                          onClick={() => handleUpdate(user.id, 'isActive', !user.isActive)}
-                          className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium transition-colors disabled:opacity-50 ${
+                          onClick={() => executeUpdate(user.id, 'isActive', !user.isActive)}
+                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 border ${
                             user.isActive
-                              ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                              : 'bg-gray-100 text-gray-500 hover:bg-gray-200'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
                           }`}
                         >
-                          <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-green-500' : 'bg-gray-400'}`} />
+                          <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
                           {user.isActive ? 'Aktif' : 'Nonaktif'}
                         </button>
                       )}
                     </td>
                     <td className="px-4 py-3 text-right hidden sm:table-cell">
                       {isLoading && (
-                        <span className="text-xs text-gray-400 animate-pulse">Menyimpan...</span>
+                        <span className="text-xs text-slate-500 font-medium animate-pulse">Menyimpan...</span>
                       )}
                     </td>
                   </tr>
@@ -246,10 +296,9 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
         </table>
       </div>
 
-      <p className="text-xs text-gray-400">
-        Menampilkan {filtered.length} dari {userList.length} pengguna. Perubahan role dan status disimpan otomatis.
+      <p className="text-xs text-slate-500 font-medium">
+        Menampilkan {filtered.length} dari {userList.length} pengguna. Perubahan role memerlukan konfirmasi admin.
       </p>
     </div>
   )
 }
-

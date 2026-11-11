@@ -36,7 +36,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         userRole={user.role as RoleCode}
         pendingCount={pendingCount}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-32">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-24 md:pb-12">
         {children}
       </main>
       <ColorOSDock

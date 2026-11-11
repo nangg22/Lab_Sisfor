@@ -16,6 +16,8 @@ import {
   ArrowRight,
   Plus,
   Trophy,
+  Ban,
+  ShieldAlert,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -80,11 +82,14 @@ export default async function DashboardPage() {
     ? await db.select({ status: bookings.status }).from(bookings)
     : await db.select({ status: bookings.status }).from(bookings).where(eq(bookings.userId, session.user.id))
 
+  // Sinkronisasi status lengkap: PENDING, APPROVED, REJECTED, CANCELLED, BLOCKED
   const stats = {
     total: allBookingsForStats.length,
     pending: allBookingsForStats.filter((b) => b.status === 'PENDING').length,
     approved: allBookingsForStats.filter((b) => b.status === 'APPROVED').length,
     rejected: allBookingsForStats.filter((b) => b.status === 'REJECTED').length,
+    cancelled: allBookingsForStats.filter((b) => b.status === 'CANCELLED').length,
+    blocked: allBookingsForStats.filter((b) => b.status === 'BLOCKED').length,
   }
 
   let topLabs: { labName: string | null; labId: string | null; total: number }[] = []
@@ -147,8 +152,24 @@ export default async function DashboardPage() {
       bg: 'bg-rose-50',
       text: 'text-rose-700',
     },
+    {
+      label: 'Dibatalkan',
+      value: stats.cancelled,
+      icon: Ban,
+      gradient: 'from-slate-400 to-slate-600',
+      bg: 'bg-slate-50',
+      text: 'text-slate-700',
+    },
     ...(isAdmin
       ? [
+          {
+            label: 'Diblokir / Maint.',
+            value: stats.blocked,
+            icon: ShieldAlert,
+            gradient: 'from-purple-500 to-slate-800',
+            bg: 'bg-slate-100',
+            text: 'text-slate-900',
+          },
           {
             label: 'Lab Aktif',
             value: activeLabs.length,
@@ -175,10 +196,10 @@ export default async function DashboardPage() {
     <div className="space-y-8">
       {/* ── Greeting ── */}
       <div>
-        <h1 className="page-title">
+        <h1 className="page-title text-slate-900">
           Selamat datang, {firstName}!
         </h1>
-        <p className="page-subtitle">
+        <p className="page-subtitle text-slate-600 font-medium">
           {isAdmin
             ? 'Pantau dan kelola pengajuan peminjaman laboratorium.'
             : 'Ajukan peminjaman laboratorium dengan mudah.'}
@@ -186,18 +207,18 @@ export default async function DashboardPage() {
       </div>
 
       {/* ── Stat Cards ── */}
-      <div className={`grid grid-cols-2 gap-4 ${isAdmin ? 'sm:grid-cols-3 lg:grid-cols-6' : 'sm:grid-cols-4'}`}>
+      <div className={`grid grid-cols-2 gap-4 ${isAdmin ? 'sm:grid-cols-4 lg:grid-cols-8' : 'sm:grid-cols-5'}`}>
         {statCards.map((stat) => {
           const Icon = stat.icon
           return (
             <div key={stat.label} className="glass-card rounded-2xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-medium text-slate-500 leading-tight">{stat.label}</p>
+                <p className="text-xs font-semibold text-slate-700 leading-tight">{stat.label}</p>
                 <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${stat.gradient} shadow-sm`}>
                   <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2} />
                 </div>
               </div>
-              <p className={`text-3xl font-bold tracking-tight ${stat.text}`}>
+              <p className={`text-2xl font-bold tracking-tight ${stat.text}`}>
                 {stat.value}
               </p>
             </div>
@@ -215,7 +236,7 @@ export default async function DashboardPage() {
             </h2>
             <Link
               href={isAdmin ? '/admin/bookings' : '/bookings'}
-              className="flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
+              className="flex items-center gap-1 text-sm text-blue-700 hover:text-blue-800 font-semibold"
             >
               Lihat semua
               <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} />
@@ -230,12 +251,12 @@ export default async function DashboardPage() {
                   className="flex items-start justify-between gap-4 px-6 py-4 hover:bg-white/40 transition-colors"
                 >
                   <div className="min-w-0">
-                    <p className="font-medium text-slate-900 text-sm truncate">{b.labName ?? '—'}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">
+                    <p className="font-semibold text-slate-900 text-sm truncate">{b.labName ?? '—'}</p>
+                    <p className="text-xs text-slate-600 font-medium mt-0.5">
                       {formatDate(b.bookingDate)} · {formatTime(b.startTime)}–{formatTime(b.endTime)}
                     </p>
                     {isAdmin && (
-                      <p className="text-xs text-slate-400 mt-0.5">oleh {b.userName ?? '—'}</p>
+                      <p className="text-xs text-slate-600 mt-0.5">oleh <span className="font-semibold text-slate-700">{b.userName ?? '—'}</span></p>
                     )}
                   </div>
                   <StatusBadge status={b.status} />
@@ -243,8 +264,8 @@ export default async function DashboardPage() {
               ))
             ) : (
               <div className="px-6 py-12 text-center">
-                <ClipboardList className="h-8 w-8 text-slate-200 mx-auto mb-2" strokeWidth={1.5} />
-                <p className="text-sm text-slate-400">Belum ada pengajuan.</p>
+                <ClipboardList className="h-8 w-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
+                <p className="text-sm text-slate-600 font-medium">Belum ada pengajuan.</p>
               </div>
             )}
           </div>
@@ -260,7 +281,7 @@ export default async function DashboardPage() {
                   <Trophy className="h-4 w-4 text-amber-500" strokeWidth={2} />
                   <h2 className="font-semibold text-slate-900 tracking-tight text-sm">Lab Terpopuler</h2>
                 </div>
-                <Link href="/admin/labs" className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium">
+                <Link href="/admin/labs" className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 font-semibold">
                   Kelola
                   <ArrowRight className="h-3 w-3" strokeWidth={2.2} />
                 </Link>
@@ -269,15 +290,15 @@ export default async function DashboardPage() {
                 {topLabs.map((lab, idx) => (
                   <div key={lab.labId ?? idx} className="flex items-center gap-3 px-5 py-3">
                     <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      idx === 0 ? 'bg-amber-100 text-amber-700' :
-                      idx === 1 ? 'bg-slate-100 text-slate-500' :
-                      idx === 2 ? 'bg-orange-100 text-orange-600' :
-                      'bg-slate-50 text-slate-400'
+                      idx === 0 ? 'bg-amber-100 text-amber-800' :
+                      idx === 1 ? 'bg-slate-200 text-slate-700' :
+                      idx === 2 ? 'bg-orange-100 text-orange-800' :
+                      'bg-slate-100 text-slate-600'
                     }`}>
                       {idx + 1}
                     </span>
-                    <p className="text-sm font-medium text-slate-800 truncate flex-1">{lab.labName ?? '—'}</p>
-                    <span className="text-xs font-semibold text-blue-600 bg-blue-50 rounded-full px-2 py-0.5">
+                    <p className="text-sm font-semibold text-slate-900 truncate flex-1">{lab.labName ?? '—'}</p>
+                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
                       {lab.total}×
                     </span>
                   </div>
@@ -290,10 +311,10 @@ export default async function DashboardPage() {
           <div className="glass-card rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/70">
               <div className="flex items-center gap-2">
-                <FlaskConical className="h-4 w-4 text-blue-500" strokeWidth={2} />
+                <FlaskConical className="h-4 w-4 text-blue-600" strokeWidth={2} />
                 <h2 className="font-semibold text-slate-900 tracking-tight text-sm">Laboratorium</h2>
               </div>
-              <Link href="/labs" className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium">
+              <Link href="/labs" className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 font-semibold">
                 Lihat semua
                 <ArrowRight className="h-3 w-3" strokeWidth={2.2} />
               </Link>
@@ -306,12 +327,12 @@ export default async function DashboardPage() {
                     href={`/labs/${lab.id}`}
                     className="block px-5 py-3.5 hover:bg-white/40 transition-colors"
                   >
-                    <p className="text-sm font-medium text-slate-900">{lab.name}</p>
-                    <p className="text-xs text-slate-400 mt-0.5">{lab.location}</p>
+                    <p className="text-sm font-semibold text-slate-900">{lab.name}</p>
+                    <p className="text-xs text-slate-600 mt-0.5 font-medium">{lab.location}</p>
                   </Link>
                 ))
               ) : (
-                <div className="px-5 py-10 text-center text-sm text-slate-400">
+                <div className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
                   Belum ada data laboratorium.
                 </div>
               )}
@@ -329,7 +350,7 @@ export default async function DashboardPage() {
                   </Link>
                   <Link
                     href="/admin/users"
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 bg-white/60 px-3 py-2 text-xs font-semibold text-slate-700 hover:bg-white transition-colors"
+                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-white transition-colors"
                   >
                     <Users className="h-3.5 w-3.5" strokeWidth={2} />
                     Pengguna
