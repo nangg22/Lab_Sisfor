@@ -10,10 +10,8 @@ import {
   FlaskConical,
   ClipboardList,
   Users,
-  Settings,
   LogOut,
   Building2,
-  ChevronRight,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -27,23 +25,35 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
   const pathname = usePathname()
   const isAdmin = userRole === 'admin'
 
-  const navigation = [
+  // STRICT Role-Based Navigation Routing Logic:
+  // - Admin: Dashboard, Jadwal Ruang, Kelola Pengajuan, Manajemen Lab, Pengguna
+  // - Mahasiswa / Dosen: Dashboard, Jadwal Ruang, Laboratorium (untuk pinjam), Riwayat Pengajuan
+  const adminNav = [
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Jadwal Ruang', href: '/schedule', icon: CalendarDays },
+    {
+      name: 'Kelola Pengajuan',
+      href: '/admin/bookings',
+      icon: ClipboardList,
+      badge: pendingCount,
+    },
+    { name: 'Manajemen Lab', href: '/admin/labs', icon: Building2 },
+    { name: 'Pengguna', href: '/admin/users', icon: Users },
+  ]
+
+  const userNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Jadwal Ruang', href: '/schedule', icon: CalendarDays },
     { name: 'Laboratorium', href: '/labs', icon: FlaskConical },
     {
-      name: isAdmin ? 'Kelola Pengajuan' : 'Pengajuan Saya',
-      href: isAdmin ? '/admin/bookings' : '/bookings',
+      name: 'Riwayat Pengajuan',
+      href: '/bookings',
       icon: ClipboardList,
       badge: pendingCount,
     },
-    ...(isAdmin
-      ? [
-          { name: 'Manajemen Lab', href: '/admin/labs', icon: Building2 },
-          { name: 'Pengguna', href: '/admin/users', icon: Users },
-        ]
-      : []),
   ]
+
+  const navigation = isAdmin ? adminNav : userNav
 
   const initials = userName
     .split(' ')
@@ -72,7 +82,7 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
       {/* Main Nav Items */}
       <div className="flex-1 overflow-y-auto px-3 py-4">
         <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
-          Menu Navigasi
+          {isAdmin ? 'Menu Administrator' : 'Menu Layanan Mahasiswa'}
         </div>
         <nav className="space-y-0.5">
           {navigation.map((item) => {
@@ -138,4 +148,3 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     </aside>
   )
 }
-

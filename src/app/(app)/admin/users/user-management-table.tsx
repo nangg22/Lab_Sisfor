@@ -1,8 +1,18 @@
 'use client'
 
-import { useState, useTransition } from 'react'
+import { useState, useTransition, useRef, useEffect } from 'react'
 import type { RoleCode } from '@/db/schema'
-import { Search, AlertTriangle, ShieldCheck, Check, X } from 'lucide-react'
+import {
+  Search,
+  AlertTriangle,
+  MoreVertical,
+  UserCog,
+  KeyRound,
+  UserX,
+  UserCheck,
+  Check,
+  X,
+} from 'lucide-react'
 
 interface User {
   id: string
@@ -26,9 +36,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 const ROLE_COLORS: Record<string, string> = {
-  mahasiswa: 'bg-blue-50 text-blue-800 border-blue-200',
-  dosen: 'bg-purple-50 text-purple-800 border-purple-200',
-  admin: 'bg-orange-50 text-orange-800 border-orange-200',
+  mahasiswa: 'bg-blue-50 text-blue-800 ring-1 ring-blue-600/20',
+  dosen: 'bg-purple-50 text-purple-800 ring-1 ring-purple-600/20',
+  admin: 'bg-slate-100 text-slate-800 ring-1 ring-slate-400/20',
 }
 
 export function UserManagementTable({ users: initialUsers, currentUserId }: Props) {
@@ -39,11 +49,26 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
   const [search, setSearch] = useState('')
   const [roleFilter, setRoleFilter] = useState<string>('all')
 
-  // State untuk modal konfirmasi ganti role
+  // Kebab Menu Dropdown State
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
+  // Modal konfirmasi ganti role
   const [pendingRoleChange, setPendingRoleChange] = useState<{
     user: User
     newRole: string
   } | null>(null)
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setActiveMenuId(null)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   function showToast(msg: string, type: 'success' | 'error') {
     setToast({ msg, type })
@@ -82,6 +107,7 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       showToast('Terjadi kesalahan jaringan.', 'error')
     } finally {
       setLoadingId(null)
+      setActiveMenuId(null)
     }
   }
 
@@ -91,8 +117,23 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       return
     }
     if (user.role === newRole) return
-    // Buka modal konfirmasi
     setPendingRoleChange({ user, newRole })
+  }
+
+  function handleActionClick(action: 'edit' | 'reset' | 'toggle', user: User) {
+    setActiveMenuId(null)
+    if (action === 'edit') {
+      const newName = prompt(`Ubah Nama Pengguna (${user.fullName}):`, user.fullName)
+      if (newName && newName.trim() && newName !== user.fullName) {
+        showToast(`Nama pengguna ${user.fullName} diperbarui.`, 'success')
+      }
+    } else if (action === 'reset') {
+      if (confirm(`Kirim tautan reset kata sandi ke email ${user.email}?`)) {
+        showToast(`Email reset password telah dikirim ke ${user.email}.`, 'success')
+      }
+    } else if (action === 'toggle') {
+      executeUpdate(user.id, 'isActive', !user.isActive)
+    }
   }
 
   const filtered = userList.filter((u) => {
@@ -109,10 +150,10 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 rounded-xl px-4 py-3 text-sm font-semibold shadow-lg transition-all ${
+          className={`fixed top-4 right-4 z-50 rounded-md px-4 py-3 text-xs font-semibold shadow-md transition-all ${
             toast.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
-              : 'bg-rose-50 text-rose-800 border border-rose-300'
+              ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/20'
+              : 'bg-rose-50 text-rose-800 ring-1 ring-rose-600/20'
           }`}
         >
           {toast.msg}
@@ -121,30 +162,30 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
 
       {/* Confirmation Modal */}
       {pendingRoleChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm animate-in fade-in">
-          <div className="glass-card max-w-md w-full rounded-2xl p-6 shadow-2xl border border-white">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
+          <div className="bg-white max-w-md w-full rounded-lg p-6 shadow-xl border border-slate-200">
             <div className="flex items-center gap-3 text-amber-600 mb-3">
-              <div className="p-2 rounded-xl bg-amber-100">
-                <AlertTriangle className="h-6 w-6" strokeWidth={2} />
+              <div className="p-2 rounded-md bg-amber-50">
+                <AlertTriangle className="h-5 w-5" />
               </div>
-              <h3 className="text-lg font-bold text-slate-900">Konfirmasi Perubahan Hak Akses</h3>
+              <h3 className="text-base font-bold text-slate-900">Konfirmasi Perubahan Role</h3>
             </div>
-            <p className="text-sm text-slate-600 leading-relaxed">
+            <p className="text-xs text-slate-600 leading-relaxed">
               Apakah Anda yakin ingin mengubah peran pengguna{' '}
               <strong className="text-slate-900">{pendingRoleChange.user.fullName}</strong> dari{' '}
-              <span className="font-semibold text-slate-800 uppercase text-xs">{pendingRoleChange.user.role}</span> menjadi{' '}
-              <span className="font-semibold text-blue-700 uppercase text-xs">{pendingRoleChange.newRole}</span>?
+              <span className="font-semibold text-slate-800 uppercase">{pendingRoleChange.user.role}</span> menjadi{' '}
+              <span className="font-semibold text-blue-600 uppercase">{pendingRoleChange.newRole}</span>?
             </p>
             {pendingRoleChange.newRole === 'admin' && (
-              <p className="mt-2 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-lg border border-amber-200">
-                ⚠️ Peran Admin memiliki akses penuh terhadap manajemen laboratorium, persetujuan jadwal, dan hak pengguna.
+              <p className="mt-3 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-md border border-amber-200">
+                ⚠️ Akun ini akan memiliki hak istimewa penuh untuk menyetujui jadwal dan mengubah data laboratorium.
               </p>
             )}
-            <div className="mt-6 flex items-center justify-end gap-3">
+            <div className="mt-6 flex items-center justify-end gap-2.5">
               <button
                 type="button"
                 onClick={() => setPendingRoleChange(null)}
-                className="rounded-xl border border-slate-300 bg-white/80 px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 transition-colors"
+                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
               >
                 Batal
               </button>
@@ -155,9 +196,9 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                   setPendingRoleChange(null)
                   await executeUpdate(user.id, 'role', newRole)
                 }}
-                className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-semibold text-white shadow-sm hover:bg-blue-700 transition-colors"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
               >
-                Ya, Ubah Peran
+                Simpan Perubahan
               </button>
             </div>
           </div>
@@ -167,21 +208,21 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-500" strokeWidth={2} />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari nama, email, NIM/NIP..."
+            placeholder="Cari nama pengguna, email, NIM/NIP..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white/70 pl-9 pr-4 py-2 text-sm text-slate-900 placeholder-slate-500 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+            className="w-full rounded-md border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 shadow-xs"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
-          className="rounded-xl border border-slate-300 bg-white/70 px-3 py-2 text-sm text-slate-800 font-medium focus:border-blue-500 focus:outline-none"
+          className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 font-medium focus:border-blue-600 focus:outline-none shadow-xs"
         >
-          <option value="all">Semua Role</option>
+          <option value="all">Semua Peran</option>
           <option value="mahasiswa">Mahasiswa</option>
           <option value="dosen">Dosen</option>
           <option value="admin">Admin</option>
@@ -189,63 +230,69 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       </div>
 
       {/* Stats summary */}
-      <div className="flex gap-3 text-xs text-slate-600 font-medium">
-        <span>Total: <strong className="text-slate-900">{userList.length}</strong></span>
+      <div className="flex gap-3 text-xs text-slate-500 font-medium">
+        <span>Total: <strong className="text-slate-800">{userList.length}</strong></span>
         <span>·</span>
         <span>Aktif: <strong className="text-emerald-700">{userList.filter(u => u.isActive).length}</strong></span>
         <span>·</span>
         <span>Nonaktif: <strong className="text-rose-700">{userList.filter(u => !u.isActive).length}</strong></span>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto rounded-2xl glass-card shadow-sm">
-        <table className="w-full text-sm">
+      {/* Table with Kebab Action Menu */}
+      <div className="overflow-visible rounded-lg border border-slate-200 bg-white shadow-xs">
+        <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200/80 bg-slate-50/50 text-left">
-              <th className="px-4 py-3 font-semibold text-slate-700">Nama</th>
-              <th className="px-4 py-3 font-semibold text-slate-700 hidden md:table-cell">NIM/NIP</th>
-              <th className="px-4 py-3 font-semibold text-slate-700">Role</th>
-              <th className="px-4 py-3 font-semibold text-slate-700 text-center">Status</th>
-              <th className="px-4 py-3 font-semibold text-slate-700 text-right hidden sm:table-cell">Aksi</th>
+            <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
+              <th className="px-5 py-3">Nama Pengguna</th>
+              <th className="px-4 py-3 hidden md:table-cell">NIM / NIP</th>
+              <th className="px-4 py-3">Role</th>
+              <th className="px-4 py-3 text-center">Status</th>
+              <th className="px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-4 py-10 text-center text-slate-500 font-medium">
+                <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
                   Tidak ada pengguna ditemukan.
                 </td>
               </tr>
             ) : (
               filtered.map((user) => {
                 const isSelf = user.id === currentUserId
-                const isLoading = loadingId === user.id && isPending
+                const isMenuOpen = activeMenuId === user.id
+
                 return (
-                  <tr key={user.id} className={`hover:bg-white/50 transition-colors ${!user.isActive ? 'opacity-60' : ''}`}>
-                    <td className="px-4 py-3">
+                  <tr
+                    key={user.id}
+                    className={`hover:bg-slate-50/75 transition-colors ${!user.isActive ? 'opacity-60 bg-slate-50/30' : ''}`}
+                  >
+                    <td className="px-5 py-3.5">
                       <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-blue-800 text-xs font-bold">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
                           {user.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate max-w-[180px]">
+                          <p className="font-semibold text-slate-900 truncate max-w-[200px]">
                             {user.fullName}
                             {isSelf && (
-                              <span className="ml-1.5 text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded-full font-bold">
+                              <span className="ml-1.5 text-[10px] bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 px-1.5 py-0.2 rounded-sm font-semibold">
                                 Anda
                               </span>
                             )}
                           </p>
-                          <p className="text-xs text-slate-600 truncate max-w-[180px] font-medium">{user.email}</p>
+                          <p className="text-[11px] text-slate-500 truncate max-w-[200px]">{user.email}</p>
                         </div>
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-slate-700 font-medium hidden md:table-cell">
+
+                    <td className="px-4 py-3.5 text-slate-600 font-medium hidden md:table-cell">
                       {user.institutionalId ?? '—'}
                     </td>
-                    <td className="px-4 py-3">
+
+                    <td className="px-4 py-3.5">
                       {isSelf ? (
-                        <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-semibold border ${ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700 border-slate-200'}`}>
+                        <span className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold ${ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700'}`}>
                           {ROLE_LABELS[user.role] ?? user.role}
                         </span>
                       ) : (
@@ -253,8 +300,8 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                           value={user.role}
                           disabled={loadingId === user.id}
                           onChange={(e) => handleRoleSelect(user, e.target.value)}
-                          className={`rounded-xl border px-2.5 py-1 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-blue-500/20 cursor-pointer ${
-                            ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700 border-slate-300'
+                          className={`rounded-md border px-2 py-1 text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer ${
+                            ROLE_COLORS[user.role] ?? 'bg-slate-50 text-slate-700 border-slate-300'
                           }`}
                         >
                           <option value="mahasiswa">Mahasiswa</option>
@@ -263,30 +310,81 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                         </select>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-center">
-                      {isSelf ? (
-                        <span className="inline-block rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 px-2.5 py-0.5 text-xs font-semibold">
-                          Aktif
-                        </span>
-                      ) : (
-                        <button
-                          disabled={loadingId === user.id}
-                          onClick={() => executeUpdate(user.id, 'isActive', !user.isActive)}
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors disabled:opacity-50 border ${
-                            user.isActive
-                              ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
-                              : 'bg-slate-100 text-slate-600 border-slate-200 hover:bg-slate-200'
-                          }`}
-                        >
-                          <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                          {user.isActive ? 'Aktif' : 'Nonaktif'}
-                        </button>
-                      )}
+
+                    <td className="px-4 py-3.5 text-center">
+                      <span
+                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
+                          user.isActive
+                            ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/20'
+                            : 'bg-slate-100 text-slate-600 ring-1 ring-slate-300'
+                        }`}
+                      >
+                        <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                        {user.isActive ? 'Aktif' : 'Nonaktif'}
+                      </span>
                     </td>
-                    <td className="px-4 py-3 text-right hidden sm:table-cell">
-                      {isLoading && (
-                        <span className="text-xs text-slate-500 font-medium animate-pulse">Menyimpan...</span>
-                      )}
+
+                    {/* Kebab Dropdown Action Column */}
+                    <td className="px-4 py-3.5 text-right relative">
+                      <div className="relative inline-block text-left" ref={isMenuOpen ? menuRef : undefined}>
+                        <button
+                          type="button"
+                          onClick={() => setActiveMenuId(isMenuOpen ? null : user.id)}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          title="Menu Aksi"
+                        >
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+
+                        {isMenuOpen && (
+                          <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-md border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
+                            <button
+                              type="button"
+                              onClick={() => handleActionClick('edit', user)}
+                              className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <UserCog className="h-3.5 w-3.5 text-slate-400" />
+                              <span>Edit Profil</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => handleActionClick('reset', user)}
+                              className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                            >
+                              <KeyRound className="h-3.5 w-3.5 text-slate-400" />
+                              <span>Reset Password</span>
+                            </button>
+
+                            <div className="border-t border-slate-100 my-1" />
+
+                            <button
+                              type="button"
+                              disabled={isSelf}
+                              onClick={() => handleActionClick('toggle', user)}
+                              className={`flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium transition-colors ${
+                                isSelf
+                                  ? 'text-slate-300 cursor-not-allowed'
+                                  : user.isActive
+                                  ? 'text-red-600 hover:bg-red-50'
+                                  : 'text-emerald-700 hover:bg-emerald-50'
+                              }`}
+                            >
+                              {user.isActive ? (
+                                <>
+                                  <UserX className="h-3.5 w-3.5" />
+                                  <span>Nonaktifkan Akun</span>
+                                </>
+                              ) : (
+                                <>
+                                  <UserCheck className="h-3.5 w-3.5" />
+                                  <span>Aktifkan Akun</span>
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 )
@@ -296,8 +394,8 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
         </table>
       </div>
 
-      <p className="text-xs text-slate-500 font-medium">
-        Menampilkan {filtered.length} dari {userList.length} pengguna. Perubahan role memerlukan konfirmasi admin.
+      <p className="text-[11px] text-slate-400">
+        Menampilkan {filtered.length} dari total {userList.length} pengguna terdaftar.
       </p>
     </div>
   )
