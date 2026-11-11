@@ -45,23 +45,29 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Laboratorium tidak ditemukan atau sedang tidak aktif.' }, { status: 404 })
     }
 
-    // Cek apakah slot waktu yang diminta bertabrakan dengan peminjaman APPROVED yang sudah ada
-    const approvedOnDate = await db
-      .select({ id: bookings.id, startTime: bookings.startTime, endTime: bookings.endTime })
+    // Cek apakah slot waktu yang diminta bertabrakan dengan peminjaman APPROVED atau BLOCKED yang sudah ada
+    const approvedOrBlocked = await db
+      .select({ id: bookings.id, startTime: bookings.startTime, endTime: bookings.endTime, status: bookings.status })
       .from(bookings)
       .where(
         and(
           eq(bookings.laboratoryId, laboratoryId),
-          eq(bookings.bookingDate, bookingDate),
-          eq(bookings.status, 'APPROVED')
+          eq(bookings.bookingDate, bookingDate)
         )
       )
 
-    const hasOverlap = approvedOnDate.some(
-      (slot) => startTime < slot.endTime && endTime > slot.startTime
+    const conflictingSlot = approvedOrBlocked.find(
+      (slot) => (slot.status === 'APPROVED' || slot.status === 'BLOCKED') &&
+                startTime < slot.endTime && endTime > slot.startTime
     )
 
-    if (hasOverlap) {
+    if (conflictingSlot) {
+      if (conflictingSlot.status === 'BLOCKED') {
+        return NextResponse.json(
+          { error: 'Laboratorium sedang diblokir untuk pemeliharaan/agenda khusus pada jam tersebut.' },
+          { status: 409 }
+        )
+      }
       return NextResponse.json(
         { error: 'Slot waktu yang Anda pilih telah terisi oleh peminjaman lain yang disetujui. Silakan pilih waktu lain.' },
         { status: 409 }

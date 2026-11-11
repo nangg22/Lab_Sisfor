@@ -68,7 +68,7 @@ export const bookings = pgTable('bookings', {
   participantCount: integer('participant_count'),
   notes: text('notes'),
   status: varchar('status', { length: 20 }).notNull().default('PENDING'),
-  // status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  // status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED'
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -135,4 +135,4 @@ export type Booking = typeof bookings.$inferSelect
 export type BookingApprovalAction = typeof bookingApprovalActions.$inferSelect
 export type BookingStatusHistory = typeof bookingStatusHistory.$inferSelect
 export type RoleCode = 'mahasiswa' | 'dosen' | 'admin'
-export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED'

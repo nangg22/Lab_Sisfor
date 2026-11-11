@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import { BlockLabModal } from './block-lab-modal'
 
 interface LabItem {
   id: string
@@ -26,6 +27,7 @@ interface Props {
   labs: LabItem[]
   bookings: BookingSlot[]
   selectedDate: string
+  isAdmin?: boolean
 }
 
 // Jam operasional: 06:00 sampai 21:00
@@ -33,7 +35,7 @@ const TIME_HOURS = [
   '06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21'
 ]
 
-export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
+export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Props) {
   const router = useRouter()
   const [activeSlot, setActiveSlot] = useState<{
     labId: string
@@ -92,9 +94,18 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
             <span className="text-gray-700 font-medium">Terpakai Penuh</span>
           </div>
           <div className="flex items-center gap-1.5">
+            <span className="h-3.5 w-3.5 rounded bg-slate-800"></span>
+            <span className="text-gray-700 font-medium">Diblokir / Maintenance</span>
+          </div>
+          <div className="flex items-center gap-1.5">
             <span className="h-3.5 w-3.5 rounded bg-emerald-500"></span>
             <span className="text-gray-700 font-medium">Dipilih</span>
           </div>
+          {isAdmin && (
+            <div className="ml-auto">
+              <BlockLabModal labs={labs} defaultDate={selectedDate} />
+            </div>
+          )}
         </div>
       </div>
 
@@ -157,12 +168,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
                     let cellText = ''
 
                     if (booking) {
-                      // Jika jam pertama booking pakai warna amber, jika berlanjut pakai rose
-                      const startHour = parseInt(booking.startTime.split(':')[0], 10)
-                      const isFirstHour = parseInt(hr, 10) === startHour
-                      cellBg = isFirstHour
-                        ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer'
-                        : 'bg-rose-500 hover:bg-rose-600 text-white cursor-pointer'
+                      if (booking.status === 'BLOCKED') {
+                        cellBg = 'bg-slate-800 hover:bg-slate-900 text-white cursor-pointer'
+                      } else {
+                        // Jika jam pertama booking pakai warna amber, jika berlanjut pakai rose
+                        const startHour = parseInt(booking.startTime.split(':')[0], 10)
+                        const isFirstHour = parseInt(hr, 10) === startHour
+                        cellBg = isFirstHour
+                          ? 'bg-amber-500 hover:bg-amber-600 text-white cursor-pointer'
+                          : 'bg-rose-500 hover:bg-rose-600 text-white cursor-pointer'
+                      }
                     }
 
                     if (isSelected) {
@@ -224,8 +239,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
               <div className="text-xs space-y-1 pt-1 text-gray-700">
                 <p>
                   <span className="font-semibold text-gray-500">Status:</span>{' '}
-                  <span className="font-bold text-rose-600 bg-rose-50 px-2 py-0.5 rounded">
-                    Terisi (Disetujui)
+                  <span
+                    className={`font-bold px-2 py-0.5 rounded ${
+                      activeSlot.booking.status === 'BLOCKED'
+                        ? 'bg-slate-800 text-white'
+                        : 'bg-rose-50 text-rose-600'
+                    }`}
+                  >
+                    {activeSlot.booking.status === 'BLOCKED'
+                      ? 'DIBLOKIR / MAINTENANCE'
+                      : 'Terisi (Disetujui)'}
                   </span>
                 </p>
                 <p>
@@ -235,10 +258,10 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
                   </span>
                 </p>
                 <p>
-                  <span className="font-semibold text-gray-500">Keperluan:</span>{' '}
+                  <span className="font-semibold text-gray-500">Keperluan / Alasan:</span>{' '}
                   <span className="text-gray-900 font-medium">{activeSlot.booking.purpose}</span>
                 </p>
-                {activeSlot.booking.userName && (
+                {activeSlot.booking.userName && activeSlot.booking.status !== 'BLOCKED' && (
                   <p>
                     <span className="font-semibold text-gray-500">Pemohon:</span>{' '}
                     <span className="text-gray-900">{activeSlot.booking.userName}</span>

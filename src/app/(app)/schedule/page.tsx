@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { laboratories, bookings, users } from '@/db/schema'
-import { eq, and } from 'drizzle-orm'
+import { eq, and, or, inArray } from 'drizzle-orm'
 import { ScheduleMatrixView } from './schedule-matrix-view'
 
 interface Props {
@@ -12,6 +12,14 @@ interface Props {
 export default async function SchedulePage({ searchParams }: Props) {
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
+
+  const [currentUser] = await db
+    .select({ role: users.role })
+    .from(users)
+    .where(eq(users.id, session.user.id))
+    .limit(1)
+
+  const isAdmin = currentUser?.role === 'admin'
 
   const { date } = await searchParams
   // Default ke hari ini jika tidak dipilih
@@ -30,8 +38,8 @@ export default async function SchedulePage({ searchParams }: Props) {
     .where(eq(laboratories.isActive, true))
     .orderBy(laboratories.name)
 
-  // Ambil booking berstatus APPROVED pada tanggal terpilih
-  const approvedBookings = await db
+  // Ambil booking berstatus APPROVED atau BLOCKED pada tanggal terpilih
+  const scheduleSlots = await db
     .select({
       id: bookings.id,
       laboratoryId: bookings.laboratoryId,
@@ -47,7 +55,7 @@ export default async function SchedulePage({ searchParams }: Props) {
     .where(
       and(
         eq(bookings.bookingDate, selectedDate),
-        eq(bookings.status, 'APPROVED')
+        inArray(bookings.status, ['APPROVED', 'BLOCKED'])
       )
     )
 
@@ -62,8 +70,9 @@ export default async function SchedulePage({ searchParams }: Props) {
 
       <ScheduleMatrixView
         labs={labs}
-        bookings={approvedBookings}
+        bookings={scheduleSlots}
         selectedDate={selectedDate}
+        isAdmin={isAdmin}
       />
     </div>
   )

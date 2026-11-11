@@ -16,23 +16,27 @@ export async function GET(request: Request) {
     return NextResponse.json({ slots: [] })
   }
 
-  const approvedSlots = await db
+  const bookedSlots = await db
     .select({
       id: bookings.id,
       startTime: bookings.startTime,
       endTime: bookings.endTime,
       purpose: bookings.purpose,
+      status: bookings.status,
     })
     .from(bookings)
     .where(
       and(
         eq(bookings.laboratoryId, laboratoryId),
-        eq(bookings.bookingDate, bookingDate),
-        eq(bookings.status, 'APPROVED')
+        eq(bookings.bookingDate, bookingDate)
       )
     )
     .orderBy(bookings.startTime)
 
-  return NextResponse.json({ slots: approvedSlots })
+  const activeSlots = bookedSlots.filter(
+    (b) => b.status === 'APPROVED' || b.status === 'BLOCKED'
+  )
+
+  return NextResponse.json({ slots: activeSlots })
 }
 

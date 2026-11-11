@@ -35,6 +35,7 @@ export function getStatusLabel(status: string): string {
     APPROVED: 'Disetujui',
     REJECTED: 'Ditolak',
     CANCELLED: 'Dibatalkan',
+    BLOCKED: 'Diblokir / Maintenance',
   }
   return labels[status] ?? status
 }
@@ -45,6 +46,7 @@ export function getStatusColor(status: string): string {
     APPROVED: 'bg-green-100 text-green-800',
     REJECTED: 'bg-red-100 text-red-800',
     CANCELLED: 'bg-gray-100 text-gray-700',
+    BLOCKED: 'bg-slate-700 text-white',
   }
   return colors[status] ?? 'bg-gray-100 text-gray-700'
 }
