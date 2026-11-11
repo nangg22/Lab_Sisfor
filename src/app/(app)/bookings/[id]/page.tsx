@@ -8,6 +8,7 @@ import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime, formatDateTime } from '@/lib/utils'
 import { CancelBookingButton } from './cancel-button'
 import { PrintTicketButton } from './print-ticket-button'
+import { KeyRound, ShieldCheck, CheckCircle2, XCircle, ArrowLeft, Clock } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -58,67 +59,80 @@ export default async function BookingDetailPage({ params }: Props) {
 
   return (
     <div className="max-w-3xl space-y-6">
-      <nav className="flex items-center gap-2 text-sm text-gray-500">
-        <Link href="/bookings" className="hover:text-gray-700">Pengajuan Saya</Link>
+      <nav className="flex items-center gap-2 text-xs font-semibold text-slate-500">
+        <Link href="/bookings" className="hover:text-blue-700 flex items-center gap-1 transition-colors">
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Pengajuan Saya
+        </Link>
         <span>/</span>
-        <span className="text-gray-900 font-medium">Detail Pengajuan</span>
+        <span className="text-slate-900 font-bold">Detail Pengajuan</span>
       </nav>
 
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-900">{b.labName}</h1>
-          <p className="text-gray-500 mt-1">{b.labLocation}</p>
+          <h1 className="page-title text-slate-900">{b.labName}</h1>
+          <p className="page-subtitle text-slate-600 font-medium">{b.labLocation}</p>
         </div>
-        <StatusBadge status={b.status} className="text-sm px-3 py-1" />
+        <StatusBadge status={b.status} className="text-sm px-3.5 py-1.5" />
       </div>
 
-      <div className="rounded-xl border border-gray-200 bg-white shadow-sm divide-y divide-gray-100">
+      <div className="glass-card rounded-2xl overflow-hidden divide-y divide-slate-100">
         {[
-          { label: 'Tanggal', value: formatDate(b.bookingDate) },
-          { label: 'Waktu', value: `${formatTime(b.startTime)} – ${formatTime(b.endTime)}` },
-          { label: 'Tujuan', value: b.purpose },
-          { label: 'Jumlah Peserta', value: b.participantCount ? `${b.participantCount} orang` : '—' },
-          { label: 'Keterangan', value: b.notes ?? '—' },
-          { label: 'Diajukan', value: formatDateTime(b.createdAt.toISOString()) },
+          { label: 'Tanggal Peminjaman', value: formatDate(b.bookingDate) },
+          { label: 'Waktu Pelaksanaan', value: `${formatTime(b.startTime)} – ${formatTime(b.endTime)} WIB` },
+          { label: 'Tujuan Kegiatan', value: b.purpose },
+          { label: 'Jumlah Peserta', value: b.participantCount ? `${b.participantCount} orang (Kapasitas: ${b.labCapacity} orang)` : '—' },
+          { label: 'Catatan Tambahan', value: b.notes ?? '—' },
+          { label: 'Waktu Diajukan', value: formatDateTime(b.createdAt.toISOString()) },
         ].map((item) => (
-          <div key={item.label} className="grid grid-cols-3 px-6 py-3 text-sm gap-2">
-            <span className="text-gray-500 font-medium">{item.label}</span>
-            <span className="col-span-2 text-gray-900">{item.value}</span>
+          <div key={item.label} className="grid grid-cols-3 px-6 py-3.5 text-sm gap-2">
+            <span className="text-slate-600 font-semibold">{item.label}</span>
+            <span className="col-span-2 text-slate-900 font-medium leading-relaxed">{item.value}</span>
           </div>
         ))}
       </div>
 
       {approvals.length > 0 && (
-        <div className={`rounded-xl border p-5 shadow-sm ${approvals[approvals.length-1].decision === 'APPROVED' ? 'border-green-200 bg-green-50' : 'border-red-200 bg-red-50'}`}>
-          <p className="font-semibold text-sm mb-1">
-            {approvals[approvals.length-1].decision === 'APPROVED' ? '✅ Pengajuan Disetujui' : '❌ Pengajuan Ditolak'}
-          </p>
-          <p className="text-sm text-gray-600">
-            oleh <span className="font-medium">{approvals[approvals.length-1].approverName ?? '—'}</span>
+        <div className={`rounded-2xl border p-5 shadow-sm ${approvals[approvals.length-1].decision === 'APPROVED' ? 'border-emerald-200 bg-emerald-50/80' : 'border-rose-200 bg-rose-50/80'}`}>
+          <div className="flex items-center gap-2 font-bold text-sm mb-1 text-slate-900">
+            {approvals[approvals.length-1].decision === 'APPROVED' ? (
+              <>
+                <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <span className="text-emerald-800">Pengajuan Telah Disetujui</span>
+              </>
+            ) : (
+              <>
+                <XCircle className="h-5 w-5 text-rose-600" />
+                <span className="text-rose-800">Pengajuan Ditolak</span>
+              </>
+            )}
+          </div>
+          <p className="text-xs text-slate-700 font-medium">
+            Diproses oleh <span className="font-bold text-slate-900">{approvals[approvals.length-1].approverName ?? 'Admin'}</span>
             {' '}· {formatDateTime(approvals[approvals.length-1].decidedAt.toISOString())}
           </p>
           {approvals[approvals.length-1].reason && (
-            <p className="mt-2 text-sm text-gray-700"><span className="font-medium">Alasan:</span> {approvals[approvals.length-1].reason}</p>
+            <p className="mt-2 text-xs text-slate-800 bg-white/70 p-2.5 rounded-xl border border-slate-200 font-medium">
+              <span className="font-bold">Alasan / Catatan Admin:</span> {approvals[approvals.length-1].reason}
+            </p>
           )}
         </div>
       )}
 
       {b.status === 'APPROVED' && (
         <div className="space-y-4">
-          <div className="rounded-xl border border-blue-200 bg-blue-50/80 p-5 shadow-sm text-sm text-blue-900 space-y-2">
-            <div className="flex items-center gap-2 font-semibold text-blue-800">
-              <svg className="h-5 w-5 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
-              </svg>
+          <div className="rounded-2xl border border-blue-200 bg-blue-50/90 p-5 shadow-sm text-sm text-blue-950 space-y-2.5">
+            <div className="flex items-center gap-2 font-bold text-blue-900 text-sm">
+              <KeyRound className="h-5 w-5 text-blue-700" strokeWidth={2.2} />
               SOP Pengambilan Kunci Fisik Laboratorium
             </div>
-            <p className="text-blue-800 leading-relaxed">
-              Pengajuan Anda telah disetujui secara digital. Silakan mengambil kunci fisik ruangan laboratorium di <strong>Ruang Pengelola / Asisten Lab</strong> sebelum jadwal peminjaman dimulai dengan menunjukkan identitas (KTM/KTP/NIP) atau bukti cetak peminjaman di bawah ini.
+            <p className="text-xs text-blue-900 leading-relaxed font-medium">
+              Pengajuan Anda telah disetujui secara digital. Silakan mengambil kunci fisik ruangan laboratorium di <strong>Ruang Pengelola / Asisten Lab</strong> sebelum jadwal peminjaman dimulai dengan menunjukkan kartu identitas (KTM/KTP/NIP) atau bukti cetak tiket di bawah.
             </p>
-            <ul className="text-xs text-blue-700 list-disc list-inside space-y-0.5 pt-1">
+            <ul className="text-xs text-blue-800 list-disc list-inside space-y-1 pt-1 font-medium">
               <li>Harap pastikan ruangan terkunci kembali setelah selesai digunakan.</li>
               <li>Kembalikan kunci fisik ke Asisten Lab maksimal 15 menit setelah waktu peminjaman berakhir.</li>
-              <li>Matikan seluruh proyektor, PC, dan pendingin ruangan (AC) sebelum meninggalkan lab.</li>
+              <li>Matikan seluruh proyektor, PC, lampu, dan pendingin ruangan (AC) sebelum meninggalkan lab.</li>
             </ul>
           </div>
 
@@ -144,16 +158,28 @@ export default async function BookingDetailPage({ params }: Props) {
       )}
 
       {history.length > 0 && (
-        <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-6">
-          <h2 className="font-semibold text-gray-900 mb-4">Riwayat Status</h2>
+        <div className="glass-card rounded-2xl p-6">
+          <h2 className="font-bold text-slate-900 mb-4 text-sm flex items-center gap-2">
+            <Clock className="h-4 w-4 text-slate-600" />
+            Riwayat Status Pengajuan
+          </h2>
           <div className="relative pl-6 space-y-4">
-            <div className="absolute left-2 top-0 bottom-0 w-px bg-gray-200" />
+            <div className="absolute left-2 top-1.5 bottom-1.5 w-0.5 bg-slate-200" />
             {history.map((h) => (
               <div key={h.id} className="relative">
-                <div className="absolute -left-4 top-1.5 h-2.5 w-2.5 rounded-full bg-blue-500 border-2 border-white" />
-                <p className="text-sm font-medium text-gray-900">{h.oldStatus ? `${h.oldStatus} → ${h.newStatus}` : h.newStatus}</p>
-                <p className="text-xs text-gray-400 mt-0.5">{formatDateTime(h.changedAt.toISOString())}{h.changerName && ` · oleh ${h.changerName}`}</p>
-                {h.reason && <p className="text-xs text-gray-500 mt-0.5">{h.reason}</p>}
+                <div className="absolute -left-[18px] top-1.5 h-2.5 w-2.5 rounded-full bg-blue-600 ring-4 ring-white" />
+                <p className="text-xs font-bold text-slate-900">
+                  {h.oldStatus ? `${h.oldStatus} → ${h.newStatus}` : h.newStatus}
+                </p>
+                <p className="text-[11px] text-slate-500 font-medium mt-0.5">
+                  {formatDateTime(h.changedAt.toISOString())}
+                  {h.changerName && ` · oleh ${h.changerName}`}
+                </p>
+                {h.reason && (
+                  <p className="text-xs text-slate-700 bg-slate-50 p-2 rounded-lg border border-slate-200 mt-1 font-medium">
+                    {h.reason}
+                  </p>
+                )}
               </div>
             ))}
           </div>
@@ -163,9 +189,11 @@ export default async function BookingDetailPage({ params }: Props) {
       {canCancel && <CancelBookingButton bookingId={b.id} />}
 
       {isAdmin && (
-        <div className="rounded-lg bg-blue-50 border border-blue-100 px-4 py-3 text-sm text-blue-700">
-          Untuk memproses keputusan, buka halaman{' '}
-          <Link href={`/admin/bookings/${b.id}`} className="font-medium underline">Kelola Pengajuan → Detail</Link>
+        <div className="rounded-xl bg-blue-50 border border-blue-200 p-4 text-xs font-semibold text-blue-900 flex items-center justify-between">
+          <span>Anda membuka pengajuan ini dengan hak akses Administrator.</span>
+          <Link href={`/admin/bookings/${b.id}`} className="font-bold text-blue-700 hover:underline">
+            Buka Form Keputusan Admin →
+          </Link>
         </div>
       )}
     </div>

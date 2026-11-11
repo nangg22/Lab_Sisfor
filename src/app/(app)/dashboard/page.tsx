@@ -3,21 +3,16 @@ import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { users, laboratories, bookings } from '@/db/schema'
-import { eq, desc, count, and } from 'drizzle-orm'
+import { eq, desc, count } from 'drizzle-orm'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime } from '@/lib/utils'
 import {
-  ClipboardList,
-  Clock,
-  CheckCircle2,
-  XCircle,
-  FlaskConical,
-  Users,
   ArrowRight,
   Plus,
-  Trophy,
-  Ban,
-  ShieldAlert,
+  ArrowUpRight,
+  Building2,
+  Users as UsersIcon,
+  ClipboardList,
 } from 'lucide-react'
 
 export default async function DashboardPage() {
@@ -34,13 +29,24 @@ export default async function DashboardPage() {
 
   const isAdmin = currentUser.role === 'admin'
 
+  // Total active labs
   const activeLabs = await db
-    .select({ id: laboratories.id, name: laboratories.name, location: laboratories.location, capacity: laboratories.capacity })
+    .select({
+      id: laboratories.id,
+      name: laboratories.name,
+      location: laboratories.location,
+      capacity: laboratories.capacity,
+    })
     .from(laboratories)
     .where(eq(laboratories.isActive, true))
 
-  const labs = activeLabs.slice(0, 3)
+  const labsPreview = activeLabs.slice(0, 4)
 
+  // Total registered users
+  const [userCountRow] = await db.select({ total: count() }).from(users)
+  const totalUsersCount = userCountRow?.total ?? 0
+
+  // Recent bookings query
   const recentBookings = isAdmin
     ? await db
         .select({
@@ -58,7 +64,7 @@ export default async function DashboardPage() {
         .leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id))
         .leftJoin(users, eq(bookings.userId, users.id))
         .orderBy(desc(bookings.createdAt))
-        .limit(5)
+        .limit(6)
     : await db
         .select({
           id: bookings.id,
@@ -76,296 +82,345 @@ export default async function DashboardPage() {
         .leftJoin(users, eq(bookings.userId, users.id))
         .where(eq(bookings.userId, session.user.id))
         .orderBy(desc(bookings.createdAt))
-        .limit(5)
+        .limit(6)
 
+  // All bookings for statistics calculation
   const allBookingsForStats = isAdmin
     ? await db.select({ status: bookings.status }).from(bookings)
-    : await db.select({ status: bookings.status }).from(bookings).where(eq(bookings.userId, session.user.id))
+    : await db
+        .select({ status: bookings.status })
+        .from(bookings)
+        .where(eq(bookings.userId, session.user.id))
 
-  // Sinkronisasi status lengkap: PENDING, APPROVED, REJECTED, CANCELLED, BLOCKED
-  const stats = {
-    total: allBookingsForStats.length,
-    pending: allBookingsForStats.filter((b) => b.status === 'PENDING').length,
-    approved: allBookingsForStats.filter((b) => b.status === 'APPROVED').length,
-    rejected: allBookingsForStats.filter((b) => b.status === 'REJECTED').length,
-    cancelled: allBookingsForStats.filter((b) => b.status === 'CANCELLED').length,
-    blocked: allBookingsForStats.filter((b) => b.status === 'BLOCKED').length,
-  }
+  const totalBookings = allBookingsForStats.length
+  const pendingCount = allBookingsForStats.filter((b) => b.status === 'PENDING').length
+  const approvedCount = allBookingsForStats.filter((b) => b.status === 'APPROVED').length
+  const rejectedCount = allBookingsForStats.filter((b) => b.status === 'REJECTED').length
+  const cancelledCount = allBookingsForStats.filter((b) => b.status === 'CANCELLED').length
+  const blockedCount = allBookingsForStats.filter((b) => b.status === 'BLOCKED').length
 
-  let topLabs: { labName: string | null; labId: string | null; total: number }[] = []
-  let totalUsers = 0
+  // Calculate percentage shares for progress bar (safe against divide-by-zero)
+  const calcPercent = (val: number) =>
+    totalBookings > 0 ? ((val / totalBookings) * 100).toFixed(1) : '0'
 
-  if (isAdmin) {
-    const labBookingCounts = await db
-      .select({
-        labId: bookings.laboratoryId,
-        labName: laboratories.name,
-        total: count(),
-      })
-      .from(bookings)
-      .leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id))
-      .where(eq(bookings.status, 'APPROVED'))
-      .groupBy(bookings.laboratoryId, laboratories.name)
-      .orderBy(desc(count()))
-      .limit(5)
-
-    topLabs = labBookingCounts.map((r) => ({
-      labName: r.labName,
-      labId: r.labId,
-      total: r.total,
-    }))
-
-    const [userCountRow] = await db.select({ total: count() }).from(users)
-    totalUsers = userCountRow?.total ?? 0
-  }
-
-  const statCards = [
-    {
-      label: isAdmin ? 'Total Pengajuan' : 'Pengajuan Saya',
-      value: stats.total,
-      icon: ClipboardList,
-      gradient: 'from-blue-500 to-indigo-600',
-      bg: 'bg-blue-50',
-      text: 'text-blue-700',
-    },
-    {
-      label: 'Menunggu',
-      value: stats.pending,
-      icon: Clock,
-      gradient: 'from-amber-400 to-orange-500',
-      bg: 'bg-amber-50',
-      text: 'text-amber-700',
-    },
-    {
-      label: 'Disetujui',
-      value: stats.approved,
-      icon: CheckCircle2,
-      gradient: 'from-emerald-400 to-teal-500',
-      bg: 'bg-emerald-50',
-      text: 'text-emerald-700',
-    },
-    {
-      label: 'Ditolak',
-      value: stats.rejected,
-      icon: XCircle,
-      gradient: 'from-rose-400 to-pink-500',
-      bg: 'bg-rose-50',
-      text: 'text-rose-700',
-    },
-    {
-      label: 'Dibatalkan',
-      value: stats.cancelled,
-      icon: Ban,
-      gradient: 'from-slate-400 to-slate-600',
-      bg: 'bg-slate-50',
-      text: 'text-slate-700',
-    },
-    ...(isAdmin
-      ? [
-          {
-            label: 'Diblokir / Maint.',
-            value: stats.blocked,
-            icon: ShieldAlert,
-            gradient: 'from-purple-500 to-slate-800',
-            bg: 'bg-slate-100',
-            text: 'text-slate-900',
-          },
-          {
-            label: 'Lab Aktif',
-            value: activeLabs.length,
-            icon: FlaskConical,
-            gradient: 'from-cyan-400 to-sky-500',
-            bg: 'bg-cyan-50',
-            text: 'text-cyan-700',
-          },
-          {
-            label: 'Pengguna',
-            value: totalUsers,
-            icon: Users,
-            gradient: 'from-violet-400 to-purple-600',
-            bg: 'bg-violet-50',
-            text: 'text-violet-700',
-          },
-        ]
-      : []),
-  ]
+  const pApproved = calcPercent(approvedCount)
+  const pPending = calcPercent(pendingCount)
+  const pBlocked = calcPercent(blockedCount)
+  const pCancelled = calcPercent(cancelledCount)
+  const pRejected = calcPercent(rejectedCount)
 
   const firstName = currentUser.fullName.split(' ')[0]
 
   return (
-    <div className="space-y-8">
-      {/* ── Greeting ── */}
-      <div>
-        <h1 className="page-title text-slate-900">
-          Selamat datang, {firstName}!
-        </h1>
-        <p className="page-subtitle text-slate-600 font-medium">
-          {isAdmin
-            ? 'Pantau dan kelola pengajuan peminjaman laboratorium.'
-            : 'Ajukan peminjaman laboratorium dengan mudah.'}
-        </p>
-      </div>
+    <div className="space-y-6">
+      {/* ── Page Header ── */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+            Ringkasan Sistem
+          </h1>
+          <p className="text-sm text-slate-500 mt-0.5">
+            Selamat datang kembali, {firstName}. Pantau performa penggunaan laboratorium.
+          </p>
+        </div>
 
-      {/* ── Stat Cards ── */}
-      <div className={`grid grid-cols-2 gap-4 ${isAdmin ? 'sm:grid-cols-4 lg:grid-cols-8' : 'sm:grid-cols-5'}`}>
-        {statCards.map((stat) => {
-          const Icon = stat.icon
-          return (
-            <div key={stat.label} className="glass-card rounded-2xl p-4">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-xs font-semibold text-slate-700 leading-tight">{stat.label}</p>
-                <div className={`flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br ${stat.gradient} shadow-sm`}>
-                  <Icon className="h-3.5 w-3.5 text-white" strokeWidth={2} />
-                </div>
-              </div>
-              <p className={`text-2xl font-bold tracking-tight ${stat.text}`}>
-                {stat.value}
-              </p>
-            </div>
-          )
-        })}
-      </div>
-
-      {/* ── Main Content ── */}
-      <div className="grid gap-6 lg:grid-cols-3">
-        {/* Recent Bookings */}
-        <div className="lg:col-span-2 glass-card rounded-2xl overflow-hidden">
-          <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100/70">
-            <h2 className="font-semibold text-slate-900 tracking-tight">
-              {isAdmin ? 'Pengajuan Terbaru' : 'Pengajuan Saya Terbaru'}
-            </h2>
+        <div className="flex items-center gap-2.5">
+          <Link
+            href="/schedule"
+            className="inline-flex items-center gap-1.5 rounded-md border border-slate-300 bg-white px-3.5 py-2 text-xs font-semibold text-slate-700 shadow-xs hover:bg-slate-50 transition-colors"
+          >
+            Lihat Jadwal Ruang
+          </Link>
+          {isAdmin ? (
             <Link
-              href={isAdmin ? '/admin/bookings' : '/bookings'}
-              className="flex items-center gap-1 text-sm text-blue-700 hover:text-blue-800 font-semibold"
+              href="/admin/labs/new"
+              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
             >
-              Lihat semua
-              <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} />
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              Tambah Lab Baru
             </Link>
+          ) : (
+            <Link
+              href="/bookings/new"
+              className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
+            >
+              <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+              Ajukan Peminjaman
+            </Link>
+          )}
+        </div>
+      </div>
+
+      {/* ── Section 3: Clean Metrics Row & Breakdown Bar ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        {/* Metric 1 */}
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
+          <p className="text-xs font-medium text-slate-500">
+            {isAdmin ? 'Total Pengajuan Masuk' : 'Total Pengajuan Saya'}
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-slate-900">
+              {totalBookings}
+            </span>
+            <span className="text-xs font-medium text-slate-500">permohonan</span>
           </div>
-          <div className="divide-y divide-slate-100/60">
-            {recentBookings.length > 0 ? (
-              recentBookings.map((b) => (
-                <Link
-                  key={b.id}
-                  href={`/bookings/${b.id}`}
-                  className="flex items-start justify-between gap-4 px-6 py-4 hover:bg-white/40 transition-colors"
-                >
-                  <div className="min-w-0">
-                    <p className="font-semibold text-slate-900 text-sm truncate">{b.labName ?? '—'}</p>
-                    <p className="text-xs text-slate-600 font-medium mt-0.5">
-                      {formatDate(b.bookingDate)} · {formatTime(b.startTime)}–{formatTime(b.endTime)}
-                    </p>
-                    {isAdmin && (
-                      <p className="text-xs text-slate-600 mt-0.5">oleh <span className="font-semibold text-slate-700">{b.userName ?? '—'}</span></p>
-                    )}
-                  </div>
-                  <StatusBadge status={b.status} />
-                </Link>
-              ))
-            ) : (
-              <div className="px-6 py-12 text-center">
-                <ClipboardList className="h-8 w-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
-                <p className="text-sm text-slate-600 font-medium">Belum ada pengajuan.</p>
-              </div>
-            )}
+          <div className="mt-3 text-[11px] text-slate-400">
+            {pendingCount} menunggu evaluasi
           </div>
         </div>
 
-        {/* Right column */}
-        <div className="space-y-5">
-          {/* Lab Terpopuler (admin) */}
-          {isAdmin && topLabs.length > 0 && (
-            <div className="glass-card rounded-2xl overflow-hidden">
-              <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/70">
-                <div className="flex items-center gap-2">
-                  <Trophy className="h-4 w-4 text-amber-500" strokeWidth={2} />
-                  <h2 className="font-semibold text-slate-900 tracking-tight text-sm">Lab Terpopuler</h2>
-                </div>
-                <Link href="/admin/labs" className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 font-semibold">
-                  Kelola
-                  <ArrowRight className="h-3 w-3" strokeWidth={2.2} />
-                </Link>
-              </div>
-              <div className="divide-y divide-slate-100/60">
-                {topLabs.map((lab, idx) => (
-                  <div key={lab.labId ?? idx} className="flex items-center gap-3 px-5 py-3">
-                    <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold ${
-                      idx === 0 ? 'bg-amber-100 text-amber-800' :
-                      idx === 1 ? 'bg-slate-200 text-slate-700' :
-                      idx === 2 ? 'bg-orange-100 text-orange-800' :
-                      'bg-slate-100 text-slate-600'
-                    }`}>
-                      {idx + 1}
-                    </span>
-                    <p className="text-sm font-semibold text-slate-900 truncate flex-1">{lab.labName ?? '—'}</p>
-                    <span className="text-xs font-bold text-blue-700 bg-blue-50 border border-blue-200 rounded-full px-2 py-0.5">
-                      {lab.total}×
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+        {/* Metric 2 */}
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
+          <p className="text-xs font-medium text-slate-500">Laboratorium Aktif</p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-slate-900">
+              {activeLabs.length}
+            </span>
+            <span className="text-xs font-medium text-slate-500">ruangan</span>
+          </div>
+          <div className="mt-3 text-[11px] text-slate-400">Siap digunakan operasional</div>
+        </div>
 
-          {/* Lab Shortcut */}
-          <div className="glass-card rounded-2xl overflow-hidden">
-            <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100/70">
-              <div className="flex items-center gap-2">
-                <FlaskConical className="h-4 w-4 text-blue-600" strokeWidth={2} />
-                <h2 className="font-semibold text-slate-900 tracking-tight text-sm">Laboratorium</h2>
+        {/* Metric 3 */}
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs">
+          <p className="text-xs font-medium text-slate-500">
+            {isAdmin ? 'Total Pengguna' : 'Slot Terjadwal'}
+          </p>
+          <div className="mt-2 flex items-baseline gap-2">
+            <span className="text-3xl font-bold tracking-tight text-slate-900">
+              {isAdmin ? totalUsersCount : approvedCount}
+            </span>
+            <span className="text-xs font-medium text-slate-500">
+              {isAdmin ? 'civitas terdaftar' : 'berhasil disetujui'}
+            </span>
+          </div>
+          <div className="mt-3 text-[11px] text-slate-400">
+            {isAdmin ? 'Mahasiswa, Dosen & Asisten' : 'Jadwal lab aktif Anda'}
+          </div>
+        </div>
+
+        {/* Breakdown Widget Card: Single Horizontal Segmented Progress Bar */}
+        <div className="rounded-lg border border-slate-200 bg-white p-5 shadow-xs lg:col-span-1">
+          <div className="flex items-center justify-between">
+            <p className="text-xs font-medium text-slate-500">Breakdown Status</p>
+            <span className="text-[11px] font-semibold text-slate-700">
+              {totalBookings} Total
+            </span>
+          </div>
+
+          {/* Segmented Progress Bar */}
+          <div className="mt-3 flex h-2 w-full overflow-hidden rounded-full bg-slate-100">
+            {approvedCount > 0 && (
+              <div
+                style={{ width: `${pApproved}%` }}
+                className="bg-emerald-500 transition-all"
+                title={`Disetujui: ${approvedCount}`}
+              />
+            )}
+            {pendingCount > 0 && (
+              <div
+                style={{ width: `${pPending}%` }}
+                className="bg-amber-400 transition-all"
+                title={`Menunggu: ${pendingCount}`}
+              />
+            )}
+            {blockedCount > 0 && (
+              <div
+                style={{ width: `${pBlocked}%` }}
+                className="bg-slate-800 transition-all"
+                title={`Maintenance / Blokir: ${blockedCount}`}
+              />
+            )}
+            {cancelledCount > 0 && (
+              <div
+                style={{ width: `${pCancelled}%` }}
+                className="bg-slate-400 transition-all"
+                title={`Dibatalkan: ${cancelledCount}`}
+              />
+            )}
+            {rejectedCount > 0 && (
+              <div
+                style={{ width: `${pRejected}%` }}
+                className="bg-rose-500 transition-all"
+                title={`Ditolak: ${rejectedCount}`}
+              />
+            )}
+          </div>
+
+          {/* Compact Legend */}
+          <div className="mt-4 grid grid-cols-2 gap-y-1 text-[11px]">
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-slate-600">Disetujui:</span>
+              <span className="font-semibold text-slate-900">{approvedCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-amber-400" />
+              <span className="text-slate-600">Menunggu:</span>
+              <span className="font-semibold text-slate-900">{pendingCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-800" />
+              <span className="text-slate-600">Maintenance:</span>
+              <span className="font-semibold text-slate-900">{blockedCount}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="h-2 w-2 rounded-full bg-slate-400" />
+              <span className="text-slate-600">Dibatalkan:</span>
+              <span className="font-semibold text-slate-900">{cancelledCount}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Section 4: Solid Enterprise Data Tables & Lists ── */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Table: Pengajuan Terbaru */}
+        <div className="rounded-lg border border-slate-200 bg-white shadow-xs lg:col-span-2 overflow-hidden">
+          <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+            <div>
+              <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                {isAdmin ? 'Pengajuan Terbaru Masuk' : 'Pengajuan Saya Terakhir'}
+              </h2>
+              <p className="text-[11px] text-slate-500">
+                Aktivitas reservasi laboratorium semester ini
+              </p>
+            </div>
+            <Link
+              href={isAdmin ? '/admin/bookings' : '/bookings'}
+              className="inline-flex items-center gap-1 text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+            >
+              Lihat semua
+              <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="border-b border-slate-100 bg-slate-50/75 text-[11px] font-semibold text-slate-500">
+                  <th className="px-5 py-2.5">Laboratorium</th>
+                  <th className="px-4 py-2.5">Tanggal & Waktu</th>
+                  {isAdmin && <th className="px-4 py-2.5">Pemohon</th>}
+                  <th className="px-4 py-2.5">Tujuan</th>
+                  <th className="px-4 py-2.5 text-right">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentBookings.length > 0 ? (
+                  recentBookings.map((b) => (
+                    <tr
+                      key={b.id}
+                      className="hover:bg-slate-50/75 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-5 py-3 font-medium text-slate-900">
+                        <Link href={`/bookings/${b.id}`} className="hover:text-blue-600">
+                          {b.labName ?? '—'}
+                        </Link>
+                      </td>
+                      <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                        <span className="font-medium text-slate-800">
+                          {formatDate(b.bookingDate)}
+                        </span>
+                        <span className="block text-[11px] text-slate-400">
+                          {formatTime(b.startTime)}–{formatTime(b.endTime)} WIB
+                        </span>
+                      </td>
+                      {isAdmin && (
+                        <td className="px-4 py-3 text-slate-600 whitespace-nowrap">
+                          {b.userName ?? '—'}
+                        </td>
+                      )}
+                      <td className="px-4 py-3 text-slate-600 max-w-[200px] truncate">
+                        {b.purpose}
+                      </td>
+                      <td className="px-4 py-3 text-right whitespace-nowrap">
+                        <StatusBadge status={b.status} />
+                      </td>
+                    </tr>
+                  ))
+                ) : (
+                  <tr>
+                    <td
+                      colSpan={isAdmin ? 5 : 4}
+                      className="px-5 py-10 text-center text-slate-400"
+                    >
+                      Belum ada data pengajuan peminjaman.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        {/* Side Panel: Daftar Laboratorium */}
+        <div className="rounded-lg border border-slate-200 bg-white shadow-xs overflow-hidden flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between border-b border-slate-200 px-5 py-3.5">
+              <div>
+                <h2 className="text-sm font-semibold tracking-tight text-slate-900">
+                  Laboratorium Aktif
+                </h2>
+                <p className="text-[11px] text-slate-500">Kapasitas & lokasi ruangan</p>
               </div>
-              <Link href="/labs" className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 font-semibold">
-                Lihat semua
-                <ArrowRight className="h-3 w-3" strokeWidth={2.2} />
+              <Link
+                href="/labs"
+                className="text-xs font-semibold text-blue-600 hover:text-blue-700 transition-colors"
+              >
+                Katalog →
               </Link>
             </div>
-            <div className="divide-y divide-slate-100/60">
-              {labs.length > 0 ? (
-                labs.map((lab) => (
-                  <Link
-                    key={lab.id}
-                    href={`/labs/${lab.id}`}
-                    className="block px-5 py-3.5 hover:bg-white/40 transition-colors"
-                  >
-                    <p className="text-sm font-semibold text-slate-900">{lab.name}</p>
-                    <p className="text-xs text-slate-600 mt-0.5 font-medium">{lab.location}</p>
-                  </Link>
-                ))
-              ) : (
-                <div className="px-5 py-10 text-center text-sm text-slate-500 font-medium">
-                  Belum ada data laboratorium.
-                </div>
-              )}
-            </div>
 
-            <div className="border-t border-slate-100/70 px-5 py-4">
-              {isAdmin ? (
-                <div className="grid grid-cols-2 gap-2">
-                  <Link
-                    href="/admin/labs/new"
-                    className="flex items-center justify-center gap-1.5 rounded-xl bg-blue-600 px-3 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/30"
-                  >
-                    <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
-                    Tambah Lab
-                  </Link>
-                  <Link
-                    href="/admin/users"
-                    className="flex items-center justify-center gap-1.5 rounded-xl border border-slate-300 bg-white/70 px-3 py-2 text-xs font-semibold text-slate-800 hover:bg-white transition-colors"
-                  >
-                    <Users className="h-3.5 w-3.5" strokeWidth={2} />
-                    Pengguna
-                  </Link>
+            <div className="divide-y divide-slate-100">
+              {labsPreview.map((lab) => (
+                <div key={lab.id} className="p-4 hover:bg-slate-50/75 transition-colors">
+                  <div className="flex items-start justify-between">
+                    <div>
+                      <Link
+                        href={`/labs/${lab.id}`}
+                        className="text-xs font-semibold text-slate-900 hover:text-blue-600 transition-colors"
+                      >
+                        {lab.name}
+                      </Link>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{lab.location}</p>
+                    </div>
+                    <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[10px] font-medium text-slate-600">
+                      {lab.capacity} Kursi
+                    </span>
+                  </div>
                 </div>
-              ) : (
-                <Link
-                  href="/bookings/new"
-                  className="flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/30"
-                >
-                  <Plus className="h-4 w-4" strokeWidth={2.5} />
-                  Ajukan Peminjaman
-                </Link>
-              )}
+              ))}
             </div>
+          </div>
+
+          <div className="border-t border-slate-200 p-4 bg-slate-50/50">
+            {isAdmin ? (
+              <div className="grid grid-cols-2 gap-2">
+                <Link
+                  href="/admin/labs/new"
+                  className="inline-flex items-center justify-center gap-1 rounded-md bg-white border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Tambah Lab
+                </Link>
+                <Link
+                  href="/admin/users"
+                  className="inline-flex items-center justify-center gap-1 rounded-md bg-white border border-slate-300 px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                >
+                  <UsersIcon className="h-3.5 w-3.5" />
+                  Hak Akses
+                </Link>
+              </div>
+            ) : (
+              <Link
+                href="/bookings/new"
+                className="w-full inline-flex items-center justify-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
+              >
+                <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+                Ajukan Peminjaman Sekarang
+              </Link>
+            )}
           </div>
         </div>
       </div>

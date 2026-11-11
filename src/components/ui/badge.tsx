@@ -5,16 +5,48 @@ interface BadgeProps {
   className?: string
 }
 
-// Status → { bg, text, dot } classes
-function getStatusStyle(status: string): { bg: string; text: string; dot: string } {
-  const map: Record<string, { bg: string; text: string; dot: string }> = {
-    PENDING:   { bg: 'bg-amber-50  border border-amber-200',  text: 'text-amber-700',  dot: 'bg-amber-400'  },
-    APPROVED:  { bg: 'bg-emerald-50 border border-emerald-200', text: 'text-emerald-700', dot: 'bg-emerald-500' },
-    REJECTED:  { bg: 'bg-rose-50   border border-rose-200',   text: 'text-rose-700',   dot: 'bg-rose-500'   },
-    CANCELLED: { bg: 'bg-slate-100 border border-slate-200',  text: 'text-slate-500',  dot: 'bg-slate-400'  },
-    BLOCKED:   { bg: 'bg-slate-800',                           text: 'text-white',      dot: 'bg-slate-400'  },
+// Enterprise Subtle Tone Badges (Linear / Stripe style with subtle ring)
+function getStatusStyle(status: string): { bg: string; text: string; ring: string; dot: string } {
+  const map: Record<string, { bg: string; text: string; ring: string; dot: string }> = {
+    PENDING: {
+      bg: 'bg-amber-50',
+      text: 'text-amber-800',
+      ring: 'ring-1 ring-amber-600/20',
+      dot: 'bg-amber-500',
+    },
+    APPROVED: {
+      bg: 'bg-emerald-50',
+      text: 'text-emerald-800',
+      ring: 'ring-1 ring-emerald-600/20',
+      dot: 'bg-emerald-500',
+    },
+    REJECTED: {
+      bg: 'bg-rose-50',
+      text: 'text-rose-800',
+      ring: 'ring-1 ring-rose-600/20',
+      dot: 'bg-rose-500',
+    },
+    CANCELLED: {
+      bg: 'bg-slate-100',
+      text: 'text-slate-600',
+      ring: 'ring-1 ring-slate-400/20',
+      dot: 'bg-slate-400',
+    },
+    BLOCKED: {
+      bg: 'bg-slate-800',
+      text: 'text-white',
+      ring: 'ring-1 ring-slate-900',
+      dot: 'bg-slate-400',
+    },
   }
-  return map[status] ?? { bg: 'bg-slate-100 border border-slate-200', text: 'text-slate-600', dot: 'bg-slate-400' }
+  return (
+    map[status] ?? {
+      bg: 'bg-slate-50',
+      text: 'text-slate-700',
+      ring: 'ring-1 ring-slate-200',
+      dot: 'bg-slate-400',
+    }
+  )
 }
 
 export function StatusBadge({ status, className }: BadgeProps) {
@@ -22,9 +54,10 @@ export function StatusBadge({ status, className }: BadgeProps) {
   return (
     <span
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold leading-none whitespace-nowrap',
+        'inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-medium leading-none whitespace-nowrap',
         style.bg,
         style.text,
+        style.ring,
         className
       )}
     >
@@ -40,19 +73,20 @@ interface RoleBadgeProps {
 }
 
 export function RoleBadge({ role, className }: RoleBadgeProps) {
-  const map: Record<string, { bg: string; text: string; label: string }> = {
-    mahasiswa: { bg: 'bg-blue-50 border border-blue-200',   text: 'text-blue-700',   label: 'Mahasiswa' },
-    dosen:     { bg: 'bg-violet-50 border border-violet-200', text: 'text-violet-700', label: 'Dosen' },
-    admin:     { bg: 'bg-orange-50 border border-orange-200', text: 'text-orange-700', label: 'Admin' },
+  const map: Record<string, { bg: string; text: string; ring: string; label: string }> = {
+    mahasiswa: { bg: 'bg-blue-50', text: 'text-blue-700', ring: 'ring-1 ring-blue-600/20', label: 'Mahasiswa' },
+    dosen: { bg: 'bg-purple-50', text: 'text-purple-700', ring: 'ring-1 ring-purple-600/20', label: 'Dosen' },
+    admin: { bg: 'bg-slate-100', text: 'text-slate-800', ring: 'ring-1 ring-slate-400/20', label: 'Admin' },
   }
-  const style = map[role] ?? { bg: 'bg-slate-100 border border-slate-200', text: 'text-slate-600', label: role }
+  const style = map[role] ?? { bg: 'bg-slate-50', text: 'text-slate-700', ring: 'ring-1 ring-slate-200', label: role }
 
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold leading-none',
+        'inline-flex items-center rounded-md px-2 py-0.5 text-[11px] font-medium leading-none',
         style.bg,
         style.text,
+        style.ring,
         className
       )}
     >
