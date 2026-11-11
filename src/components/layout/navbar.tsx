@@ -7,6 +7,18 @@ import { signOut } from 'next-auth/react'
 import { RoleBadge } from '@/components/ui/badge'
 import { NotificationBell } from './notification-bell'
 import type { RoleCode } from '@/db/schema'
+import {
+  Home,
+  CalendarDays,
+  FlaskConical,
+  ClipboardList,
+  Users,
+  LayoutGrid,
+  Plus,
+  User,
+  LogOut,
+  ChevronDown,
+} from 'lucide-react'
 
 interface NavbarProps {
   userName: string
@@ -25,61 +37,63 @@ export function Navbar({ userName, userRole, pendingCount }: NavbarProps) {
   }
 
   const userLinks = [
-    { href: '/dashboard', label: 'Beranda' },
-    { href: '/schedule', label: 'Jadwal Lab' },
-    { href: '/labs', label: 'Laboratorium' },
-    { href: '/bookings', label: 'Pengajuan Saya' },
+    { href: '/dashboard',  label: 'Beranda',        icon: Home },
+    { href: '/schedule',   label: 'Jadwal Lab',     icon: CalendarDays },
+    { href: '/labs',       label: 'Laboratorium',   icon: FlaskConical },
+    { href: '/bookings',   label: 'Pengajuan Saya', icon: ClipboardList },
   ]
 
   const adminLinks = [
-    { href: '/dashboard', label: 'Beranda' },
-    { href: '/schedule', label: 'Jadwal Lab' },
-    { href: '/labs', label: 'Laboratorium' },
-    { href: '/admin/bookings', label: 'Kelola Pengajuan' },
-    { href: '/admin/labs', label: 'Kelola Lab' },
-    { href: '/admin/users', label: 'Pengguna' },
+    { href: '/dashboard',       label: 'Beranda',          icon: Home },
+    { href: '/schedule',        label: 'Jadwal Lab',       icon: CalendarDays },
+    { href: '/labs',            label: 'Laboratorium',     icon: FlaskConical },
+    { href: '/admin/bookings',  label: 'Kelola Pengajuan', icon: ClipboardList },
+    { href: '/admin/labs',      label: 'Kelola Lab',       icon: LayoutGrid },
+    { href: '/admin/users',     label: 'Pengguna',         icon: Users },
   ]
 
   const links = userRole === 'admin' ? adminLinks : userLinks
+  const initials = userName.charAt(0).toUpperCase()
 
   return (
-    <header className="sticky top-0 z-40 border-b border-white/60 bg-white/70 backdrop-blur-xl shadow-xs">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        <Link href="/dashboard" className="flex items-center gap-3 font-bold">
-          <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-teal-400 text-white text-base font-extrabold shadow-md shadow-blue-500/25">
-            🏛️
+    <header className="sticky top-0 z-40 glass-panel border-b border-white/70">
+      <div className="mx-auto flex h-15 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8" style={{ height: '60px' }}>
+
+        {/* ── Logo ── */}
+        <Link href="/dashboard" className="flex items-center gap-2.5 select-none shrink-0">
+          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-500 shadow-md shadow-blue-500/30">
+            <FlaskConical className="h-5 w-5 text-white" strokeWidth={2} />
           </div>
-          <div>
-            <span className="block text-sm font-extrabold tracking-tight text-slate-900 uppercase">
-              SISTEM PEMINJAMAN RUANGAN PRODI
+          <div className="hidden sm:block leading-tight">
+            <span className="block text-[13px] font-700 tracking-tight text-slate-900 font-bold">
+              SIP-Lab Sisfor
             </span>
-            <span className="block text-[10px] text-slate-500 font-medium">SIP-Lab Sisfor · UISI</span>
+            <span className="block text-[11px] text-slate-400 font-medium tracking-wide">
+              UISI · Prodi Sisfor
+            </span>
           </div>
         </Link>
 
-        <nav className="hidden md:flex items-center gap-1">
+        {/* ── Desktop Nav ── */}
+        <nav className="hidden md:flex items-center gap-0.5">
           {links.map((link) => {
             const isActive = pathname === link.href || pathname.startsWith(link.href + '/')
             const isBookingTab = link.href === '/admin/bookings' || link.href === '/bookings'
+            const Icon = link.icon
             return (
               <Link
                 key={link.href}
                 href={link.href}
-                className={`relative flex items-center rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                className={`relative flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-150 ${
                   isActive
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
+                    ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
+                    : 'text-slate-600 hover:bg-white/70 hover:text-slate-900'
                 }`}
               >
+                <Icon className="h-4 w-4 shrink-0" strokeWidth={isActive ? 2.2 : 1.8} />
                 <span>{link.label}</span>
                 {isBookingTab && pendingCount !== undefined && pendingCount > 0 && (
-                  <span
-                    className={`ml-1.5 inline-flex items-center justify-center rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                      userRole === 'admin'
-                        ? 'bg-red-500 text-white'
-                        : 'bg-amber-100 text-amber-800'
-                    }`}
-                  >
+                  <span className="ml-0.5 inline-flex h-4.5 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[10px] font-bold text-white leading-none">
                     {pendingCount}
                   </span>
                 )}
@@ -88,55 +102,61 @@ export function Navbar({ userName, userRole, pendingCount }: NavbarProps) {
           })}
         </nav>
 
+        {/* ── Right Actions ── */}
         <div className="flex items-center gap-2">
-          {/* Quick Add Button */}
+          {/* Quick Add */}
           <Link
             href="/bookings/new"
-            className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/80 border border-white text-slate-700 shadow-xs hover:bg-white hover:scale-105 transition-all"
-            title="Tambah Pengajuan"
+            className="hidden sm:flex h-9 w-9 items-center justify-center rounded-xl border border-white/80 bg-white/70 text-slate-600 shadow-sm hover:bg-white hover:text-blue-600 hover:scale-105 hover:shadow-md transition-all duration-150"
+            title="Ajukan Peminjaman"
           >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-            </svg>
+            <Plus className="h-4.5 w-4.5" strokeWidth={2.2} style={{ height: '18px', width: '18px' }} />
           </Link>
 
-          {/* ColorOS Notification Bell with Live Dropdown */}
+          {/* Notification Bell */}
           <NotificationBell />
 
+          {/* User Menu */}
           <div className="relative">
             <button
               onClick={() => setMenuOpen(!menuOpen)}
-              className="flex items-center gap-2 rounded-xl bg-white/80 border border-white px-2.5 py-1.5 text-sm text-slate-800 shadow-xs hover:bg-white transition-all"
+              className="flex items-center gap-2 rounded-xl border border-white/80 bg-white/70 pl-1.5 pr-2.5 py-1.5 text-sm text-slate-700 shadow-sm hover:bg-white hover:shadow-md transition-all duration-150"
             >
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-tr from-amber-200 to-amber-400 text-amber-900 font-bold text-xs shadow-xs">
-                {userName.charAt(0).toUpperCase()}
+              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-violet-400 to-indigo-500 text-white font-bold text-xs shadow-sm">
+                {initials}
               </div>
-              <span className="hidden sm:block font-semibold max-w-28 truncate">{userName}</span>
-              <svg className="h-3.5 w-3.5 text-slate-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
+              <span className="hidden sm:block font-semibold max-w-[120px] truncate text-[13px]">
+                {userName.split(' ')[0]}
+              </span>
+              <ChevronDown className={`h-3.5 w-3.5 text-slate-400 transition-transform duration-200 ${menuOpen ? 'rotate-180' : ''}`} strokeWidth={2.2} />
             </button>
 
             {menuOpen && (
               <>
                 <div className="fixed inset-0 z-10" onClick={() => setMenuOpen(false)} />
-                <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl border border-white/80 bg-white/90 backdrop-blur-2xl shadow-xl py-2 animate-in fade-in zoom-in-95">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-bold text-gray-900 truncate">{userName}</p>
+                <div className="absolute right-0 z-20 mt-2 w-56 rounded-2xl glass-panel shadow-xl py-1.5 overflow-hidden">
+                  <div className="px-4 py-3 border-b border-slate-100/70">
+                    <p className="text-sm font-semibold text-slate-900 truncate">{userName}</p>
                     <RoleBadge role={userRole} className="mt-1" />
                   </div>
-                  <Link href="/profile" className="flex items-center gap-2 px-4 py-2 text-sm text-gray-700 hover:bg-white/80" onClick={() => setMenuOpen(false)}>
-                    <svg className="h-4 w-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                    </svg>
-                    Profil Saya
-                  </Link>
-                  <button onClick={handleLogout} disabled={loggingOut} className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 disabled:opacity-50">
-                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                    {loggingOut ? 'Keluar...' : 'Keluar'}
-                  </button>
+                  <div className="py-1">
+                    <Link
+                      href="/profile"
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-white/60 transition-colors"
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <User className="h-4 w-4 text-slate-400" strokeWidth={1.8} />
+                      Profil Saya
+                    </Link>
+                    <button
+                      onClick={handleLogout}
+                      disabled={loggingOut}
+                      className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-rose-600 hover:bg-rose-50/60 disabled:opacity-50 transition-colors"
+                    >
+                      <LogOut className="h-4 w-4" strokeWidth={1.8} />
+                      {loggingOut ? 'Keluar...' : 'Keluar'}
+                    </button>
+                  </div>
                 </div>
               </>
             )}
@@ -144,25 +164,26 @@ export function Navbar({ userName, userRole, pendingCount }: NavbarProps) {
         </div>
       </div>
 
-      <nav className="md:hidden border-t border-gray-100 flex overflow-x-auto px-4 py-2 gap-1">
+      {/* ── Mobile Nav (scrollable tab strip) ── */}
+      <nav className="md:hidden border-t border-slate-100/60 flex overflow-x-auto px-3 py-1.5 gap-0.5 scrollbar-hide">
         {links.map((link) => {
           const isActive = pathname === link.href || pathname.startsWith(link.href + '/')
           const isBookingTab = link.href === '/admin/bookings' || link.href === '/bookings'
+          const Icon = link.icon
           return (
             <Link
               key={link.href}
               href={link.href}
-              className={`whitespace-nowrap flex items-center rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-                isActive ? 'bg-blue-50 text-blue-700' : 'text-gray-600 hover:bg-gray-100'
+              className={`whitespace-nowrap flex items-center gap-1.5 shrink-0 rounded-lg px-3 py-1.5 text-[13px] font-medium transition-colors ${
+                isActive
+                  ? 'bg-blue-600 text-white'
+                  : 'text-slate-600 hover:bg-white/70'
               }`}
             >
+              <Icon className="h-3.5 w-3.5 shrink-0" strokeWidth={isActive ? 2.2 : 1.8} />
               <span>{link.label}</span>
               {isBookingTab && pendingCount !== undefined && pendingCount > 0 && (
-                <span
-                  className={`ml-1.5 inline-flex items-center justify-center rounded-full px-1.5 py-0.2 text-[10px] font-bold ${
-                    userRole === 'admin' ? 'bg-red-500 text-white' : 'bg-amber-100 text-amber-800'
-                  }`}
-                >
+                <span className="ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-1 text-[9px] font-bold text-white">
                   {pendingCount}
                 </span>
               )}

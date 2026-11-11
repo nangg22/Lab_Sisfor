@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { Bell, CheckCheck, CheckCircle2, XCircle, FileText, Megaphone } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 
 interface NotificationItem {
@@ -14,11 +15,17 @@ interface NotificationItem {
   createdAt: string
 }
 
+function NotifIcon({ type }: { type: string }) {
+  if (type === 'APPROVED')    return <CheckCircle2 className="h-4 w-4 text-emerald-500" strokeWidth={2} />
+  if (type === 'REJECTED')    return <XCircle      className="h-4 w-4 text-rose-500"    strokeWidth={2} />
+  if (type === 'NEW_BOOKING') return <FileText     className="h-4 w-4 text-amber-500"   strokeWidth={2} />
+  return <Megaphone className="h-4 w-4 text-blue-500" strokeWidth={2} />
+}
+
 export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
-  const [loading, setLoading] = useState(false)
 
   async function fetchNotifications() {
     try {
@@ -35,7 +42,6 @@ export function NotificationBell() {
 
   useEffect(() => {
     fetchNotifications()
-    // Polling ringan setiap 30 detik
     const timer = setInterval(fetchNotifications, 30000)
     return () => clearInterval(timer)
   }, [])
@@ -51,9 +57,7 @@ export function NotificationBell() {
   }
 
   function handleToggle() {
-    if (!open && unreadCount > 0) {
-      markAllAsRead()
-    }
+    if (!open && unreadCount > 0) markAllAsRead()
     setOpen(!open)
   }
 
@@ -61,19 +65,12 @@ export function NotificationBell() {
     <div className="relative">
       <button
         onClick={handleToggle}
-        className="relative flex h-9 w-9 items-center justify-center rounded-xl bg-white/80 border border-white text-slate-700 shadow-xs hover:bg-white hover:scale-105 transition-all"
+        className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-white/80 bg-white/70 text-slate-600 shadow-sm hover:bg-white hover:text-blue-600 hover:scale-105 hover:shadow-md transition-all duration-150"
         title="Notifikasi"
       >
-        <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={1.8}
-            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
-          />
-        </svg>
+        <Bell className="h-4.5 w-4.5" strokeWidth={1.8} style={{ height: '18px', width: '18px' }} />
         {unreadCount > 0 && (
-          <span className="absolute top-1 right-1 flex h-4 w-4 items-center justify-center rounded-full bg-rose-500 text-[10px] font-bold text-white ring-2 ring-white animate-pulse">
+          <span className="absolute top-0.5 right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-rose-500 px-0.5 text-[9px] font-bold text-white ring-2 ring-white animate-pulse leading-none">
             {unreadCount > 9 ? '9+' : unreadCount}
           </span>
         )}
@@ -82,10 +79,12 @@ export function NotificationBell() {
       {open && (
         <>
           <div className="fixed inset-0 z-30" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 z-40 mt-2 w-80 sm:w-96 rounded-2xl border border-white/90 bg-white/95 backdrop-blur-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-white/50">
+          <div className="absolute right-0 z-40 mt-2 w-80 sm:w-96 rounded-2xl glass-panel shadow-2xl overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-slate-100/70">
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm text-slate-900">Notifikasi</span>
+                <Bell className="h-4 w-4 text-slate-500" strokeWidth={1.8} />
+                <span className="font-semibold text-sm text-slate-900">Notifikasi</span>
                 {unreadCount > 0 && (
                   <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-bold text-blue-700">
                     {unreadCount} baru
@@ -95,51 +94,46 @@ export function NotificationBell() {
               {notifications.length > 0 && (
                 <button
                   onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-700 font-medium"
+                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-medium"
                 >
+                  <CheckCheck className="h-3.5 w-3.5" strokeWidth={2} />
                   Tandai dibaca
                 </button>
               )}
             </div>
 
-            <div className="max-h-96 overflow-y-auto divide-y divide-gray-100">
+            {/* List */}
+            <div className="max-h-[380px] overflow-y-auto divide-y divide-slate-100/60">
               {notifications.length === 0 ? (
-                <div className="p-8 text-center text-xs text-gray-400">
-                  Belum ada notifikasi masuk.
+                <div className="flex flex-col items-center justify-center py-12 gap-2">
+                  <Bell className="h-8 w-8 text-slate-200" strokeWidth={1.5} />
+                  <p className="text-xs text-slate-400">Belum ada notifikasi masuk.</p>
                 </div>
               ) : (
                 notifications.map((n) => {
-                  let badgeColor = 'bg-blue-500'
-                  let icon = '📢'
-                  if (n.type === 'APPROVED') {
-                    badgeColor = 'bg-emerald-500'
-                    icon = '✅'
-                  } else if (n.type === 'REJECTED') {
-                    badgeColor = 'bg-rose-500'
-                    icon = '❌'
-                  } else if (n.type === 'NEW_BOOKING') {
-                    badgeColor = 'bg-amber-500'
-                    icon = '📝'
-                  }
-
                   const content = (
                     <div
-                      className={`p-3.5 flex gap-3 text-left transition-colors hover:bg-slate-50 ${
+                      className={`flex gap-3 px-4 py-3.5 text-left transition-colors hover:bg-white/50 ${
                         !n.isRead ? 'bg-blue-50/40' : ''
                       }`}
                     >
-                      <div className="text-base shrink-0">{icon}</div>
+                      <div className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                        <NotifIcon type={n.type} />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between gap-1 mb-0.5">
-                          <p className="text-xs font-bold text-slate-900 truncate">{n.title}</p>
-                          <span className="text-[10px] text-gray-400 shrink-0">
+                          <p className="text-xs font-semibold text-slate-900 truncate">{n.title}</p>
+                          <span className="text-[10px] text-slate-400 shrink-0">
                             {formatDateTime(n.createdAt)}
                           </span>
                         </div>
-                        <p className="text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        <p className="text-xs text-slate-500 line-clamp-2 leading-relaxed">
                           {n.message}
                         </p>
                       </div>
+                      {!n.isRead && (
+                        <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-blue-500" />
+                      )}
                     </div>
                   )
 

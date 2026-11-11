@@ -30,13 +30,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const pendingCount = pendingResult?.total ?? 0
 
   return (
-    <div className="min-h-screen pb-28">
+    <div className="min-h-screen">
       <Navbar
         userName={user.fullName}
         userRole={user.role as RoleCode}
         pendingCount={pendingCount}
       />
-      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8 pb-32">
         {children}
       </main>
       <ColorOSDock
