@@ -12,6 +12,7 @@ import {
   Users,
   LogOut,
   Building2,
+  Sparkles,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -25,9 +26,6 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
   const pathname = usePathname()
   const isAdmin = userRole === 'admin'
 
-  // STRICT Role-Based Navigation Routing Logic:
-  // - Admin: Dashboard, Jadwal Ruang, Kelola Pengajuan, Manajemen Lab, Pengguna
-  // - Mahasiswa / Dosen: Dashboard, Jadwal Ruang, Laboratorium (untuk pinjam), Riwayat Pengajuan
   const adminNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
     { name: 'Jadwal Ruang', href: '/schedule', icon: CalendarDays },
@@ -63,28 +61,28 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     .toUpperCase()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-slate-200 bg-white md:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-slate-900 bg-white md:flex">
       {/* Brand Header */}
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-md bg-blue-600 text-white font-bold text-sm shadow-xs">
+      <div className="flex h-16 items-center gap-3 border-b-2 border-slate-900 px-6 bg-amber-300">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-black text-sm border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]">
           SL
         </div>
         <div className="min-w-0">
-          <span className="block text-sm font-semibold tracking-tight text-slate-900 leading-none truncate">
+          <span className="block text-sm font-black tracking-tight text-slate-900 leading-none truncate">
             SIP-Lab Sisfor
           </span>
-          <span className="block text-[11px] font-medium text-slate-500 mt-1 truncate">
+          <span className="block text-[11px] font-bold text-slate-800 mt-1 truncate">
             UISI · Sistem Informasi
           </span>
         </div>
       </div>
 
       {/* Main Nav Items */}
-      <div className="flex-1 overflow-y-auto px-3 py-4">
-        <div className="px-3 pb-2 text-[11px] font-semibold uppercase tracking-wider text-slate-400">
+      <div className="flex-1 overflow-y-auto px-4 py-5">
+        <div className="px-2 pb-2.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
           {isAdmin ? 'Menu Administrator' : 'Menu Layanan Mahasiswa'}
         </div>
-        <nav className="space-y-0.5">
+        <nav className="space-y-1.5">
           {navigation.map((item) => {
             const isActive =
               pathname === item.href ||
@@ -95,24 +93,27 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center justify-between rounded-md px-3 py-2 text-sm font-medium transition-colors ${
+                className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                   isActive
-                    ? 'bg-slate-100 text-blue-700 font-semibold'
-                    : 'text-slate-600 hover:bg-slate-50 hover:text-slate-900'
+                    ? 'bg-blue-600 text-white border-2 border-slate-900 shadow-[2.5px_2.5px_0px_0px_#0f172a] translate-x-0.5'
+                    : 'text-slate-700 hover:bg-slate-100 border border-transparent'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
                     className={`h-4 w-4 shrink-0 transition-colors ${
-                      isActive ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'
+                      isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-900'
                     }`}
+                    strokeWidth={2.2}
                   />
                   <span>{item.name}</span>
                 </div>
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
-                    className={`ml-auto inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                      isAdmin ? 'bg-rose-50 text-rose-700 ring-1 ring-rose-600/20' : 'bg-slate-100 text-slate-700'
+                    className={`ml-auto inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black border border-slate-900 ${
+                      isActive
+                        ? 'bg-amber-300 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]'
+                        : 'bg-rose-500 text-white shadow-[1px_1px_0px_0px_#0f172a]'
                     }`}
                   >
                     {item.badge}
@@ -125,21 +126,21 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
       </div>
 
       {/* User Profile Section at Bottom */}
-      <div className="border-t border-slate-200 p-3">
-        <div className="flex items-center justify-between rounded-lg p-2 hover:bg-slate-50 transition-colors">
-          <Link href="/profile" className="flex items-center gap-3 min-w-0 flex-1">
-            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
+      <div className="border-t-2 border-slate-900 p-3.5 bg-slate-50">
+        <div className="flex items-center justify-between rounded-xl border-2 border-slate-900 bg-white p-2.5 shadow-[2px_2px_0px_0px_#0f172a]">
+          <Link href="/profile" className="flex items-center gap-2.5 min-w-0 flex-1">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 text-slate-950 text-xs font-black">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
-              <p className="text-sm font-semibold text-slate-900 truncate">{userName}</p>
-              <p className="text-xs text-slate-500 truncate capitalize">{userRole}</p>
+              <p className="text-xs font-black text-slate-900 truncate">{userName}</p>
+              <p className="text-[10px] font-bold text-slate-500 truncate capitalize">{userRole}</p>
             </div>
           </Link>
           <button
             onClick={() => signOut({ callbackUrl: '/auth/login' })}
             title="Keluar"
-            className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-md transition-colors"
+            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-slate-900"
           >
             <LogOut className="h-4 w-4" />
           </button>

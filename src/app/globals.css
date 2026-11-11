@@ -4,8 +4,6 @@
 
 :root {
   --font-sans: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --color-brand: #2563eb;
-  --color-brand-dark: #1d4ed8;
 }
 
 *, *::before, *::after {
@@ -22,13 +20,135 @@ body {
   font-family: var(--font-sans);
   font-size: 14px;
   line-height: 1.5;
-  letter-spacing: -0.011em;
+  letter-spacing: -0.012em;
   color: #0f172a;
-  background-color: #f8fafc; /* Clean Enterprise SaaS bg-slate-50 */
+  background-color: #f6f8fb; /* Warm academic soft clean canvas */
   min-height: 100vh;
 }
 
-/* ─── Clean Native Scrollbar ─── */
+/* ═══════════════════════════════════════════════════════════════
+   HYBRID DESIGN: Pop Neo-Academic + Modern Clean EdTech
+   (Bold solid cards, crisp borders, subtle offset hard shadows)
+═══════════════════════════════════════════════════════════════ */
+
+/* Pop Neo-Brutal Card with 2.5px crisp border & offset shadow */
+.neo-card {
+  background-color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+  transition: all 0.15s ease-in-out;
+}
+
+.neo-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 4px 4px 0px 0px #0f172a;
+}
+
+.neo-card-flat {
+  background-color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 2.5px 2.5px 0px 0px #0f172a;
+}
+
+/* Accent Card variants */
+.neo-card-blue {
+  background-color: #3b82f6;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+.neo-card-yellow {
+  background-color: #facc15;
+  color: #0f172a;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+.neo-card-green {
+  background-color: #22c55e;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+.neo-card-red {
+  background-color: #ef4444;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+.neo-card-dark {
+  background-color: #0f172a;
+  color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 14px;
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+/* Pop Button with Click Feel */
+.neo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  font-weight: 700;
+  border: 2px solid #0f172a;
+  border-radius: 10px;
+  box-shadow: 2px 2px 0px 0px #0f172a;
+  transition: all 0.1s ease;
+}
+
+.neo-btn:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 0px 0px #0f172a;
+}
+
+.neo-btn:active {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px 0px #0f172a;
+}
+
+.neo-btn-primary {
+  background-color: #3b82f6;
+  color: #ffffff;
+}
+
+.neo-btn-primary:hover {
+  background-color: #2563eb;
+}
+
+.neo-btn-white {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
+.neo-btn-white:hover {
+  background-color: #f8fafc;
+}
+
+/* Pop Pill Badge */
+.neo-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-weight: 700;
+  font-size: 0.72rem;
+  padding: 0.2rem 0.55rem;
+  border: 1.5px solid #0f172a;
+  border-radius: 9999px;
+  box-shadow: 1px 1.5px 0px 0px #0f172a;
+  line-height: 1;
+}
+
+/* ─── Scrollbar ─── */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;

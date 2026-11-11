@@ -245,3 +245,4 @@ export function AdminLabsList({ labs }: Props) {
     </div>
   )
 }
+

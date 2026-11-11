@@ -226,3 +226,4 @@ export function BookingsManagementView({ bookings, currentFilter, pendingCount }
     </div>
   )
 }
+
