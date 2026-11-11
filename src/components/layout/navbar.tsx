@@ -25,12 +25,14 @@ export function Navbar({ userName, userRole, pendingCount }: NavbarProps) {
 
   const userLinks = [
     { href: '/dashboard', label: 'Beranda' },
+    { href: '/schedule', label: 'Jadwal Lab' },
     { href: '/labs', label: 'Laboratorium' },
     { href: '/bookings', label: 'Pengajuan Saya' },
   ]
 
   const adminLinks = [
     { href: '/dashboard', label: 'Beranda' },
+    { href: '/schedule', label: 'Jadwal Lab' },
     { href: '/labs', label: 'Laboratorium' },
     { href: '/admin/bookings', label: 'Kelola Pengajuan' },
     { href: '/admin/labs', label: 'Kelola Lab' },
