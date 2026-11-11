@@ -267,6 +267,26 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                     <span className="text-gray-900">{activeSlot.booking.userName}</span>
                   </p>
                 )}
+                {isAdmin && activeSlot.booking.status === 'BLOCKED' && (
+                  <div className="pt-2">
+                    <button
+                      onClick={async () => {
+                        if (confirm('Buka kembali slot pemblokiran ini?')) {
+                          const res = await fetch(`/api/admin/labs/block/${activeSlot.booking?.id}`, {
+                            method: 'DELETE',
+                          })
+                          if (res.ok) {
+                            setActiveSlot(null)
+                            router.refresh()
+                          }
+                        }
+                      }}
+                      className="w-full rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-red-700 transition-colors"
+                    >
+                      🔓 Buka Blokir Jadwal Ini
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
               <div className="pt-2 text-center space-y-3">

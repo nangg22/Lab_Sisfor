@@ -94,3 +94,4 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Terjadi kesalahan server.' }, { status: 500 })
   }
 }
+
