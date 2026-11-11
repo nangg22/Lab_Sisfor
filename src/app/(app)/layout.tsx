@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { users, bookings } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { Navbar } from '@/components/layout/navbar'
+import { ColorOSDock } from '@/components/layout/coloros-dock'
 import type { RoleCode } from '@/db/schema'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -29,7 +30,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const pendingCount = pendingResult?.total ?? 0
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen pb-28">
       <Navbar
         userName={user.fullName}
         userRole={user.role as RoleCode}
@@ -38,6 +39,10 @@ export default async function AppLayout({ children }: { children: React.ReactNod
       <main className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {children}
       </main>
+      <ColorOSDock
+        userRole={user.role as RoleCode}
+        pendingCount={pendingCount}
+      />
     </div>
   )
 }

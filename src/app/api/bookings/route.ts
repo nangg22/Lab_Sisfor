@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { bookings, bookingStatusHistory, laboratories } from '@/db/schema'
+import { bookings, bookingStatusHistory, laboratories, notifications, users } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function POST(request: Request) {
@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     // Pastikan lab aktif
     const [lab] = await db
-      .select({ id: laboratories.id, isActive: laboratories.isActive })
+      .select({ id: laboratories.id, name: laboratories.name, isActive: laboratories.isActive })
       .from(laboratories)
       .where(eq(laboratories.id, laboratoryId))
       .limit(1)
@@ -96,6 +96,23 @@ export async function POST(request: Request) {
       changedByUserId: session.user.id,
       reason: 'Pengajuan dibuat',
     })
+
+    // Beritahukan semua admin sistem melalui in-app notification
+    const admins = await db
+      .select({ id: users.id })
+      .from(users)
+      .where(eq(users.role, 'admin'))
+
+    for (const adm of admins) {
+      await db.insert(notifications).values({
+        userId: adm.id,
+        title: 'Pengajuan Baru Masuk',
+        message: `${session.user.name || 'Pengguna'} mengajukan peminjaman ${lab.name || 'Laboratorium'} untuk tanggal ${bookingDate}.`,
+        type: 'NEW_BOOKING',
+        link: `/admin/bookings/${booking.id}`,
+        isRead: false,
+      })
+    }
 
     return NextResponse.json({ id: booking.id }, { status: 201 })
   } catch (error) {

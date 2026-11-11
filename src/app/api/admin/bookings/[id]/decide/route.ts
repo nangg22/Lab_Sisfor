@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { users, bookings, bookingApprovalActions, bookingStatusHistory } from '@/db/schema'
+import { users, bookings, bookingApprovalActions, bookingStatusHistory, laboratories, notifications } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -44,6 +44,28 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   await db.update(bookings).set({ status: decision }).where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
   await db.insert(bookingApprovalActions).values({ bookingId: id, approverUserId: session.user.id, decision, reason: reason?.trim() || null })
   await db.insert(bookingStatusHistory).values({ bookingId: id, oldStatus: 'PENDING', newStatus: decision, changedByUserId: session.user.id, reason: reason?.trim() || null })
+
+  // Ambil nama lab untuk isi notifikasi
+  const [lab] = await db
+    .select({ name: laboratories.name })
+    .from(laboratories)
+    .where(eq(laboratories.id, booking.laboratoryId))
+    .limit(1)
+
+  const labName = lab?.name || 'Laboratorium'
+  const isApproved = decision === 'APPROVED'
+
+  // Kirim notifikasi in-app ke pemohon
+  await db.insert(notifications).values({
+    userId: booking.userId,
+    title: isApproved ? 'Pengajuan Peminjaman Disetujui' : 'Pengajuan Peminjaman Ditolak',
+    message: isApproved
+      ? `Pengajuan Anda untuk ${labName} pada tanggal ${booking.bookingDate} telah disetujui. Silakan cetak bukti untuk mengambil kunci.`
+      : `Pengajuan Anda untuk ${labName} pada tanggal ${booking.bookingDate} ditolak. Alasan: ${reason || 'Tidak ada alasan khusus.'}`,
+    type: decision,
+    link: `/bookings/${booking.id}`,
+    isRead: false,
+  })
 
   return NextResponse.json({ success: true })
 }

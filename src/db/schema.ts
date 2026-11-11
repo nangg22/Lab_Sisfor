@@ -68,7 +68,10 @@ export const bookings = pgTable('bookings', {
   participantCount: integer('participant_count'),
   notes: text('notes'),
   status: varchar('status', { length: 20 }).notNull().default('PENDING'),
-  // status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED'
+  // status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED' | 'IN_USE' | 'COMPLETED'
+  keyTakenAt: timestamp('key_taken_at'),
+  keyReturnedAt: timestamp('key_returned_at'),
+  keyHandledByUserId: uuid('key_handled_by_user_id').references(() => users.id),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
@@ -103,11 +106,32 @@ export const bookingStatusHistory = pgTable('booking_status_history', {
   changedAt: timestamp('changed_at').notNull().defaultNow(),
 })
 
+// ─── NOTIFICATIONS ────────────────────────────────────────────────────────────
+
+export const notifications = pgTable('notifications', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id')
+    .notNull()
+    .references(() => users.id, { onDelete: 'cascade' }),
+  title: varchar('title', { length: 255 }).notNull(),
+  message: text('message').notNull(),
+  type: varchar('type', { length: 50 }).notNull().default('INFO'),
+  // type: 'INFO' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'NEW_BOOKING'
+  link: varchar('link', { length: 255 }),
+  isRead: boolean('is_read').notNull().default(false),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 // ─── RELATIONS ────────────────────────────────────────────────────────────────
 
 export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
   approvalActions: many(bookingApprovalActions),
+  notifications: many(notifications),
+}))
+
+export const notificationsRelations = relations(notifications, ({ one }) => ({
+  user: one(users, { fields: [notifications.userId], references: [users.id] }),
 }))
 
 export const laboratoriesRelations = relations(laboratories, ({ many }) => ({
@@ -134,5 +158,7 @@ export type LaboratoryFacility = typeof laboratoryFacilities.$inferSelect
 export type Booking = typeof bookings.$inferSelect
 export type BookingApprovalAction = typeof bookingApprovalActions.$inferSelect
 export type BookingStatusHistory = typeof bookingStatusHistory.$inferSelect
+export type Notification = typeof notifications.$inferSelect
+export type NewNotification = typeof notifications.$inferInsert
 export type RoleCode = 'mahasiswa' | 'dosen' | 'admin'
-export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED'
+export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED' | 'IN_USE' | 'COMPLETED'
