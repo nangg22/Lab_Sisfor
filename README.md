@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SIP-Lab Sisfor
 
-## Getting Started
+Sistem Informasi Peminjaman Laboratorium — Prodi Sistem Informasi, Universitas Internasional Semen Indonesia (UISI).
 
-First, run the development server:
+## Tech Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Next.js 16** (App Router, Turbopack, Proxy) + TypeScript
+- **Neon** (Serverless PostgreSQL)
+- **Drizzle ORM** (Schema-driven migrations & type-safe queries)
+- **NextAuth.js v5 (Auth.js)** (Credentials authentication with bcryptjs)
+- **Tailwind CSS v4**
+- **Vercel** (Production deployment)
+
+## Setup & Instalasi Lokal
+
+### 1. Buat Database di Neon
+1. Masuk ke [neon.tech](https://neon.tech) → Create New Project (misal: `sip-lab`).
+2. Salin PostgreSQL **Connection String** yang disediakan di dashboard.
+
+### 2. Konfigurasi Environment Variables
+Buat atau edit file `.env.local` di folder `sip-lab/`:
+
+```env
+# Neon Database
+DATABASE_URL=postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require
+
+# NextAuth Secret & App URL
+NEXTAUTH_SECRET=generate_dengan_openssl_rand_base64_32
+NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+> **Tips generate secret:** Jalankan `openssl rand -base64 32` di terminal / git bash.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Sinkronisasi Skema Database & Seeding
+Jalankan push skema Drizzle ke Neon:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+```bash
+npm run db:push
+npm run db:seed
+```
 
-## Learn More
+### 4. Menjalankan Server Development
 
-To learn more about Next.js, take a look at the following resources:
+```bash
+npm install
+npm run dev
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+### 5. Membuat / Mengubah Akun Menjadi Admin
+1. Buka [http://localhost:3000/auth/register](http://localhost:3000/auth/register) dan lakukan registrasi akun.
+2. Buka **Neon SQL Editor** pada dashboard Neon, lalu jalankan query:
 
-## Deploy on Vercel
+```sql
+UPDATE users SET role = 'admin' WHERE email = 'email_anda@xxx.com';
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+3. Logout dan login kembali untuk me-refresh session token.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+---
+
+## Struktur Halaman & Hak Akses
+
+| URL | Hak Akses | Deskripsi |
+|-----|-----------|-----------|
+| `/` | Publik | Landing page sistem |
+| `/auth/login` | Publik | Halaman masuk |
+| `/auth/register` | Publik | Registrasi akun baru (Mahasiswa / Dosen) |
+| `/dashboard` | Login | Ringkasan statistik & aktivitas pengajuan |
+| `/labs` | Login | Katalog laboratorium & fasilitas |
+| `/labs/[id]` | Login | Detail lab & kalender jadwal terisi bulan ini |
+| `/bookings` | Login | Riwayat pengajuan peminjaman pribadi |
+| `/bookings/new` | Login | Formulir pengajuan peminjaman laboratorium |
+| `/bookings/[id]` | Login / Admin | Detail status pengajuan, riwayat, & pembatalan |
+| `/admin/bookings` | Admin | Kelola & filter seluruh pengajuan peminjam |
+| `/admin/bookings/[id]` | Admin | Tindakan persetujuan (*Approve*) atau penolakan (*Reject*) |
+| `/admin/labs` | Admin | Manajemen data master & fasilitas lab |
+| `/profile` | Login | Pengelolaan profil pengguna |
+
+---
+
+## Aturan Bisnis & Logika Sistem
+
+- **Multi-Role**: Mahasiswa, Dosen, dan Admin.
+- **Persetujuan Satu Pintu**: Pengajuan diverifikasi dan disetujui langsung oleh Admin / Asisten Lab.
+- **Deteksi Bentrok Jadwal Otomatis**: Sistem secara otomatis mengecek tumpang tindih waktu (*overlap*) pada tanggal dan lab yang sama saat Admin menyetujui peminjaman.
+- **Audit Trail**: Setiap perubahan status pengajuan dicatat di tabel `booking_status_history` dan `booking_approval_actions`.
+- **Kapasitas Melebihi**: Memberikan peringatan (*warning*) jika jumlah peserta melebihi kapasitas lab, namun tidak memblokir pengajuan secara sepihak.
+- **SOP Serah-Terima Kunci**: Mengingatkan peminjam untuk mengambil kunci fisik secara langsung ke Asisten Lab setelah status berubah menjadi *Approved*.
