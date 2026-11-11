@@ -5,10 +5,10 @@ import { laboratories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { BookingForm } from './booking-form'
 
-interface Props { searchParams: Promise<{ lab?: string }> }
+interface Props { searchParams: Promise<{ lab?: string; date?: string; start?: string }> }
 
 export default async function NewBookingPage({ searchParams }: Props) {
-  const { lab: labId } = await searchParams
+  const { lab: labId, date: defaultDate, start: defaultStart } = await searchParams
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
 
@@ -24,7 +24,13 @@ export default async function NewBookingPage({ searchParams }: Props) {
         <h1 className="text-2xl font-bold text-gray-900">Ajukan Peminjaman</h1>
         <p className="mt-1 text-gray-500">Isi form di bawah untuk mengajukan peminjaman laboratorium.</p>
       </div>
-      <BookingForm labs={labs} defaultLabId={labId} userId={session.user.id} />
+      <BookingForm
+        labs={labs}
+        defaultLabId={labId}
+        defaultDate={defaultDate}
+        defaultStartTime={defaultStart}
+        userId={session.user.id}
+      />
     </div>
   )
 }

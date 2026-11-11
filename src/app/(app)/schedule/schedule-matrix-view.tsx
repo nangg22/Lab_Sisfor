@@ -36,6 +36,7 @@ const TIME_HOURS = [
 export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
   const router = useRouter()
   const [activeSlot, setActiveSlot] = useState<{
+    labId: string
     labName: string
     hour: string
     booking?: BookingSlot
@@ -173,6 +174,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
                         key={hr}
                         onClick={() =>
                           setActiveSlot({
+                            labId: lab.id,
                             labName: lab.name,
                             hour: hr,
                             booking: booking || undefined,
@@ -249,7 +251,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
                   ✅ Slot waktu ini masih kosong dan tersedia untuk dipinjam!
                 </p>
                 <Link
-                  href={`/bookings/new`}
+                  href={`/bookings/new?lab=${activeSlot.labId}&date=${selectedDate}&start=${activeSlot.hour.padStart(2, '0')}:00`}
                   className="inline-flex items-center justify-center rounded-lg bg-blue-600 px-4 py-2 text-xs font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm"
                 >
                   + Ajukan Peminjaman Sekarang
@@ -262,3 +264,4 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate }: Props) {
     </div>
   )
 }
+

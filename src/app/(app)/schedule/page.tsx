@@ -68,3 +68,4 @@ export default async function SchedulePage({ searchParams }: Props) {
     </div>
   )
 }
+

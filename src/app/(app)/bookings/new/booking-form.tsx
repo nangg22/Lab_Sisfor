@@ -8,14 +8,24 @@ import { formatTime } from '@/lib/utils'
 
 interface Lab { id: string; name: string; location: string; capacity: number }
 interface Slot { id: string; startTime: string; endTime: string; purpose: string }
-interface Props { labs: Lab[]; defaultLabId?: string; userId: string }
+interface Props {
+  labs: Lab[]
+  defaultLabId?: string
+  defaultDate?: string
+  defaultStartTime?: string
+  userId: string
+}
 
-export function BookingForm({ labs, defaultLabId, userId }: Props) {
+export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime, userId }: Props) {
   const router = useRouter()
   const [labId, setLabId] = useState(defaultLabId ?? '')
-  const [date, setDate] = useState('')
-  const [startTime, setStartTime] = useState('')
-  const [endTime, setEndTime] = useState('')
+  const [date, setDate] = useState(defaultDate ?? '')
+  const [startTime, setStartTime] = useState(defaultStartTime ?? '')
+  const [endTime, setEndTime] = useState(
+    defaultStartTime
+      ? `${(parseInt(defaultStartTime.split(':')[0], 10) + 1).toString().padStart(2, '0')}:00`
+      : ''
+  )
   const [purpose, setPurpose] = useState('')
   const [participantCount, setParticipantCount] = useState('')
   const [notes, setNotes] = useState('')
