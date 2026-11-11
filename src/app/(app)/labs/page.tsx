@@ -51,12 +51,12 @@ export default async function LabsPage({ searchParams }: Props) {
   }))
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="page-title">Laboratorium</h1>
-          <p className="page-subtitle">Pilih laboratorium yang ingin Anda pinjam.</p>
+          <h1 className="text-xl font-bold tracking-tight text-slate-900">Katalog Laboratorium</h1>
+          <p className="text-sm text-slate-500 mt-0.5">Daftar seluruh laboratorium aktif dan spesifikasi fasilitas.</p>
         </div>
 
         <form method="GET" action="/labs" className="relative w-full sm:w-72">
@@ -65,109 +65,109 @@ export default async function LabsPage({ searchParams }: Props) {
             type="text"
             name="q"
             defaultValue={q ?? ''}
-            placeholder="Cari lab atau lokasi..."
-            className="w-full rounded-xl border border-white/80 bg-white/70 backdrop-blur-sm pl-9 pr-4 py-2.5 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-400 focus:outline-none focus:ring-3 focus:ring-blue-500/15 transition-all"
+            placeholder="Cari nama atau lokasi lab..."
+            className="w-full rounded-md border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 transition-all shadow-xs"
           />
         </form>
       </div>
 
       {labsWithDetails.length > 0 ? (
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {labsWithDetails.map((lab) => {
             const hasBookingsToday = lab.todaySlots > 0
             return (
               <Link
                 key={lab.id}
                 href={`/labs/${lab.id}`}
-                className="group glass-card rounded-2xl p-5 flex flex-col gap-4"
+                className="group rounded-lg border border-slate-200 bg-white p-5 shadow-xs hover:border-slate-300 hover:shadow-sm transition-all flex flex-col justify-between"
               >
-                {/* Top row */}
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 shadow-sm shadow-blue-500/30">
-                    <span className="text-white font-bold text-base">
+                <div>
+                  {/* Top row */}
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-800 font-bold text-sm">
                       {lab.name.charAt(0)}
-                    </span>
-                  </div>
+                    </div>
 
-                  {hasBookingsToday ? (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 border border-amber-200 px-2.5 py-1 text-xs font-semibold text-amber-700 leading-none">
-                      <Clock className="h-3 w-3" strokeWidth={2.2} />
-                      {lab.todaySlots} slot terisi
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 border border-emerald-200 px-2.5 py-1 text-xs font-semibold text-emerald-700 leading-none">
-                      <CheckCircle2 className="h-3 w-3" strokeWidth={2.2} />
-                      Tersedia
-                    </span>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1">
-                  <h3 className="font-semibold text-slate-900 text-[15px] leading-snug group-hover:text-blue-700 transition-colors">
-                    {lab.name}
-                  </h3>
-                  <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-500">
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3 shrink-0" strokeWidth={2} />
-                      {lab.location}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <Users className="h-3 w-3 shrink-0" strokeWidth={2} />
-                      {lab.capacity} orang
-                    </span>
-                  </div>
-
-                  {lab.description && (
-                    <p className="mt-2.5 text-xs text-slate-500 line-clamp-2 leading-relaxed">
-                      {lab.description}
-                    </p>
-                  )}
-                </div>
-
-                {/* Facilities */}
-                {lab.facilities.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5">
-                    {lab.facilities.slice(0, 3).map((f, i) => (
-                      <span
-                        key={i}
-                        className="rounded-full bg-slate-100/80 px-2.5 py-0.5 text-xs font-medium text-slate-600"
-                      >
-                        {f.facilityName}{f.quantity ? ` (${f.quantity})` : ''}
+                    {hasBookingsToday ? (
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-800 ring-1 ring-amber-600/20">
+                        <Clock className="h-3 w-3" />
+                        {lab.todaySlots} slot terisi
                       </span>
-                    ))}
-                    {lab.facilities.length > 3 && (
-                      <span className="rounded-full bg-slate-100/80 px-2.5 py-0.5 text-xs text-slate-400">
-                        +{lab.facilities.length - 3}
+                    ) : (
+                      <span className="inline-flex items-center gap-1.5 rounded-md bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-800 ring-1 ring-emerald-600/20">
+                        <CheckCircle2 className="h-3 w-3" />
+                        Tersedia hari ini
                       </span>
                     )}
                   </div>
-                )}
 
-                {/* CTA */}
-                <div className="flex items-center gap-1 text-sm font-semibold text-blue-600 group-hover:text-blue-700 transition-colors">
-                  Lihat detail &amp; ajukan
-                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" strokeWidth={2.2} />
+                  {/* Info */}
+                  <div className="mt-3">
+                    <h3 className="font-semibold text-slate-900 text-sm group-hover:text-blue-600 transition-colors">
+                      {lab.name}
+                    </h3>
+                    <div className="mt-1.5 flex items-center gap-3 text-xs text-slate-500 font-medium">
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        {lab.location}
+                      </span>
+                      <span className="flex items-center gap-1">
+                        <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                        {lab.capacity} Kursi
+                      </span>
+                    </div>
+
+                    {lab.description && (
+                      <p className="mt-2 text-xs text-slate-600 line-clamp-2 leading-relaxed">
+                        {lab.description}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Facilities */}
+                  {lab.facilities.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1">
+                      {lab.facilities.slice(0, 3).map((f, i) => (
+                        <span
+                          key={i}
+                          className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600"
+                        >
+                          {f.facilityName}{f.quantity ? ` (${f.quantity})` : ''}
+                        </span>
+                      ))}
+                      {lab.facilities.length > 3 && (
+                        <span className="rounded-md bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500">
+                          +{lab.facilities.length - 3}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer link */}
+                <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs font-semibold text-blue-600 group-hover:text-blue-700">
+                  <span>Lihat detail &amp; ajukan</span>
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
                 </div>
               </Link>
             )
           })}
         </div>
       ) : (
-        <div className="glass-card rounded-2xl px-6 py-16 text-center">
+        <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center shadow-xs">
           {query ? (
             <>
-              <Search className="h-10 w-10 text-slate-200 mx-auto mb-3" strokeWidth={1.5} />
-              <p className="text-slate-500 text-sm mb-2">
+              <Search className="h-8 w-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
+              <p className="text-slate-600 text-sm mb-1">
                 Tidak ditemukan laboratorium yang cocok dengan{' '}
                 <span className="font-semibold">&ldquo;{q}&rdquo;</span>.
               </p>
-              <Link href="/labs" className="text-sm font-semibold text-blue-600 hover:text-blue-700">
+              <Link href="/labs" className="text-xs font-semibold text-blue-600 hover:text-blue-700">
                 Reset pencarian
               </Link>
             </>
           ) : (
-            <p className="text-slate-400 text-sm">Belum ada data laboratorium aktif.</p>
+            <p className="text-slate-500 text-sm">Belum ada data laboratorium aktif.</p>
           )}
         </div>
       )}

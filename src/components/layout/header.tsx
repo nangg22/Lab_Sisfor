@@ -87,3 +87,4 @@ export function Header({ isAdmin }: HeaderProps) {
     </header>
   )
 }
+

@@ -138,3 +138,4 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     </aside>
   )
 }
+
