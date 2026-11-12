@@ -15,9 +15,7 @@ import {
   Eye,
   Clock,
   UserCheck,
-  CheckCircle2,
   CalendarDays,
-  ShieldCheck,
   ExternalLink,
 } from 'lucide-react'
 
@@ -114,21 +112,18 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-6">
-      {/* ── 1. Hero Banner: Pop Neo-Brutal Aesthetic (Image 1 inspired) ── */}
-      <div className="neo-card-dark p-6 sm:p-7 relative overflow-hidden">
-        {/* Background accent badge */}
-        <div className="absolute right-4 -top-6 w-40 h-40 bg-amber-300 rounded-full blur-2xl opacity-15 pointer-events-none" />
-
+      {/* ── 1. Hero Banner: Pop Neo-Brutal Aesthetic (High Contrast Black on White/Amber) ── */}
+      <div className="neo-card p-6 sm:p-7 relative overflow-hidden bg-white border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
             <div className="inline-flex items-center gap-1.5 rounded-full bg-amber-300 px-3 py-1 text-[11px] font-black text-slate-950 uppercase tracking-wide border border-slate-900 shadow-[1.5px_1.5px_0px_0px_#0f172a] mb-2.5">
-              <Sparkles className="h-3 w-3" />
+              <Sparkles className="h-3.5 w-3.5" />
               <span>Sistem Informasi Laboratorium UISI</span>
             </div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-white">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-slate-900">
               Halo, {firstName}! 👋
             </h1>
-            <p className="text-xs sm:text-sm text-slate-300 mt-1 max-w-xl font-medium leading-relaxed">
+            <p className="text-xs sm:text-sm text-slate-600 mt-1 max-w-xl font-bold leading-relaxed">
               Pantau jadwal penggunaan laboratorium, ketersediaan fasilitas komputer, dan pengajuan perizinan secara terpadu.
             </p>
           </div>
@@ -162,7 +157,7 @@ export default async function DashboardPage() {
         </div>
       </div>
 
-      {/* ── 2. Stat Cards Row: Pop Color Accent Cards (Image 1 & 2 hybrid) ── */}
+      {/* ── 2. Stat Cards Row: Pop Color Accent Cards with Solid Borders & Clear Font Colors ── */}
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {/* Card 1: Total Pengajuan (Yellow Neo) */}
         <div className="neo-card-yellow p-5 flex flex-col justify-between">
@@ -178,53 +173,53 @@ export default async function DashboardPage() {
             <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-950">
               {totalBookings}
             </span>
-            <span className="text-xs font-bold text-slate-800 ml-1.5">Permohonan</span>
+            <span className="text-xs font-bold text-slate-950 ml-1.5">Permohonan</span>
           </div>
-          <p className="mt-2 text-[11px] font-bold text-slate-800 flex items-center gap-1">
+          <p className="mt-2 text-[11px] font-black text-slate-900 flex items-center gap-1">
             <span>●</span> {pendingCount} menunggu evaluasi
           </p>
         </div>
 
-        {/* Card 2: Lab Aktif (Blue Neo) */}
-        <div className="neo-card-blue p-5 flex flex-col justify-between">
+        {/* Card 2: Lab Aktif (White Neo with Blue Accent) */}
+        <div className="neo-card p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-white">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">
               Laboratorium Aktif
             </span>
-            <div className="p-1.5 rounded-md bg-white text-blue-600">
+            <div className="p-1.5 rounded-md bg-blue-600 text-white">
               <Building2 className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
               {activeLabs.length}
             </span>
-            <span className="text-xs font-bold text-blue-100 ml-1.5">Ruangan</span>
+            <span className="text-xs font-bold text-slate-600 ml-1.5">Ruangan</span>
           </div>
-          <p className="mt-2 text-[11px] font-bold text-blue-100 flex items-center gap-1">
+          <p className="mt-2 text-[11px] font-bold text-blue-700 flex items-center gap-1">
             <span>●</span> Fasilitas siap operasional
           </p>
         </div>
 
-        {/* Card 3: Total Pengguna / Terjadwal (Green Neo) */}
-        <div className="neo-card-green p-5 flex flex-col justify-between">
+        {/* Card 3: Total Pengguna / Terjadwal (White Neo with Green Accent) */}
+        <div className="neo-card p-5 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-black uppercase tracking-wider text-white">
+            <span className="text-xs font-black uppercase tracking-wider text-slate-900">
               {isAdmin ? 'Total Pengguna' : 'Slot Terjadwal'}
             </span>
-            <div className="p-1.5 rounded-md bg-white text-emerald-600">
+            <div className="p-1.5 rounded-md bg-emerald-600 text-white">
               <UserCheck className="h-4 w-4" />
             </div>
           </div>
           <div className="mt-4">
-            <span className="text-3xl sm:text-4xl font-black tracking-tight text-white">
+            <span className="text-3xl sm:text-4xl font-black tracking-tight text-slate-900">
               {isAdmin ? totalUsersCount : approvedCount}
             </span>
-            <span className="text-xs font-bold text-emerald-100 ml-1.5">
+            <span className="text-xs font-bold text-slate-600 ml-1.5">
               {isAdmin ? 'Civitas' : 'Disetujui'}
             </span>
           </div>
-          <p className="mt-2 text-[11px] font-bold text-emerald-100 flex items-center gap-1">
+          <p className="mt-2 text-[11px] font-bold text-emerald-700 flex items-center gap-1">
             <span>●</span> {isAdmin ? 'Mahasiswa & Dosen' : 'Siap dipergunakan'}
           </p>
         </div>
@@ -240,8 +235,8 @@ export default async function DashboardPage() {
             </span>
           </div>
 
-          {/* Segmented Bar with crisp 1.5px border */}
-          <div className="mt-4 flex h-3 w-full overflow-hidden rounded-md border-2 border-slate-900 bg-slate-100">
+          {/* Segmented Bar with crisp border */}
+          <div className="mt-4 flex h-3.5 w-full overflow-hidden rounded-md border-2 border-slate-900 bg-slate-100">
             {approvedCount > 0 && (
               <div
                 style={{ width: `${pApproved}%` }}
@@ -279,26 +274,26 @@ export default async function DashboardPage() {
             )}
           </div>
 
-          {/* Legend Grid */}
-          <div className="mt-3 grid grid-cols-2 gap-y-1 text-[10px] font-bold">
+          {/* Legend Grid with visible font */}
+          <div className="mt-3 grid grid-cols-2 gap-y-1 text-[11px] font-black">
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-xs bg-emerald-400 border border-slate-900" />
-              <span className="text-slate-600">Disetujui:</span>
+              <span className="h-2.5 w-2.5 rounded-xs bg-emerald-400 border border-slate-900" />
+              <span className="text-slate-700">Disetujui:</span>
               <span className="text-slate-950 font-black">{approvedCount}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-xs bg-amber-300 border border-slate-900" />
-              <span className="text-slate-600">Menunggu:</span>
+              <span className="h-2.5 w-2.5 rounded-xs bg-amber-300 border border-slate-900" />
+              <span className="text-slate-700">Menunggu:</span>
               <span className="text-slate-950 font-black">{pendingCount}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-xs bg-slate-900" />
-              <span className="text-slate-600">Maintenance:</span>
+              <span className="h-2.5 w-2.5 rounded-xs bg-slate-900 border border-slate-900" />
+              <span className="text-slate-700">Maintenance:</span>
               <span className="text-slate-950 font-black">{blockedCount}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="h-2 w-2 rounded-xs bg-slate-400 border border-slate-900" />
-              <span className="text-slate-600">Dibatalkan:</span>
+              <span className="h-2.5 w-2.5 rounded-xs bg-slate-400 border border-slate-900" />
+              <span className="text-slate-700">Dibatalkan:</span>
               <span className="text-slate-950 font-black">{cancelledCount}</span>
             </div>
           </div>
@@ -315,7 +310,7 @@ export default async function DashboardPage() {
                 <h2 className="text-sm font-black tracking-tight text-slate-950 uppercase">
                   {isAdmin ? 'Pengajuan Masuk Terbaru' : 'Pengajuan Saya Terakhir'}
                 </h2>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[11px] font-bold text-slate-600">
                   Daftar reservasi ruangan semester ini
                 </p>
               </div>
@@ -354,20 +349,20 @@ export default async function DashboardPage() {
                             {b.labName ?? '—'}
                           </Link>
                         </td>
-                        <td className="px-4 py-3.5 text-slate-700 whitespace-nowrap">
+                        <td className="px-4 py-3.5 text-slate-800 whitespace-nowrap">
                           <span className="font-bold text-slate-900 block">
                             {formatDate(b.bookingDate)}
                           </span>
-                          <span className="text-[11px] font-semibold text-slate-500">
+                          <span className="text-[11px] font-bold text-slate-600">
                             {formatTime(b.startTime)}–{formatTime(b.endTime)} WIB
                           </span>
                         </td>
                         {isAdmin && (
-                          <td className="px-4 py-3.5 text-slate-800 whitespace-nowrap font-bold">
+                          <td className="px-4 py-3.5 text-slate-900 whitespace-nowrap font-black">
                             {b.userName ?? '—'}
                           </td>
                         )}
-                        <td className="px-4 py-3.5 text-slate-600 max-w-[200px] truncate">
+                        <td className="px-4 py-3.5 text-slate-700 font-medium max-w-[200px] truncate">
                           {b.purpose}
                         </td>
                         <td className="px-4 py-3.5 text-right whitespace-nowrap">
@@ -379,7 +374,7 @@ export default async function DashboardPage() {
                     <tr>
                       <td
                         colSpan={isAdmin ? 5 : 4}
-                        className="px-5 py-12 text-center text-slate-500 font-bold"
+                        className="px-5 py-12 text-center text-slate-600 font-bold"
                       >
                         Belum ada aktivitas peminjaman.
                       </td>
@@ -390,8 +385,8 @@ export default async function DashboardPage() {
             </div>
           </div>
 
-          <div className="p-3 bg-slate-50 border-t border-slate-200 text-center">
-            <span className="text-[11px] font-bold text-slate-500">
+          <div className="p-3 bg-slate-50 border-t-2 border-slate-900 text-center">
+            <span className="text-[11px] font-bold text-slate-600">
               Sistem Informasi Peminjaman Laboratorium Terverifikasi UISI
             </span>
           </div>
@@ -405,7 +400,7 @@ export default async function DashboardPage() {
                 <h2 className="text-sm font-black tracking-tight text-slate-950 uppercase">
                   Laboratorium Aktif
                 </h2>
-                <p className="text-[11px] font-bold text-slate-500">
+                <p className="text-[11px] font-bold text-slate-600">
                   Daftar ruangan siap operasional
                 </p>
               </div>
@@ -428,7 +423,7 @@ export default async function DashboardPage() {
                       >
                         {lab.name}
                       </Link>
-                      <p className="text-[11px] font-semibold text-slate-500 mt-0.5">
+                      <p className="text-[11px] font-bold text-slate-500 mt-0.5">
                         {lab.location}
                       </p>
                     </div>

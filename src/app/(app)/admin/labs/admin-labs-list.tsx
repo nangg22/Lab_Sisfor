@@ -8,6 +8,7 @@ import {
   Pencil,
   PowerOff,
   Power,
+  Trash2,
   MapPin,
   Users,
   Layers,
@@ -74,23 +75,46 @@ export function AdminLabsList({ labs }: Props) {
     }
   }
 
+  async function handleDeleteLab(lab: LabWithCount) {
+    setActiveMenuId(null)
+    const msg = `Apakah Anda yakin ingin MENGHAPUS permanen ${lab.name}? Seluruh riwayat fasilitas dan jadwal peminjaman di ruangan ini akan ikut terhapus.`
+    if (!confirm(msg)) return
+
+    setLoadingId(lab.id)
+    try {
+      const res = await fetch(`/api/admin/labs/${lab.id}`, {
+        method: 'DELETE',
+      })
+
+      if (res.ok) {
+        router.refresh()
+      } else {
+        alert('Gagal menghapus laboratorium.')
+      }
+    } catch {
+      alert('Terjadi kesalahan saat menghapus data.')
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Title & Add Button */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight text-slate-900">
+          <h1 className="text-xl font-black tracking-tight text-slate-900">
             Manajemen Laboratorium
           </h1>
-          <p className="text-sm text-slate-500 mt-0.5">
-            Daftar master ruangan laboratorium, lokasi, dan kontrol status aktif.
+          <p className="text-xs sm:text-sm text-slate-600 font-bold mt-0.5">
+            Daftar master ruangan laboratorium, lokasi, dan kontrol status aktif atau hapus lab.
           </p>
         </div>
         <Link
           href="/admin/labs/new"
-          className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-2 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
+          className="neo-btn neo-btn-primary px-3.5 py-2 text-xs font-black"
         >
-          <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
+          <Plus className="h-4 w-4" strokeWidth={2.5} />
           <span>Tambah Lab Baru</span>
         </Link>
       </div>
@@ -104,27 +128,27 @@ export function AdminLabsList({ labs }: Props) {
           return (
             <div
               key={lab.id}
-              className={`relative rounded-lg border border-slate-200 bg-white p-5 shadow-xs transition-all flex flex-col justify-between ${
-                !lab.isActive ? 'opacity-70 bg-slate-50/50' : 'hover:border-slate-300'
+              className={`relative neo-card p-5 transition-all flex flex-col justify-between ${
+                !lab.isActive ? 'opacity-70 bg-slate-50' : 'bg-white'
               }`}
             >
               <div>
                 {/* Header Row: Lab Icon + Status Pill + Kebab Dropdown */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-800 font-bold text-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-sm shadow-[1.5px_1.5px_0px_0px_#0f172a]">
                       {lab.name.charAt(0)}
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1 text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border-1.5 border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] ${
                         lab.isActive
-                          ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/20'
-                          : 'bg-slate-100 text-slate-600 ring-1 ring-slate-300'
+                          ? 'bg-emerald-400 text-slate-950'
+                          : 'bg-slate-200 text-slate-700'
                       }`}
                     >
                       <span
-                        className={`h-1.5 w-1.5 rounded-full ${
-                          lab.isActive ? 'bg-emerald-500' : 'bg-slate-400'
+                        className={`h-2 w-2 rounded-full ${
+                          lab.isActive ? 'bg-slate-950' : 'bg-slate-500'
                         }`}
                       />
                       {lab.isActive ? 'Aktif' : 'Nonaktif'}
@@ -140,31 +164,29 @@ export function AdminLabsList({ labs }: Props) {
                       type="button"
                       disabled={isLoading}
                       onClick={() => setActiveMenuId(isMenuOpen ? null : lab.id)}
-                      className="inline-flex h-7 w-7 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors shadow-xs"
                       title="Opsi Pengaturan Lab"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
 
                     {isMenuOpen && (
-                      <div className="absolute right-0 z-30 mt-1 w-40 origin-top-right rounded-md border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
+                      <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-xl border-2 border-slate-900 bg-white py-1.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in zoom-in-95">
                         <Link
                           href={`/admin/labs/${lab.id}/edit`}
                           onClick={() => setActiveMenuId(null)}
-                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
+                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors"
                         >
-                          <Pencil className="h-3.5 w-3.5 text-slate-400" />
+                          <Pencil className="h-3.5 w-3.5 text-slate-600" />
                           <span>Edit Lab</span>
                         </Link>
-
-                        <div className="border-t border-slate-100 my-1" />
 
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(lab)}
-                          className={`flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium transition-colors ${
+                          className={`flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold transition-colors ${
                             lab.isActive
-                              ? 'text-red-600 hover:bg-red-50'
+                              ? 'text-amber-700 hover:bg-amber-50'
                               : 'text-emerald-700 hover:bg-emerald-50'
                           }`}
                         >
@@ -180,45 +202,56 @@ export function AdminLabsList({ labs }: Props) {
                             </>
                           )}
                         </button>
+
+                        <div className="border-t border-slate-200 my-1" />
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteLab(lab)}
+                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                          <span>Hapus Ruangan</span>
+                        </button>
                       </div>
                     )}
                   </div>
                 </div>
 
                 {/* Lab Title & Specs */}
-                <h3 className="mt-3.5 font-semibold text-slate-900 text-sm">
+                <h3 className="mt-4 font-black text-slate-900 text-base">
                   {lab.name}
                 </h3>
 
-                <div className="mt-2 space-y-1 text-xs text-slate-500 font-medium">
-                  <p className="flex items-center gap-1.5">
-                    <MapPin className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                <div className="mt-2.5 space-y-1.5 text-xs text-slate-700 font-bold">
+                  <p className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-slate-500 shrink-0" />
                     <span>{lab.location}</span>
                   </p>
-                  <p className="flex items-center gap-1.5">
-                    <Users className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                  <p className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-slate-500 shrink-0" />
                     <span>Kapasitas: {lab.capacity} Kursi</span>
                   </p>
                   {lab.facilityCount > 0 && (
-                    <p className="flex items-center gap-1.5">
-                      <Layers className="h-3.5 w-3.5 text-slate-400 shrink-0" />
+                    <p className="flex items-center gap-2 text-slate-600">
+                      <Layers className="h-4 w-4 text-slate-500 shrink-0" />
                       <span>{lab.facilityCount} fasilitas terdaftar</span>
                     </p>
                   )}
                 </div>
               </div>
 
-              {/* Card Footer: Subtle preview link */}
-              <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between">
+              {/* Card Footer */}
+              <div className="mt-5 pt-3 border-t-2 border-slate-100 flex items-center justify-between">
                 <Link
                   href={`/labs/${lab.id}`}
-                  className="text-xs font-medium text-slate-500 hover:text-blue-600 transition-colors"
+                  className="text-xs font-black text-blue-600 hover:underline transition-colors"
                 >
                   Lihat halaman publik →
                 </Link>
                 {isLoading && (
-                  <span className="text-[11px] text-slate-400 animate-pulse">
-                    Menyimpan...
+                  <span className="text-[11px] font-bold text-slate-500 animate-pulse">
+                    Memproses...
                   </span>
                 )}
               </div>
@@ -228,21 +261,20 @@ export function AdminLabsList({ labs }: Props) {
       </div>
 
       {labs.length === 0 && (
-        <div className="rounded-lg border border-slate-200 bg-white px-6 py-16 text-center shadow-xs">
-          <FlaskConical className="h-8 w-8 text-slate-300 mx-auto mb-2" strokeWidth={1.5} />
-          <p className="text-slate-500 text-sm font-medium mb-3">
+        <div className="neo-card p-12 text-center bg-white">
+          <FlaskConical className="h-10 w-10 text-slate-400 mx-auto mb-3" strokeWidth={1.5} />
+          <p className="text-slate-800 text-sm font-black mb-4">
             Belum ada laboratorium terdaftar.
           </p>
           <Link
             href="/admin/labs/new"
-            className="inline-flex items-center gap-1.5 rounded-md bg-blue-600 px-3.5 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700"
+            className="neo-btn neo-btn-primary px-4 py-2 text-xs font-black"
           >
-            <Plus className="h-3.5 w-3.5" />
-            Tambah laboratorium pertama
+            <Plus className="h-4 w-4" />
+            <span>Tambah laboratorium pertama</span>
           </Link>
         </div>
       )}
     </div>
   )
 }
-

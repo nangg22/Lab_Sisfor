@@ -22,16 +22,16 @@ body {
   line-height: 1.5;
   letter-spacing: -0.012em;
   color: #0f172a;
-  background-color: #f6f8fb; /* Warm academic soft clean canvas */
+  background-color: #f8fafc;
   min-height: 100vh;
 }
 
 /* ═══════════════════════════════════════════════════════════════
    HYBRID DESIGN: Pop Neo-Academic + Modern Clean EdTech
-   (Bold solid cards, crisp borders, subtle offset hard shadows)
+   High contrast font colors & crisp borders
 ═══════════════════════════════════════════════════════════════ */
 
-/* Pop Neo-Brutal Card with 2.5px crisp border & offset shadow */
+/* Pop Neo-Brutal Card with crisp 2px border & offset shadow */
 .neo-card {
   background-color: #ffffff;
   border: 2px solid #0f172a;
@@ -52,7 +52,7 @@ body {
   box-shadow: 2.5px 2.5px 0px 0px #0f172a;
 }
 
-/* Accent Card variants */
+/* Accent Card variants with High-Contrast dark text */
 .neo-card-blue {
   background-color: #3b82f6;
   color: #ffffff;
@@ -117,12 +117,12 @@ body {
 }
 
 .neo-btn-primary {
-  background-color: #3b82f6;
+  background-color: #2563eb;
   color: #ffffff;
 }
 
 .neo-btn-primary:hover {
-  background-color: #2563eb;
+  background-color: #1d4ed8;
 }
 
 .neo-btn-white {
@@ -131,7 +131,7 @@ body {
 }
 
 .neo-btn-white:hover {
-  background-color: #f8fafc;
+  background-color: #f1f5f9;
 }
 
 /* Pop Pill Badge */
@@ -146,6 +146,14 @@ body {
   border-radius: 9999px;
   box-shadow: 1px 1.5px 0px 0px #0f172a;
   line-height: 1;
+}
+
+/* Mobile Dock Solid Container with border & shadow */
+.mobile-dock-solid {
+  background-color: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 9999px;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 3px 3px 0px 0px #0f172a;
 }
 
 /* ─── Scrollbar ─── */
