@@ -8,38 +8,16 @@ import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime } from '@/lib/utils'
 import { Plus, ClipboardList, FlaskConical, Clock, ArrowRight } from 'lucide-react'
 
-export default async function BookingsPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ status?: string }>
-}) {
+export default async function BookingsPage({ searchParams }: { searchParams: Promise<{ status?: string }> }) {
   const { status: filterStatus } = await searchParams
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
 
   const myBookings = await db
-    .select({
-      id: bookings.id,
-      bookingDate: bookings.bookingDate,
-      startTime: bookings.startTime,
-      endTime: bookings.endTime,
-      purpose: bookings.purpose,
-      participantCount: bookings.participantCount,
-      status: bookings.status,
-      createdAt: bookings.createdAt,
-      labName: laboratories.name,
-      labLocation: laboratories.location,
-    })
-    .from(bookings)
-    .leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id))
-    .where(eq(bookings.userId, session.user.id))
-    .orderBy(desc(bookings.createdAt))
+    .select({ id: bookings.id, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, status: bookings.status, createdAt: bookings.createdAt, labName: laboratories.name, labLocation: laboratories.location })
+    .from(bookings).leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id)).where(eq(bookings.userId, session.user.id)).orderBy(desc(bookings.createdAt))
 
-  const filtered =
-    filterStatus && filterStatus !== 'ALL'
-      ? myBookings.filter((b) => b.status === filterStatus)
-      : myBookings
-
+  const filtered = filterStatus && filterStatus !== 'ALL' ? myBookings.filter((b) => b.status === filterStatus) : myBookings
   const pendingCount = myBookings.filter((b) => b.status === 'PENDING').length
 
   const statusFilters = [
@@ -51,24 +29,20 @@ export default async function BookingsPage({
   ]
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="page-title">Pengajuan Saya</h1>
-          <p className="page-subtitle">Riwayat semua pengajuan peminjaman Anda.</p>
+          <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">Pengajuan Saya</h1>
+          <p className="text-sm font-bold text-slate-500 mt-0.5">Riwayat semua pengajuan peminjaman Anda.</p>
         </div>
-        <Link
-          href="/bookings/new"
-          className="shrink-0 inline-flex items-center gap-2 rounded-xl bg-blue-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/30"
-        >
+        <Link href="/bookings/new" className="neo-btn neo-btn-primary px-4 py-2.5 text-xs font-black">
           <Plus className="h-4 w-4" strokeWidth={2.5} />
-          <span className="hidden sm:inline">Ajukan Baru</span>
-          <span className="sm:hidden">Baru</span>
+          <span>Ajukan Baru</span>
         </Link>
       </div>
 
-      {/* Filter Tabs */}
+      {/* Filter pills */}
       <div className="flex flex-wrap gap-2">
         {statusFilters.map((f) => {
           const isActive = (f.value === 'ALL' && !filterStatus) || filterStatus === f.value
@@ -76,17 +50,15 @@ export default async function BookingsPage({
             <Link
               key={f.value}
               href={f.value === 'ALL' ? '/bookings' : `/bookings?status=${f.value}`}
-              className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 text-sm font-medium transition-all duration-150 ${
+              className={`inline-flex items-center gap-1.5 rounded-full px-3.5 py-1.5 text-xs font-black border transition-all ${
                 isActive
-                  ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/30'
-                  : 'bg-white/70 border border-white/80 text-slate-600 hover:bg-white hover:text-slate-900 backdrop-blur-sm'
+                  ? 'bg-amber-300 border-slate-200 text-slate-950 shadow-sm'
+                  : 'bg-white border-slate-200 text-slate-600 hover:border-slate-200'
               }`}
             >
               {f.label}
               {f.value === 'PENDING' && pendingCount > 0 && (
-                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold leading-none ${
-                  isActive ? 'bg-white/20 text-white' : 'bg-amber-100 text-amber-700'
-                }`}>
+                <span className={`inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-black leading-none border ${isActive ? 'bg-slate-900 text-white border-slate-200' : 'bg-rose-500 text-white border-rose-700'}`}>
                   {pendingCount}
                 </span>
               )}
@@ -95,73 +67,85 @@ export default async function BookingsPage({
         })}
       </div>
 
-      {/* Content */}
+      {/* Mobile card list */}
       {filtered.length > 0 ? (
-        <div className="glass-card rounded-2xl overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full">
-              <thead>
-                <tr className="border-b border-slate-100/70">
-                  {['Laboratorium', 'Tanggal', 'Waktu', 'Tujuan', 'Status', ''].map((h) => (
-                    <th
-                      key={h}
-                      className="px-5 py-3.5 text-left text-[11px] font-semibold text-slate-400 uppercase tracking-wider"
-                    >
-                      {h}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100/60">
-                {filtered.map((b) => (
-                  <tr key={b.id} className="hover:bg-white/40 transition-colors">
-                    <td className="px-5 py-4">
-                      <div className="flex items-center gap-2.5">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-50">
-                          <FlaskConical className="h-4 w-4 text-blue-500" strokeWidth={2} />
-                        </div>
-                        <div>
-                          <p className="font-medium text-slate-900 text-sm leading-tight">{b.labName ?? '—'}</p>
-                          <p className="text-xs text-slate-400 mt-0.5">{b.labLocation ?? '—'}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-700 whitespace-nowrap">{formatDate(b.bookingDate)}</td>
-                    <td className="px-5 py-4 whitespace-nowrap">
-                      <span className="inline-flex items-center gap-1 text-sm text-slate-700">
-                        <Clock className="h-3.5 w-3.5 text-slate-400 shrink-0" strokeWidth={2} />
-                        {formatTime(b.startTime)}–{formatTime(b.endTime)}
-                      </span>
-                    </td>
-                    <td className="px-5 py-4 text-sm text-slate-600 max-w-[200px] truncate">{b.purpose}</td>
-                    <td className="px-5 py-4">
-                      <StatusBadge status={b.status} />
-                    </td>
-                    <td className="px-5 py-4">
-                      <Link
-                        href={`/bookings/${b.id}`}
-                        className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-700 font-medium"
-                      >
-                        Detail
-                        <ArrowRight className="h-3.5 w-3.5" strokeWidth={2.2} />
-                      </Link>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+        <>
+          <div className="block sm:hidden space-y-3">
+            {filtered.map((b) => (
+              <Link key={b.id} href={`/bookings/${b.id}`} className="neo-card block p-4 hover:shadow-sm transition-shadow">
+                <div className="flex items-start justify-between gap-2 mb-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-blue-600 border border-slate-200 shadow-sm">
+                      <FlaskConical className="h-4 w-4 text-white" strokeWidth={2} />
+                    </div>
+                    <span className="text-sm font-black text-slate-900 truncate">{b.labName ?? '—'}</span>
+                  </div>
+                  <StatusBadge status={b.status} />
+                </div>
+                <p className="text-[11px] font-bold text-slate-500 ml-10">{b.labLocation ?? '—'}</p>
+                <div className="mt-2 ml-10 flex items-center gap-3 text-[11px] font-bold text-slate-600">
+                  <span>{formatDate(b.bookingDate)}</span>
+                  <span className="flex items-center gap-1"><Clock className="h-3 w-3" />{formatTime(b.startTime)}–{formatTime(b.endTime)}</span>
+                </div>
+                <p className="mt-1 ml-10 text-[11px] text-slate-500 truncate">{b.purpose}</p>
+              </Link>
+            ))}
           </div>
-        </div>
+
+          {/* Desktop table */}
+          <div className="hidden sm:block neo-card overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full text-left text-xs">
+                <thead>
+                  <tr className="bg-amber-100 border-b border-slate-200 text-[11px] font-black text-slate-900 uppercase tracking-wider">
+                    <th className="px-4 py-3">Laboratorium</th>
+                    <th className="px-4 py-3">Tanggal</th>
+                    <th className="px-4 py-3">Waktu</th>
+                    <th className="px-4 py-3">Tujuan</th>
+                    <th className="px-4 py-3">Status</th>
+                    <th className="px-4 py-3"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-200">
+                  {filtered.map((b) => (
+                    <tr key={b.id} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-4 py-3.5">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-blue-600 border border-slate-200">
+                            <FlaskConical className="h-3.5 w-3.5 text-white" strokeWidth={2} />
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900">{b.labName ?? '—'}</p>
+                            <p className="text-[10px] font-bold text-slate-400">{b.labLocation ?? '—'}</p>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-4 py-3.5 font-bold text-slate-800 whitespace-nowrap">{formatDate(b.bookingDate)}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap">
+                        <span className="flex items-center gap-1 font-bold text-slate-800">
+                          <Clock className="h-3 w-3 text-slate-400" />{formatTime(b.startTime)}–{formatTime(b.endTime)}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3.5 text-slate-600 max-w-[180px] truncate">{b.purpose}</td>
+                      <td className="px-4 py-3.5"><StatusBadge status={b.status} /></td>
+                      <td className="px-4 py-3.5">
+                        <Link href={`/bookings/${b.id}`} className="inline-flex items-center gap-1 text-xs font-black text-blue-600 hover:text-blue-700">
+                          Detail<ArrowRight className="h-3 w-3" />
+                        </Link>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </>
       ) : (
-        <div className="glass-card rounded-2xl px-6 py-16 text-center">
-          <ClipboardList className="h-10 w-10 text-slate-200 mx-auto mb-3" strokeWidth={1.5} />
-          <p className="text-slate-500 text-sm mb-4">Belum ada pengajuan.</p>
-          <Link
-            href="/bookings/new"
-            className="inline-flex items-center gap-2 rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white hover:bg-blue-700 transition-colors shadow-sm shadow-blue-600/30"
-          >
-            <Plus className="h-4 w-4" strokeWidth={2.5} />
-            Ajukan Peminjaman Pertama
+        <div className="neo-card px-6 py-14 text-center">
+          <ClipboardList className="h-10 w-10 text-slate-300 mx-auto mb-3" strokeWidth={1.5} />
+          <p className="text-sm font-bold text-slate-500 mb-4">Belum ada pengajuan.</p>
+          <Link href="/bookings/new" className="neo-btn neo-btn-primary px-5 py-2.5 text-xs font-black inline-flex">
+            <Plus className="h-4 w-4" strokeWidth={2.5} />Ajukan Peminjaman Pertama
           </Link>
         </div>
       )}

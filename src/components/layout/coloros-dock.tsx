@@ -63,7 +63,7 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
               href={item.href}
               className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tight transition-all duration-150 ${
                 isActive
-                  ? 'bg-slate-900 text-white shadow-[2px_2px_0px_0px_#0f172a] -translate-y-0.5'
+                  ? 'bg-slate-900 text-white shadow-sm -translate-y-0.5'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
               }`}
             >

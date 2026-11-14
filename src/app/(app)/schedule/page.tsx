@@ -62,9 +62,9 @@ export default async function SchedulePage({ searchParams }: Props) {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-gray-900">Jadwal Penggunaan Ruang & Laboratorium</h1>
-        <p className="mt-1 text-gray-500 text-sm">
-          Pantau ketersediaan seluruh laboratorium secara visual per jam seperti sistem RuangUISI.
+        <h1 className="text-2xl font-black tracking-tight text-slate-900">Jadwal Penggunaan Ruang & Laboratorium</h1>
+        <p className="mt-1 text-slate-500 text-sm font-bold">
+          Pantau ketersediaan seluruh laboratorium secara visual per jam.
         </p>
       </div>
 

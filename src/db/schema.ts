@@ -5,6 +5,7 @@ import {
   boolean,
   integer,
   text,
+  jsonb,
   date,
   time,
   timestamp,
@@ -21,10 +22,22 @@ export const users = pgTable('users', {
   email: varchar('email', { length: 255 }).notNull().unique(),
   passwordHash: varchar('password_hash', { length: 255 }).notNull(),
   role: varchar('role', { length: 20 }).notNull().default('mahasiswa'),
-  // role: 'mahasiswa' | 'dosen' | 'admin'
+  // role: 'mahasiswa' | 'dosen' | 'aslab' | 'kaprodi' | 'pembina_lab' | 'admin'
+  verificationStatus: varchar('verification_status', { length: 20 }).notNull().default('ACTIVE'),
   isActive: boolean('is_active').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
+})
+
+export const auditLogs = pgTable('audit_logs', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  actorUserId: uuid('actor_user_id').references(() => users.id),
+  action: varchar('action', { length: 80 }).notNull(),
+  targetType: varchar('target_type', { length: 40 }).notNull(),
+  targetId: uuid('target_id'),
+  reason: text('reason'),
+  metadata: jsonb('metadata'),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
 // ─── LABORATORIES ─────────────────────────────────────────────────────────────
@@ -160,5 +173,6 @@ export type BookingApprovalAction = typeof bookingApprovalActions.$inferSelect
 export type BookingStatusHistory = typeof bookingStatusHistory.$inferSelect
 export type Notification = typeof notifications.$inferSelect
 export type NewNotification = typeof notifications.$inferInsert
-export type RoleCode = 'mahasiswa' | 'dosen' | 'admin'
+export type RoleCode = 'mahasiswa' | 'dosen' | 'aslab' | 'kaprodi' | 'pembina_lab' | 'admin'
+export type VerificationStatus = 'PENDING' | 'ACTIVE' | 'REJECTED'
 export type BookingStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED' | 'BLOCKED' | 'IN_USE' | 'COMPLETED'

@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { CheckCircle2, AlertCircle } from 'lucide-react'
 
 interface Props { userId: string; initialFullName: string; initialInstitutionalId: string; role: string }
 
@@ -40,8 +41,16 @@ export function ProfileForm({ userId, initialFullName, initialInstitutionalId, r
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {error && <div className="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-sm text-red-700">{error}</div>}
-      {success && <div className="rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-sm text-green-700">✅ Profil berhasil diperbarui.</div>}
+      {error && (
+        <div className="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-slate-200 shadow-sm px-4 py-3 text-xs font-bold text-rose-700" role="alert">
+          <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />{error}
+        </div>
+      )}
+      {success && (
+        <div className="flex items-center gap-2.5 rounded-xl bg-emerald-50 border border-slate-200 shadow-sm px-4 py-3 text-xs font-bold text-emerald-700" role="status">
+          <CheckCircle2 className="h-4 w-4 shrink-0" strokeWidth={2} />Profil berhasil diperbarui.
+        </div>
+      )}
       <Input label="Nama Lengkap" value={fullName} onChange={(e) => setFullName(e.target.value)} required />
       <Input
         label={role === 'mahasiswa' ? 'NIM' : role === 'dosen' ? 'NIP' : 'ID Institusi'}
@@ -49,11 +58,11 @@ export function ProfileForm({ userId, initialFullName, initialInstitutionalId, r
         onChange={(e) => setInstitutionalId(e.target.value)}
         hint="Opsional"
       />
-      <div className="flex flex-col gap-1">
-        <label className="text-sm font-medium text-gray-700">Peran</label>
-        <p className="text-sm text-gray-500 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200 capitalize">
+      <div className="flex flex-col gap-1.5">
+        <label className="text-[11px] font-black uppercase tracking-wide text-slate-700">Peran</label>
+        <p className="text-sm font-bold text-slate-700 bg-slate-100 rounded-lg px-3 py-2 border border-slate-200 capitalize">
           {role === 'mahasiswa' ? 'Mahasiswa' : role === 'dosen' ? 'Dosen' : 'Admin / Asisten Lab'}
-          <span className="ml-2 text-xs text-gray-400">(tidak dapat diubah sendiri)</span>
+          <span className="ml-2 text-xs font-bold text-slate-400">(tidak dapat diubah sendiri)</span>
         </p>
       </div>
       <Button type="submit" loading={loading} className="w-full">Simpan Perubahan</Button>

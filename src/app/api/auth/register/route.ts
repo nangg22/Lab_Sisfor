@@ -7,9 +7,19 @@ import bcrypt from 'bcryptjs'
 export async function POST(request: Request) {
   try {
     const { fullName, institutionalId, email, password, role } = await request.json()
+    const normalizedEmail = String(email ?? '').toLowerCase().trim()
+    const normalizedRole = role === 'dosen' ? 'dosen' : role === 'mahasiswa' ? 'mahasiswa' : null
 
-    if (!fullName || !email || !password) {
+    if (!fullName || !normalizedEmail || !password || !normalizedRole || !institutionalId?.trim()) {
       return NextResponse.json({ error: 'Data tidak lengkap.' }, { status: 400 })
+    }
+
+    if (!normalizedEmail.endsWith('@uisi.ac.id')) {
+      return NextResponse.json({ error: 'Registrasi hanya diperbolehkan menggunakan email @uisi.ac.id.' }, { status: 400 })
+    }
+
+    if (!/^[A-Za-z0-9./-]{4,50}$/.test(institutionalId.trim())) {
+      return NextResponse.json({ error: 'NIM/NIP tidak valid.' }, { status: 400 })
     }
 
     if (password.length < 8) {
@@ -19,7 +29,7 @@ export async function POST(request: Request) {
     const existing = await db
       .select({ id: users.id })
       .from(users)
-      .where(eq(users.email, email.toLowerCase().trim()))
+      .where(eq(users.email, normalizedEmail))
       .limit(1)
 
     if (existing.length > 0) {
@@ -31,9 +41,11 @@ export async function POST(request: Request) {
     await db.insert(users).values({
       fullName: fullName.trim(),
       institutionalId: institutionalId?.trim() || null,
-      email: email.toLowerCase().trim(),
+      email: normalizedEmail,
       passwordHash,
-      role: role === 'dosen' ? 'dosen' : 'mahasiswa',
+      role: normalizedRole,
+      verificationStatus: 'PENDING',
+      isActive: false,
     })
 
     return NextResponse.json({ success: true }, { status: 201 })

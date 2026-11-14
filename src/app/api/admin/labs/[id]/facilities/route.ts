@@ -8,6 +8,10 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
+  // Fix #6: role check — hanya admin yang boleh mengakses daftar fasilitas
+  const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, session.user.id)).limit(1)
+  if (u?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+
   const { id: laboratoryId } = await params
   const facilities = await db
     .select()

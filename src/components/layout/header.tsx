@@ -88,7 +88,7 @@ export function Header({ isAdmin }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b-2 border-slate-900 bg-white px-6">
+    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
       {/* Breadcrumbs */}
       <nav className="flex items-center gap-1.5 text-xs text-slate-600 font-bold">
         <Link href="/dashboard" className="hover:text-blue-600 transition-colors">
@@ -116,7 +116,7 @@ export function Header({ isAdmin }: HeaderProps) {
 
       {/* Right Controls: Date/Time + Notifications + Action Button */}
       <div className="flex items-center gap-4">
-        <div className="hidden sm:block text-xs font-bold text-slate-600 bg-slate-100 border border-slate-900 rounded-md px-2.5 py-1 shadow-[1px_1px_0px_0px_#0f172a]">
+        <div className="hidden sm:block text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded-md px-2.5 py-1 shadow-sm">
           {currentDate}
         </div>
 

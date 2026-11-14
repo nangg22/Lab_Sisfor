@@ -95,11 +95,11 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
       <div className="neo-card p-4 sm:p-5 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
         {/* Date Selector & Prev/Next */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center rounded-lg border-2 border-slate-900 bg-white shadow-[2px_2px_0px_0px_#0f172a] overflow-hidden">
+          <div className="flex items-center rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
             <button
               onClick={() => changeDate(-1)}
               title="Hari Sebelumnya"
-              className="p-2 hover:bg-slate-100 transition-colors border-r-2 border-slate-900"
+              className="min-h-11 min-w-11 p-2 hover:bg-slate-100 transition-colors border-r border-slate-200"
             >
               <ChevronLeft className="h-4 w-4 text-slate-900" strokeWidth={2.5} />
             </button>
@@ -115,7 +115,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
             <button
               onClick={() => changeDate(1)}
               title="Hari Berikutnya"
-              className="p-2 hover:bg-slate-100 transition-colors border-l-2 border-slate-900"
+              className="min-h-11 min-w-11 p-2 hover:bg-slate-100 transition-colors border-l border-slate-200"
             >
               <ChevronRight className="h-4 w-4 text-slate-900" strokeWidth={2.5} />
             </button>
@@ -126,7 +126,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
               type="date"
               value={selectedDate}
               onChange={handleDirectDate}
-              className="rounded-lg border-2 border-slate-900 bg-amber-200 px-3 py-1.5 text-xs font-black text-slate-950 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none"
+              className="rounded-lg border border-slate-200 bg-amber-200 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm focus:outline-none"
             />
             <span className="hidden sm:inline text-xs font-black text-slate-800">
               {formatDate(selectedDate)}
@@ -141,7 +141,8 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
             <select
               value={selectedLabId}
               onChange={(e) => setSelectedLabId(e.target.value)}
-              className="rounded-lg border-2 border-slate-900 bg-white px-3 py-1.5 text-xs font-black text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none cursor-pointer"
+              aria-label="Filter laboratorium"
+              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-900 shadow-sm focus:outline-none cursor-pointer"
             >
               <option value="ALL">Semua Laboratorium ({labs.length})</option>
               {labs.map((l) => (
@@ -158,10 +159,17 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[11px] font-medium text-slate-600">
+        <span className="sm:hidden text-slate-500">Geser tabel ke samping untuk melihat semua laboratorium.</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500" />Slot tersedia</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-600" />Disetujui</span>
+        <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-700" />Diblokir</span>
+      </div>
+
       {/* ── 2. Google Calendar Weekly / Day Timetable Matrix ── */}
       <div className="neo-card bg-white overflow-hidden">
         {/* Matrix Header info bar */}
-        <div className="bg-slate-900 px-5 py-3 text-white flex items-center justify-between border-b-2 border-slate-900">
+        <div className="bg-slate-900 px-5 py-3 text-white flex items-center justify-between border-b border-slate-200">
           <div className="flex items-center gap-2">
             <CalendarDays className="h-4 w-4 text-amber-300" />
             <span className="text-xs font-black tracking-wide uppercase">
@@ -174,16 +182,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
         </div>
 
         <div className="overflow-x-auto w-full">
-          <div className="min-w-[900px] flex border-b-2 border-slate-900 bg-amber-50 text-[11px] font-black text-slate-900 uppercase">
+          <div className="sticky top-0 z-10 min-w-[900px] flex border-b border-slate-200 bg-amber-50 text-[11px] font-black text-slate-900 uppercase">
             {/* Time gutter header */}
-            <div className="w-20 shrink-0 p-3 border-r-2 border-slate-900 text-center">
+            <div className="sticky left-0 z-20 w-20 shrink-0 p-3 border-r border-slate-200 bg-amber-50 text-center">
               Waktu
             </div>
             {/* Lab column headers */}
             {displayedLabs.map((lab) => (
               <div
                 key={lab.id}
-                className="flex-1 p-3 border-r-2 border-slate-900 last:border-r-0 flex flex-col justify-center text-center"
+                className="flex-1 p-3 border-r border-slate-200 last:border-r-0 flex flex-col justify-center text-center"
               >
                 <span className="text-xs font-black text-slate-950 truncate">{lab.name}</span>
                 <span className="text-[10px] text-slate-600 font-bold truncate">
@@ -203,7 +211,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
               return (
                 <div key={hour} className="flex min-h-[64px]">
                   {/* Time label column */}
-                  <div className="w-20 shrink-0 p-2.5 border-r-2 border-slate-900 text-center bg-slate-50 flex items-start justify-center">
+                  <div className="sticky left-0 z-10 w-20 shrink-0 p-2.5 border-r border-slate-200 text-center bg-slate-50 flex items-start justify-center">
                     <span className="text-[11px] font-black text-slate-700">
                       {hourStr}:00
                     </span>
@@ -220,7 +228,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                     return (
                       <div
                         key={lab.id}
-                        className="flex-1 p-1 border-r-2 border-slate-900 last:border-r-0 relative hover:bg-blue-50/40 transition-colors group"
+                        className="flex-1 p-1 border-r border-slate-200 last:border-r-0 relative hover:bg-blue-50 transition-colors group"
                       >
                         {matchedBookings.length > 0 ? (
                           matchedBookings.map((b, idx) => {
@@ -241,7 +249,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                                     labLocation: lab.location,
                                   })
                                 }
-                                className={`w-full rounded-md border-2 px-2.5 py-1.5 shadow-[2px_2px_0px_0px_#0f172a] cursor-pointer transition-all hover:-translate-y-0.5 hover:shadow-[3px_3px_0px_0px_#0f172a] ${colorClass}`}
+                                className={`w-full rounded-md border px-2.5 py-1.5 shadow-sm cursor-pointer transition-colors ${colorClass}`}
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="text-[11px] font-black truncate">
@@ -282,11 +290,11 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
       {/* ── 3. Google Calendar Event Detail Modal / Slide-in ── */}
       {activeEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-          <div className="neo-card max-w-md w-full bg-white p-6 shadow-[5px_5px_0px_0px_#0f172a] border-2 border-slate-900 animate-in zoom-in-95">
+          <div className="neo-card max-w-md w-full bg-white p-6 shadow-sm border border-slate-200 animate-in zoom-in-95">
             {/* Modal Header */}
-            <div className="flex items-start justify-between pb-3 border-b-2 border-slate-900">
+            <div className="flex items-start justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-lg bg-amber-300 border-2 border-slate-900 shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                <div className="p-2 rounded-lg bg-amber-300 border border-slate-200 shadow-sm">
                   <CalendarIcon className="h-4 w-4 text-slate-950" />
                 </div>
                 <div>
@@ -296,7 +304,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
               </div>
               <button
                 onClick={() => setActiveEvent(null)}
-                className="p-1 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-900"
+                className="p-1 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -313,7 +321,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                 </p>
               </div>
 
-              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border-2 border-slate-900">
+              <div className="grid grid-cols-2 gap-3 p-3 rounded-xl bg-slate-50 border border-slate-200">
                 <div>
                   <span className="text-[10px] font-bold text-slate-500 flex items-center gap-1">
                     <Building2 className="h-3 w-3" /> Ruangan Lab:

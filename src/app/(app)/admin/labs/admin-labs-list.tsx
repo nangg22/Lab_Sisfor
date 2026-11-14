@@ -136,11 +136,11 @@ export function AdminLabsList({ labs }: Props) {
                 {/* Header Row: Lab Icon + Status Pill + Kebab Dropdown */}
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 text-slate-950 font-black text-sm shadow-[1.5px_1.5px_0px_0px_#0f172a]">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-300 border border-slate-200 text-slate-950 font-black text-sm shadow-sm">
                       {lab.name.charAt(0)}
                     </div>
                     <span
-                      className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border-1.5 border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] ${
+                      className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border border-slate-200 shadow-sm ${
                         lab.isActive
                           ? 'bg-emerald-400 text-slate-950'
                           : 'bg-slate-200 text-slate-700'
@@ -171,7 +171,7 @@ export function AdminLabsList({ labs }: Props) {
                     </button>
 
                     {isMenuOpen && (
-                      <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-xl border-2 border-slate-900 bg-white py-1.5 shadow-[3px_3px_0px_0px_#0f172a] animate-in fade-in zoom-in-95">
+                      <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-xl border border-slate-200 bg-white py-1.5 shadow-sm animate-in fade-in zoom-in-95">
                         <Link
                           href={`/admin/labs/${lab.id}/edit`}
                           onClick={() => setActiveMenuId(null)}

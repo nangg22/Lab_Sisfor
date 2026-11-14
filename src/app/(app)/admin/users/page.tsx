@@ -25,6 +25,7 @@ export default async function AdminUsersPage() {
       institutionalId: users.institutionalId,
       role: users.role,
       isActive: users.isActive,
+      verificationStatus: users.verificationStatus,
       createdAt: users.createdAt,
     })
     .from(users)
@@ -64,7 +65,7 @@ export default async function AdminUsersPage() {
           { label: 'Dosen', value: totalDosen, color: 'text-purple-700 bg-purple-50' },
           { label: 'Admin', value: totalAdmin, color: 'text-red-700 bg-red-50' },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div key={s.label} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
             <p className="text-sm text-gray-500">{s.label}</p>
             <p className={`mt-2 text-3xl font-bold ${s.color} rounded-lg px-2 py-0.5 inline-block`}>
               {s.value}

@@ -27,6 +27,7 @@ export async function GET() {
       institutionalId: users.institutionalId,
       role: users.role,
       isActive: users.isActive,
+      verificationStatus: users.verificationStatus,
       createdAt: users.createdAt,
     })
     .from(users)

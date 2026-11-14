@@ -36,6 +36,11 @@ yarn-error.log*
 # vercel
 .vercel
 
+# local agent metadata
+.codex/
+.cursor/
+.gemini/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts

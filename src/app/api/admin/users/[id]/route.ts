@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { users } from '@/db/schema'
+import { users, auditLogs } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 interface Params {
@@ -31,26 +31,50 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const body = await request.json()
-  const { role, isActive } = body as { role?: string; isActive?: boolean }
+  const { role, isActive, verificationStatus, reason } = body as { role?: string; isActive?: boolean; verificationStatus?: string; reason?: string }
 
-  const validRoles = ['mahasiswa', 'dosen', 'admin']
+  const validRoles = ['mahasiswa', 'dosen', 'aslab', 'kaprodi', 'pembina_lab', 'admin']
   if (role !== undefined && !validRoles.includes(role)) {
     return NextResponse.json({ error: 'Role tidak valid' }, { status: 400 })
+  }
+  if (verificationStatus !== undefined && !['PENDING', 'ACTIVE', 'REJECTED'].includes(verificationStatus)) {
+    return NextResponse.json({ error: 'Status verifikasi tidak valid' }, { status: 400 })
+  }
+  if (verificationStatus === 'REJECTED' && !reason?.trim()) {
+    return NextResponse.json({ error: 'Alasan penolakan wajib diisi' }, { status: 400 })
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() }
   if (role !== undefined) updateData.role = role
-  if (isActive !== undefined) updateData.isActive = isActive
+  if (isActive !== undefined) {
+    updateData.isActive = isActive
+    // Mengaktifkan akun pending sekaligus menyelesaikan verifikasi akun.
+    if (isActive) updateData.verificationStatus = 'ACTIVE'
+  }
+  if (verificationStatus !== undefined) {
+    updateData.verificationStatus = verificationStatus
+    if (verificationStatus === 'ACTIVE') updateData.isActive = true
+    if (verificationStatus === 'REJECTED') updateData.isActive = false
+  }
 
   const [updated] = await db
     .update(users)
     .set(updateData)
     .where(eq(users.id, id))
-    .returning({ id: users.id, role: users.role, isActive: users.isActive })
+    .returning({ id: users.id, role: users.role, isActive: users.isActive, verificationStatus: users.verificationStatus })
 
   if (!updated) {
     return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
   }
+
+  await db.insert(auditLogs).values({
+    actorUserId: session.user.id,
+    action: verificationStatus === 'ACTIVE' ? 'USER_VERIFIED' : verificationStatus === 'REJECTED' ? 'USER_VERIFICATION_REJECTED' : role !== undefined ? 'USER_ROLE_CHANGED' : 'USER_STATUS_CHANGED',
+    targetType: 'USER',
+    targetId: id,
+    reason: reason?.trim() || null,
+    metadata: { role, isActive, verificationStatus },
+  })
 
   return NextResponse.json(updated)
 }

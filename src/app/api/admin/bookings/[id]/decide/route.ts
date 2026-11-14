@@ -1,15 +1,18 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { users, bookings, bookingApprovalActions, bookingStatusHistory, laboratories, notifications } from '@/db/schema'
+import { auditLogs, users, bookings, bookingApprovalActions, bookingStatusHistory, laboratories, notifications } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
+import { hasPermission } from '@/lib/permissions'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth()
   if (!session?.user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const [currentUser] = await db.select({ role: users.role }).from(users).where(eq(users.id, session.user.id)).limit(1)
-  if (currentUser?.role !== 'admin') return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  const [currentUser] = await db.select({ role: users.role, isActive: users.isActive }).from(users).where(eq(users.id, session.user.id)).limit(1)
+  if (!currentUser?.isActive || !hasPermission(currentUser.role, 'booking:approve')) {
+    return NextResponse.json({ error: 'Anda tidak memiliki kewenangan memproses pengajuan.' }, { status: 403 })
+  }
 
   const { id } = await params
   const { decision, reason } = await request.json()
@@ -25,27 +28,64 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   if (!booking) return NextResponse.json({ error: 'Pengajuan tidak ditemukan.' }, { status: 404 })
   if (booking.status !== 'PENDING') return NextResponse.json({ error: 'Pengajuan sudah diproses.' }, { status: 400 })
 
-  // Cek konflik jadwal saat approve (BR-004, CON-017)
+  // Conflict check saat APPROVE
   if (decision === 'APPROVED') {
     const conflicts = await db
       .select({ id: bookings.id, startTime: bookings.startTime, endTime: bookings.endTime })
       .from(bookings)
-      .where(and(eq(bookings.laboratoryId, booking.laboratoryId), eq(bookings.bookingDate, booking.bookingDate), eq(bookings.status, 'APPROVED')))
+      .where(
+        and(
+          eq(bookings.laboratoryId, booking.laboratoryId),
+          eq(bookings.bookingDate, booking.bookingDate),
+          eq(bookings.status, 'APPROVED')
+        )
+      )
 
     const hasConflict = conflicts.some(
       (c) => booking.startTime < c.endTime && booking.endTime > c.startTime && c.id !== id
     )
-
     if (hasConflict) {
-      return NextResponse.json({ error: 'Konflik jadwal: ada peminjaman lain yang sudah disetujui pada waktu tersebut.' }, { status: 409 })
+      return NextResponse.json(
+        { error: 'Konflik jadwal: ada peminjaman lain yang sudah disetujui pada waktu tersebut.' },
+        { status: 409 }
+      )
     }
   }
 
-  await db.update(bookings).set({ status: decision }).where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
-  await db.insert(bookingApprovalActions).values({ bookingId: id, approverUserId: session.user.id, decision, reason: reason?.trim() || null })
-  await db.insert(bookingStatusHistory).values({ bookingId: id, oldStatus: 'PENDING', newStatus: decision, changedByUserId: session.user.id, reason: reason?.trim() || null })
+  // Update status — WHERE status = 'PENDING' sebagai atomic guard
+  // Jika dua admin approve bersamaan, hanya satu yang akan berhasil update.
+  const updated = await db
+    .update(bookings)
+    .set({ status: decision })
+    .where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
+    .returning({ id: bookings.id })
 
-  // Ambil nama lab untuk isi notifikasi
+  if (updated.length === 0) {
+    return NextResponse.json({ error: 'Pengajuan sudah diproses oleh admin lain.' }, { status: 400 })
+  }
+
+  await db.insert(bookingApprovalActions).values({
+    bookingId: id,
+    approverUserId: session.user.id,
+    decision,
+    reason: reason?.trim() || null,
+  })
+  await db.insert(bookingStatusHistory).values({
+    bookingId: id,
+    oldStatus: 'PENDING',
+    newStatus: decision,
+    changedByUserId: session.user.id,
+    reason: reason?.trim() || null,
+  })
+  await db.insert(auditLogs).values({
+    actorUserId: session.user.id,
+    action: decision === 'APPROVED' ? 'BOOKING_APPROVED' : 'BOOKING_REJECTED',
+    targetType: 'BOOKING',
+    targetId: id,
+    reason: reason?.trim() || null,
+    metadata: { laboratoryId: booking.laboratoryId, bookingDate: booking.bookingDate, startTime: booking.startTime, endTime: booking.endTime },
+  })
+
   const [lab] = await db
     .select({ name: laboratories.name })
     .from(laboratories)
@@ -55,7 +95,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
   const labName = lab?.name || 'Laboratorium'
   const isApproved = decision === 'APPROVED'
 
-  // Kirim notifikasi in-app ke pemohon
   await db.insert(notifications).values({
     userId: booking.userId,
     title: isApproved ? 'Pengajuan Peminjaman Disetujui' : 'Pengajuan Peminjaman Ditolak',

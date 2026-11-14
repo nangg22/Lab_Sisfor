@@ -98,7 +98,7 @@ export function LabForm({ mode, lab }: Props) {
     <div className="neo-card bg-white p-6">
       {/* Card Header */}
       <div className="flex items-center gap-3 mb-6 pb-4 border-b-2 border-slate-100">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-400 border border-slate-200 shadow-sm">
           <FlaskConical className="h-5 w-5 text-slate-900" strokeWidth={2.5} />
         </div>
         <div>
@@ -113,12 +113,12 @@ export function LabForm({ mode, lab }: Props) {
 
       {/* Alerts */}
       {serverError && (
-        <div className="mb-5 rounded-xl bg-red-50 border-2 border-red-400 px-4 py-3 text-sm font-bold text-red-700 shadow-[2px_2px_0px_0px_theme(colors.red.400)]">
+        <div className="mb-5 rounded-xl bg-red-50 border border-red-400 px-4 py-3 text-sm font-bold text-red-700 shadow-sm">
           ⚠ {serverError}
         </div>
       )}
       {saved && (
-        <div className="mb-5 rounded-xl bg-emerald-50 border-2 border-emerald-500 px-4 py-3 text-sm font-bold text-emerald-700 shadow-[2px_2px_0px_0px_theme(colors.emerald.500)]">
+        <div className="mb-5 rounded-xl bg-emerald-50 border border-emerald-500 px-4 py-3 text-sm font-bold text-emerald-700 shadow-sm">
           ✓ Perubahan berhasil disimpan!
         </div>
       )}
@@ -134,8 +134,8 @@ export function LabForm({ mode, lab }: Props) {
             value={name}
             onChange={e => setName(e.target.value)}
             placeholder="Contoh: Lab Komputer Sisfor A"
-            className={`w-full rounded-xl border-2 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a] transition-all ${
-              errors.name ? 'border-red-500 shadow-[2px_2px_0px_0px_theme(colors.red.500)]' : 'border-slate-900'
+            className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all ${
+              errors.name ? 'border-red-500 shadow-sm' : 'border-slate-200'
             }`}
           />
           {errors.name && <p className="mt-1 text-xs font-bold text-red-600">{errors.name}</p>}
@@ -151,8 +151,8 @@ export function LabForm({ mode, lab }: Props) {
             value={location}
             onChange={e => setLocation(e.target.value)}
             placeholder="Contoh: Gedung A Lantai 2, Kampus UISI"
-            className={`w-full rounded-xl border-2 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a] transition-all ${
-              errors.location ? 'border-red-500 shadow-[2px_2px_0px_0px_theme(colors.red.500)]' : 'border-slate-900'
+            className={`w-full rounded-xl border bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all ${
+              errors.location ? 'border-red-500 shadow-sm' : 'border-slate-200'
             }`}
           />
           {errors.location && <p className="mt-1 text-xs font-bold text-red-600">{errors.location}</p>}
@@ -172,8 +172,8 @@ export function LabForm({ mode, lab }: Props) {
               value={capacity}
               onChange={e => setCapacity(e.target.value)}
               placeholder="30"
-              className={`w-32 rounded-xl border-2 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a] transition-all ${
-                errors.capacity ? 'border-red-500' : 'border-slate-900'
+              className={`w-32 rounded-xl border bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm transition-all ${
+                errors.capacity ? 'border-red-500' : 'border-slate-200'
               }`}
             />
             <span className="text-sm font-black text-slate-600">orang / kursi</span>
@@ -193,16 +193,16 @@ export function LabForm({ mode, lab }: Props) {
             value={description}
             onChange={e => setDescription(e.target.value)}
             placeholder="Deskripsikan fungsi utama lab, peralatan utama, aturan penggunaan, atau catatan khusus untuk peminjam..."
-            className="w-full rounded-xl border-2 border-slate-900 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a] resize-none transition-all"
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm resize-none transition-all"
           />
           <p className="mt-1 text-xs font-bold text-slate-400">{description.length} / 500 karakter</p>
         </div>
 
         {/* Status Toggle */}
-        <div className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all ${
+        <div className={`flex items-center justify-between p-4 rounded-xl border transition-all ${
           isActive
-            ? 'border-emerald-500 bg-emerald-50 shadow-[2px_2px_0px_0px_theme(colors.emerald.500)]'
-            : 'border-amber-500 bg-amber-50 shadow-[2px_2px_0px_0px_theme(colors.amber.500)]'
+            ? 'border-emerald-500 bg-emerald-50 shadow-sm'
+            : 'border-amber-500 bg-amber-50 shadow-sm'
         }`}>
           <div>
             <p className="text-sm font-black text-slate-900">Status Lab</p>
@@ -230,7 +230,7 @@ export function LabForm({ mode, lab }: Props) {
           <button
             type="button"
             onClick={() => router.back()}
-            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border-2 border-slate-900 bg-white px-4 py-2.5 text-sm font-black text-slate-800 hover:bg-slate-100 transition-colors shadow-[2px_2px_0px_0px_#0f172a]"
+            className="flex-1 inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-black text-slate-800 hover:bg-slate-100 transition-colors shadow-sm"
           >
             <ArrowLeft className="h-4 w-4" />
             Kembali

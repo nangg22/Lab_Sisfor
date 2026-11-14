@@ -19,7 +19,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const [user] = await db
           .select()
           .from(users)
-          .where(eq(users.email, credentials.email as string))
+          .where(eq(users.email, String(credentials.email).toLowerCase().trim()))
           .limit(1)
 
         if (!user) return null
@@ -30,6 +30,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         )
 
         if (!passwordMatch) return null
+
+        // Fix #2: Tolak user yang sudah dinonaktifkan
+        if (!user.isActive || user.verificationStatus !== 'ACTIVE') return null
 
         return {
           id: user.id,

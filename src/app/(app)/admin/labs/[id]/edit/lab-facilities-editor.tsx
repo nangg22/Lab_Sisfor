@@ -113,7 +113,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <div className="flex items-center gap-2.5">
-          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
+          <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 border border-slate-200 shadow-sm">
             <Layers className="h-4 w-4 text-white" strokeWidth={2.5} />
           </div>
           <div>
@@ -138,7 +138,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
 
       {/* Global error */}
       {error && (
-        <div className="mb-4 rounded-lg bg-red-50 border-2 border-red-400 px-4 py-2.5 text-sm font-bold text-red-700">
+        <div className="mb-4 rounded-lg bg-red-50 border border-red-400 px-4 py-2.5 text-sm font-bold text-red-700">
           {error}
         </div>
       )}
@@ -147,7 +147,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
       {showAddForm && (
         <form
           onSubmit={handleAdd}
-          className="mb-5 rounded-xl border-2 border-dashed border-blue-400 bg-blue-50 p-4 space-y-3"
+          className="mb-5 rounded-xl border border-dashed border-blue-400 bg-blue-50 p-4 space-y-3"
         >
           <p className="text-xs font-black text-blue-700 uppercase tracking-wider">+ Fasilitas Baru</p>
           {addError && (
@@ -161,7 +161,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                 onChange={e => setAddName(e.target.value)}
                 placeholder="Contoh: PC Core i7, Proyektor"
                 required
-                className="w-full rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a]"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               />
             </div>
             <div className="sm:col-span-3">
@@ -172,7 +172,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                 onChange={e => setAddQty(e.target.value)}
                 placeholder="30"
                 min="1"
-                className="w-full rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a]"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               />
             </div>
             <div className="sm:col-span-4">
@@ -181,7 +181,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                 value={addDetails}
                 onChange={e => setAddDetails(e.target.value)}
                 placeholder="RAM 16GB, SSD 512GB"
-                className="w-full rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-[2px_2px_0px_0px_#0f172a]"
+                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-2 text-sm font-bold text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm"
               />
             </div>
           </div>
@@ -189,7 +189,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
             <button
               type="button"
               onClick={() => { setShowAddForm(false); setAddError(null) }}
-              className="px-4 py-1.5 text-xs font-black rounded-lg border-2 border-slate-900 text-slate-700 hover:bg-slate-100 transition-colors"
+              className="px-4 py-1.5 text-xs font-black rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors"
             >
               Batal
             </button>
@@ -207,7 +207,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
       {/* Facilities list */}
       <div className="space-y-2">
         {facilities.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-10 text-center border-2 border-dashed border-slate-200 rounded-xl">
+          <div className="flex flex-col items-center justify-center py-10 text-center border border-dashed border-slate-200 rounded-xl">
             <PackageOpen className="h-9 w-9 text-slate-300 mb-2" strokeWidth={1.5} />
             <p className="text-sm font-black text-slate-500">Belum ada fasilitas terdaftar.</p>
             <p className="text-xs font-bold text-slate-400 mt-0.5">Klik tombol "Tambah" untuk menambahkan.</p>
@@ -220,9 +220,9 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
             return (
               <div
                 key={f.id}
-                className={`rounded-xl border-2 transition-all ${
+                className={`rounded-xl border transition-all ${
                   isEditing
-                    ? 'border-blue-500 bg-blue-50 shadow-[2px_2px_0px_0px_theme(colors.blue.500)]'
+                    ? 'border-blue-500 bg-blue-50 shadow-sm'
                     : 'border-slate-200 bg-white hover:border-slate-400'
                 } p-3`}
               >
@@ -236,7 +236,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                           autoFocus
                           value={editName}
                           onChange={e => setEditName(e.target.value)}
-                          className="w-full rounded-lg border-2 border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="w-full rounded-lg border border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                       </div>
                       <div className="sm:col-span-3">
@@ -246,7 +246,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                           min="1"
                           value={editQty}
                           onChange={e => setEditQty(e.target.value)}
-                          className="w-full rounded-lg border-2 border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="w-full rounded-lg border border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                       </div>
                       <div className="sm:col-span-4">
@@ -254,7 +254,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                         <input
                           value={editDetails}
                           onChange={e => setEditDetails(e.target.value)}
-                          className="w-full rounded-lg border-2 border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
+                          className="w-full rounded-lg border border-blue-500 bg-white px-2.5 py-1.5 text-sm font-bold text-slate-900 focus:outline-none focus:ring-2 focus:ring-blue-400"
                         />
                       </div>
                     </div>
@@ -262,7 +262,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                       <button
                         type="button"
                         onClick={cancelEdit}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg border-2 border-slate-900 text-slate-700 hover:bg-slate-100 transition-colors"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg border border-slate-200 text-slate-700 hover:bg-slate-100 transition-colors"
                       >
                         <X className="h-3 w-3" /> Batal
                       </button>
@@ -270,7 +270,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                         type="button"
                         disabled={saving}
                         onClick={() => handleSaveEdit(f.id)}
-                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg border-2 border-blue-700 bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-[2px_2px_0px_0px_#1e3a8a] disabled:opacity-60"
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-black rounded-lg border border-blue-700 bg-blue-600 text-white hover:bg-blue-700 transition-colors shadow-sm disabled:opacity-60"
                       >
                         <Check className="h-3 w-3" /> {saving ? 'Menyimpan...' : 'Simpan'}
                       </button>

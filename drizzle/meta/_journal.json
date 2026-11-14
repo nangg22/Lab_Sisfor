@@ -1,0 +1,20 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1794674636721,
+      "tag": "0000_brief_metal_master",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1794676152971,
+      "tag": "0001_unique_thundra",
+      "breakpoints": true
+    }
+  ]
+}

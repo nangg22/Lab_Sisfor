@@ -1,19 +1,26 @@
 'use client'
 
-import { useState } from 'react'
+import '../auth.css'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FlaskConical, LogIn, AlertCircle } from 'lucide-react'
+import { FlaskConical, LogIn, AlertCircle, Eye, EyeOff, Mail, Lock } from 'lucide-react'
 
 export default function LoginPage() {
   const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPassword, setShowPassword] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // rAF ensures the class is added after first paint so transition fires
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault()
@@ -37,69 +44,128 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-16">
-      <div className="w-full max-w-sm">
-        {/* Logo + Heading */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
-            <FlaskConical className="h-7 w-7 text-white" strokeWidth={2} />
+    <div className="auth-page">
+      {/* Subtle decorative blobs */}
+      <div className="auth-bg-blob auth-bg-blob-1" aria-hidden="true" />
+      <div className="auth-bg-blob auth-bg-blob-2" aria-hidden="true" />
+      <div className="auth-bg-blob auth-bg-blob-3" aria-hidden="true" />
+      <div className="auth-bg-grid"              aria-hidden="true" />
+
+      <div className={`auth-wrap ${mounted ? 'auth-wrap--in' : ''}`}>
+
+        {/* ── Logo ── */}
+        <div className="auth-logo" aria-label="SIP-Lab Sisfor">
+          <div className="auth-logo-icon" aria-hidden="true">
+            <FlaskConical className="h-7 w-7 text-slate-900" strokeWidth={2.5} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            SIP-Lab Sisfor
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            Sistem Informasi Peminjaman Laboratorium
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Prodi Sistem Informasi · UISI
-          </p>
+          <div style={{ textAlign: 'center' }}>
+            <p className="auth-logo-title">SIP-Lab Sisfor</p>
+            <p className="auth-logo-sub">Sistem Informasi Peminjaman Laboratorium</p>
+            <span className="auth-logo-badge">Prodi Sistem Informasi · UISI</span>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="glass-card rounded-2xl p-8">
-          <h2 className="mb-6 text-[17px] font-semibold text-slate-900 tracking-tight">
-            Masuk ke akun Anda
-          </h2>
+        {/* ── Card ── */}
+        <div className="auth-card">
+          <div className="auth-card-stripe" aria-hidden="true" />
 
-          {error && (
-            <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />
-              {error}
-            </div>
-          )}
+          <div className="auth-card-body">
+            <h1 className="auth-card-heading">Masuk ke Akun</h1>
+            <p className="auth-card-description">
+              Kelola pengajuan dan jadwal peminjaman laboratorium Anda.
+            </p>
 
-          <form onSubmit={handleLogin} className="flex flex-col gap-4">
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@email.com"
-              required
-              autoComplete="email"
-            />
-            <Input
-              label="Kata Sandi"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              required
-              autoComplete="current-password"
-            />
-            <Button type="submit" loading={loading} className="w-full mt-2" size="lg">
-              <LogIn className="h-4 w-4 mr-2" strokeWidth={2} />
-              Masuk
-            </Button>
-          </form>
+            {error && (
+              <div id="login-error" className="auth-error" role="alert" aria-live="polite">
+                <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                <span>{error}</span>
+              </div>
+            )}
 
-          <p className="mt-6 text-center text-sm text-slate-500">
+            <form onSubmit={handleLogin} className="auth-form" noValidate>
+              {/* Email */}
+              <div className="auth-field">
+                <label htmlFor="email" className="auth-label">
+                  Email <span className="auth-required" aria-hidden="true">*</span>
+                </label>
+                <div className="auth-input-wrap">
+                  <Mail className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nama@email.com"
+                    required
+                    autoComplete="email"
+                    className="auth-input"
+                    aria-required="true"
+                    aria-describedby={error ? 'login-error' : undefined}
+                    aria-invalid={Boolean(error)}
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="auth-field">
+                <label htmlFor="password" className="auth-label">
+                  Kata Sandi <span className="auth-required" aria-hidden="true">*</span>
+                </label>
+                <div className="auth-input-wrap">
+                  <Lock className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    autoComplete="current-password"
+                    className="auth-input auth-input--password"
+                    aria-required="true"
+                    aria-describedby={error ? 'login-error' : undefined}
+                    aria-invalid={Boolean(error)}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="auth-eye-btn"
+                    aria-label={showPassword ? 'Sembunyikan kata sandi' : 'Tampilkan kata sandi'}
+                  >
+                    {showPassword
+                      ? <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      : <Eye    className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="auth-submit-wrap">
+                <button type="submit" disabled={loading} className="auth-submit">
+                  {loading ? (
+                    <>
+                      <span className="auth-spinner" aria-hidden="true" />
+                      Memproses…
+                    </>
+                  ) : (
+                    <>
+                      <LogIn className="h-4 w-4" aria-hidden="true" />
+                      Masuk
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="auth-card-footer">
             Belum punya akun?{' '}
-            <Link href="/auth/register" className="font-semibold text-blue-600 hover:text-blue-700">
+            <Link href="/auth/register" className="auth-link">
               Daftar di sini
             </Link>
-          </p>
+          </div>
         </div>
+
       </div>
     </div>
   )

@@ -62,13 +62,13 @@ export default async function EditLabPage({ params }: Props) {
 
       {/* Page Title */}
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] text-slate-900 font-black text-lg">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400 border border-slate-200 shadow-sm text-slate-900 font-black text-lg">
           {lab.name.charAt(0)}
         </div>
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
             <h1 className="text-xl font-black text-slate-900 tracking-tight">{lab.name}</h1>
-            <span className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border-2 border-slate-900 shadow-[1px_1px_0px_0px_#0f172a] ${
+            <span className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border border-slate-200 shadow-sm ${
               lab.isActive ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'
             }`}>
               <span className={`h-1.5 w-1.5 rounded-full ${lab.isActive ? 'bg-slate-950' : 'bg-slate-500'}`} />
@@ -130,7 +130,7 @@ export default async function EditLabPage({ params }: Props) {
       </div>
 
       {/* Danger Zone */}
-      <div className="neo-card bg-white border-rose-500 p-5" style={{ borderColor: '#f43f5e', boxShadow: '3px 3px 0 0 #f43f5e' }}>
+      <div className="neo-card bg-white border-rose-500 p-5" style={{ borderColor: '#f43f5e', boxShadow: '0 4px 10px rgba(244, 63, 94, 0.12)' }}>
         <h3 className="text-sm font-black text-rose-700 mb-1">Zona Berbahaya</h3>
         <p className="text-xs font-bold text-slate-600 mb-4">
           Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus untuk mencegah kehilangan data.
@@ -138,7 +138,7 @@ export default async function EditLabPage({ params }: Props) {
         <div className="flex gap-3">
           <Link
             href="/admin/labs"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border-2 border-rose-600 text-rose-600 hover:bg-rose-50 transition-colors"
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border border-rose-600 text-rose-600 hover:bg-rose-50 transition-colors"
           >
             Hapus Ruangan Ini →
           </Link>

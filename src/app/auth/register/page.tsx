@@ -1,24 +1,33 @@
 'use client'
 
-import { useState } from 'react'
+import '../auth.css'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { FlaskConical, UserPlus, AlertCircle, GraduationCap, Briefcase } from 'lucide-react'
+import {
+  FlaskConical, UserPlus, AlertCircle,
+  GraduationCap, Briefcase, Eye, EyeOff,
+  Mail, Lock, User, Hash,
+} from 'lucide-react'
 
 type Role = 'mahasiswa' | 'dosen'
 
 export default function RegisterPage() {
   const router = useRouter()
-  const [fullName, setFullName] = useState('')
+  const [fullName, setFullName]             = useState('')
   const [institutionalId, setInstitutionalId] = useState('')
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [role, setRole] = useState<Role>('mahasiswa')
-  const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState(false)
+  const [email, setEmail]                   = useState('')
+  const [password, setPassword]             = useState('')
+  const [showPassword, setShowPassword]     = useState(false)
+  const [role, setRole]                     = useState<Role>('mahasiswa')
+  const [error, setError]                   = useState<string | null>(null)
+  const [loading, setLoading]               = useState(false)
+  const [mounted, setMounted]               = useState(false)
+
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setMounted(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
@@ -42,134 +51,194 @@ export default function RegisterPage() {
       return
     }
 
-    const result = await signIn('credentials', { email, password, redirect: false })
-    if (result?.error) {
-      setError('Akun dibuat. Silakan login manual.')
-      setLoading(false)
-      return
-    }
-
-    router.push('/dashboard')
+    router.push('/auth/login?registered=pending')
     router.refresh()
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-4 py-16">
-      <div className="w-full max-w-md">
-        {/* Logo + Heading */}
-        <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-indigo-500 via-blue-600 to-cyan-500 shadow-lg shadow-blue-500/30">
-            <FlaskConical className="h-7 w-7 text-white" strokeWidth={2} />
+    <div className="auth-page">
+      <div className="auth-bg-blob auth-bg-blob-1" aria-hidden="true" />
+      <div className="auth-bg-blob auth-bg-blob-2" aria-hidden="true" />
+      <div className="auth-bg-blob auth-bg-blob-3" aria-hidden="true" />
+      <div className="auth-bg-grid"              aria-hidden="true" />
+
+      <div className={`auth-wrap ${mounted ? 'auth-wrap--in' : ''}`} style={{ maxWidth: '440px' }}>
+
+        {/* ── Logo ── */}
+        <div className="auth-logo">
+          <div className="auth-logo-icon" aria-hidden="true">
+            <FlaskConical className="h-7 w-7 text-slate-900" strokeWidth={2.5} />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-            SIP-Lab Sisfor
-          </h1>
-          <p className="mt-1.5 text-sm text-slate-500">
-            Daftar akun baru peminjaman lab
-          </p>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Prodi Sistem Informasi · UISI
-          </p>
+          <div style={{ textAlign: 'center' }}>
+            <p className="auth-logo-title">SIP-Lab Sisfor</p>
+            <p className="auth-logo-sub">Daftar akun baru peminjaman lab</p>
+            <span className="auth-logo-badge">Prodi Sistem Informasi · UISI</span>
+          </div>
         </div>
 
-        {/* Card */}
-        <div className="glass-card rounded-2xl p-8">
-          <h2 className="mb-6 text-[17px] font-semibold text-slate-900 tracking-tight">
-            Buat Akun Anda
-          </h2>
+        {/* ── Card ── */}
+        <div className="auth-card">
+          <div className="auth-card-stripe" aria-hidden="true" />
 
-          {error && (
-            <div className="mb-5 flex items-center gap-2.5 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
-              <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />
-              {error}
-            </div>
-          )}
+          <div className="auth-card-body">
+            <h1 className="auth-card-heading">Buat Akun</h1>
 
-          <form onSubmit={handleRegister} className="flex flex-col gap-4">
-            <Input
-              label="Nama Lengkap"
-              type="text"
-              value={fullName}
-              onChange={(e) => setFullName(e.target.value)}
-              placeholder="Contoh: Danang Praja"
-              required
-            />
+            {error && (
+              <div className="auth-error" role="alert">
+                <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} aria-hidden="true" />
+                <span>{error}</span>
+              </div>
+            )}
 
-            <div className="flex flex-col gap-1.5">
-              <label className="text-xs font-semibold text-slate-700 uppercase tracking-wide">
-                Peran <span className="text-rose-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-2.5">
-                {[
-                  { id: 'mahasiswa', label: 'Mahasiswa', icon: GraduationCap },
-                  { id: 'dosen', label: 'Dosen', icon: Briefcase },
-                ].map((item) => {
-                  const Icon = item.icon
-                  const isChecked = role === item.id
-                  return (
+            <form onSubmit={handleRegister} className="auth-form" noValidate>
+
+              {/* Nama Lengkap */}
+              <div className="auth-field">
+                <label htmlFor="fullName" className="auth-label">
+                  Nama Lengkap <span className="auth-required" aria-hidden="true">*</span>
+                </label>
+                <div className="auth-input-wrap">
+                  <User className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="fullName"
+                    type="text"
+                    value={fullName}
+                    onChange={(e) => setFullName(e.target.value)}
+                    placeholder="Contoh: Danang Praja"
+                    required
+                    className="auth-input"
+                  />
+                </div>
+              </div>
+
+              {/* Role */}
+              <div className="auth-field">
+                <span className="auth-label" id="role-label">
+                  Peran <span className="auth-required" aria-hidden="true">*</span>
+                </span>
+                <div className="auth-role-grid" role="radiogroup" aria-labelledby="role-label">
+                  {([
+                    { id: 'mahasiswa', label: 'Mahasiswa', Icon: GraduationCap },
+                    { id: 'dosen',     label: 'Dosen',      Icon: Briefcase },
+                  ] as const).map(({ id, label, Icon }) => (
                     <label
-                      key={item.id}
-                      className={`flex cursor-pointer items-center justify-center gap-2 rounded-xl border py-2.5 px-3 text-xs font-semibold transition-all ${
-                        isChecked
-                          ? 'border-blue-500 bg-blue-50/80 text-blue-700 shadow-sm'
-                          : 'border-white/80 bg-white/50 text-slate-600 hover:bg-white hover:border-slate-300'
-                      }`}
+                      key={id}
+                      className={`auth-role-option${role === id ? ' auth-role-option--active' : ''}`}
                     >
                       <input
                         type="radio"
                         name="role"
-                        value={item.id}
-                        checked={isChecked}
-                        onChange={() => setRole(item.id as Role)}
+                        value={id}
+                        checked={role === id}
+                        onChange={() => setRole(id)}
                         className="sr-only"
                       />
-                      <Icon className="h-4 w-4" strokeWidth={2} />
-                      <span>{item.label}</span>
+                      <Icon className="h-3.5 w-3.5" aria-hidden="true" />
+                      {label}
                     </label>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
-            </div>
 
-            <Input
-              label={role === 'mahasiswa' ? 'NIM' : 'NIP'}
-              type="text"
-              value={institutionalId}
-              onChange={(e) => setInstitutionalId(e.target.value)}
-              placeholder={role === 'mahasiswa' ? 'Contoh: 3012110001' : 'Contoh: 19800101...'}
-              hint="Opsional"
-            />
-            <Input
-              label="Email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="nama@uisi.ac.id"
-              required
-              autoComplete="email"
-            />
-            <Input
-              label="Kata Sandi"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="Minimal 8 karakter"
-              required
-              hint="Minimal 8 karakter"
-            />
-            <Button type="submit" loading={loading} className="w-full mt-2" size="lg">
-              <UserPlus className="h-4 w-4 mr-2" strokeWidth={2} />
-              Daftar Sekarang
-            </Button>
-          </form>
+              {/* NIM / NIP */}
+              <div className="auth-field">
+                <label htmlFor="instId" className="auth-label">
+                  {role === 'mahasiswa' ? 'NIM' : 'NIP'}
+                  <span style={{ marginLeft: '4px', fontWeight: 600, fontSize: '0.68rem', color: '#64748b', textTransform: 'none' }}>
+                    (Wajib)
+                  </span>
+                </label>
+                <div className="auth-input-wrap">
+                  <Hash className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="instId"
+                    type="text"
+                    value={institutionalId}
+                    onChange={(e) => setInstitutionalId(e.target.value)}
+                    placeholder={role === 'mahasiswa' ? '3012110001' : '19800101…'}
+                    className="auth-input"
+                  />
+                </div>
+              </div>
 
-          <p className="mt-6 text-center text-sm text-slate-500">
+              {/* Email */}
+              <div className="auth-field">
+                <label htmlFor="email" className="auth-label">
+                  Email <span className="auth-required" aria-hidden="true">*</span>
+                </label>
+                <div className="auth-input-wrap">
+                  <Mail className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="email"
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="nama@uisi.ac.id"
+                    required
+                    autoComplete="email"
+                    className="auth-input"
+                  />
+                </div>
+              </div>
+
+              {/* Password */}
+              <div className="auth-field">
+                <label htmlFor="password" className="auth-label">
+                  Kata Sandi <span className="auth-required" aria-hidden="true">*</span>
+                </label>
+                <div className="auth-input-wrap">
+                  <Lock className="auth-input-icon" aria-hidden="true" />
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="Minimal 8 karakter"
+                    required
+                    autoComplete="new-password"
+                    className="auth-input auth-input--password"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((v) => !v)}
+                    className="auth-eye-btn"
+                    aria-label={showPassword ? 'Sembunyikan' : 'Tampilkan'}
+                  >
+                    {showPassword
+                      ? <EyeOff className="h-4 w-4" aria-hidden="true" />
+                      : <Eye    className="h-4 w-4" aria-hidden="true" />}
+                  </button>
+                </div>
+                <p className="auth-field-hint">Minimal 8 karakter</p>
+              </div>
+
+              {/* Submit */}
+              <div className="auth-submit-wrap">
+                <button type="submit" disabled={loading} className="auth-submit">
+                  {loading ? (
+                    <>
+                      <span className="auth-spinner" aria-hidden="true" />
+                      Memproses…
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="h-4 w-4" aria-hidden="true" />
+                      Daftar Sekarang
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="auth-card-footer">
             Sudah punya akun?{' '}
-            <Link href="/auth/login" className="font-semibold text-blue-600 hover:text-blue-700">
+            <Link href="/auth/login" className="auth-link">
               Masuk di sini
             </Link>
-          </p>
+          </div>
         </div>
+
       </div>
     </div>
   )

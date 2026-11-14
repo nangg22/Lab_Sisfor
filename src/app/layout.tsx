@@ -13,6 +13,7 @@ export const metadata: Metadata = {
   title: 'SIP-Lab Sisfor — Sistem Informasi Peminjaman Laboratorium',
   description:
     'Sistem Informasi Peminjaman Laboratorium Program Studi Sistem Informasi UISI',
+  robots: { index: false, follow: false },
 }
 
 export default function RootLayout({

@@ -46,7 +46,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         <Header isAdmin={isAdmin} />
 
         {/* Content Container */}
-        <main className="flex-1 p-6 md:p-8">
+        <main className="flex-1 p-4 md:p-8 pb-28 md:pb-8">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>

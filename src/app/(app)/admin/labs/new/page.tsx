@@ -26,7 +26,7 @@ export default async function NewLabPage() {
 
       {/* Page Header */}
       <div className="flex items-center gap-3">
-        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a]">
+        <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-amber-400 border border-slate-200 shadow-sm">
           <FlaskConical className="h-6 w-6 text-slate-900" strokeWidth={2.5} />
         </div>
         <div>

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
 import type { RoleCode } from '@/db/schema'
+import { hasPermission } from '@/lib/permissions'
 import {
   LayoutDashboard,
   CalendarDays,
@@ -12,7 +13,7 @@ import {
   Users,
   LogOut,
   Building2,
-  Sparkles,
+  ShieldCheck,
 } from 'lucide-react'
 
 interface SidebarProps {
@@ -25,6 +26,7 @@ interface SidebarProps {
 export function Sidebar({ userName, userEmail, userRole, pendingCount }: SidebarProps) {
   const pathname = usePathname()
   const isAdmin = userRole === 'admin'
+  const canAudit = hasPermission(userRole, 'audit:read')
 
   const adminNav = [
     { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -37,6 +39,7 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     },
     { name: 'Manajemen Lab', href: '/admin/labs', icon: Building2 },
     { name: 'Pengguna', href: '/admin/users', icon: Users },
+    ...(canAudit ? [{ name: 'Audit Log', href: '/admin/audit', icon: ShieldCheck }] : []),
   ]
 
   const userNav = [
@@ -51,7 +54,15 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     },
   ]
 
-  const navigation = isAdmin ? adminNav : userNav
+  const navigation = isAdmin
+    ? adminNav
+    : canAudit
+      ? [
+          ...userNav,
+          { name: 'Pengawasan Booking', href: '/admin/bookings', icon: ClipboardList },
+          { name: 'Audit Log', href: '/admin/audit', icon: ShieldCheck },
+        ]
+      : userNav
 
   const initials = userName
     .split(' ')
@@ -61,10 +72,10 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     .toUpperCase()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-slate-900 bg-white md:flex">
+    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-slate-200 bg-white md:flex">
       {/* Brand Header */}
-      <div className="flex h-16 items-center gap-3 border-b-2 border-slate-900 px-6 bg-amber-300">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-black text-sm border-2 border-slate-900 shadow-[2px_2px_0px_0px_rgba(15,23,42,1)]">
+      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-6 bg-amber-300">
+        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-black text-sm border border-slate-200 shadow-sm">
           SL
         </div>
         <div className="min-w-0">
@@ -95,7 +106,7 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
                 href={item.href}
                 className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
                   isActive
-                    ? 'bg-blue-600 text-white border-2 border-slate-900 shadow-[2.5px_2.5px_0px_0px_#0f172a] translate-x-0.5'
+                    ? 'bg-blue-600 text-white border border-slate-200 shadow-sm translate-x-0.5'
                     : 'text-slate-700 hover:bg-slate-100 border border-transparent'
                 }`}
               >
@@ -110,10 +121,10 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
                 </div>
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
-                    className={`ml-auto inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black border border-slate-900 ${
+                    className={`ml-auto inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black border border-slate-200 ${
                       isActive
-                        ? 'bg-amber-300 text-slate-950 shadow-[1px_1px_0px_0px_#0f172a]'
-                        : 'bg-rose-500 text-white shadow-[1px_1px_0px_0px_#0f172a]'
+                        ? 'bg-amber-300 text-slate-950 shadow-sm'
+                        : 'bg-rose-500 text-white shadow-sm'
                     }`}
                   >
                     {item.badge}
@@ -126,10 +137,10 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
       </div>
 
       {/* User Profile Section at Bottom */}
-      <div className="border-t-2 border-slate-900 p-3.5 bg-slate-50">
-        <div className="flex items-center justify-between rounded-xl border-2 border-slate-900 bg-white p-2.5 shadow-[2px_2px_0px_0px_#0f172a]">
+      <div className="border-t-2 border-slate-200 p-3.5 bg-slate-50">
+        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
           <Link href="/profile" className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 text-slate-950 text-xs font-black">
+            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 border border-slate-200 text-slate-950 text-xs font-black">
               {initials}
             </div>
             <div className="min-w-0 flex-1">
@@ -140,7 +151,7 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
           <button
             onClick={() => signOut({ callbackUrl: '/auth/login' })}
             title="Keluar"
-            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-slate-900"
+            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
           >
             <LogOut className="h-4 w-4" />
           </button>

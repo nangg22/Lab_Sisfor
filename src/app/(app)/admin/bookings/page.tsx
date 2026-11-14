@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { bookings, laboratories, users } from '@/db/schema'
 import { eq, desc } from 'drizzle-orm'
 import { BookingsManagementView } from './bookings-management-view'
+import { hasPermission } from '@/lib/permissions'
 
 export default async function AdminBookingsPage({
   searchParams,
@@ -15,12 +16,12 @@ export default async function AdminBookingsPage({
   if (!session?.user) redirect('/auth/login')
 
   const [currentUser] = await db
-    .select({ role: users.role })
+    .select({ role: users.role, isActive: users.isActive })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1)
 
-  if (currentUser?.role !== 'admin') redirect('/dashboard')
+  if (!currentUser?.isActive || !hasPermission(currentUser.role, 'booking:read_all')) redirect('/dashboard')
 
   const allBookings = await db
     .select({
@@ -52,6 +53,8 @@ export default async function AdminBookingsPage({
       bookings={filtered}
       currentFilter={filterStatus}
       pendingCount={pendingCount}
+      canApprove={hasPermission(currentUser.role, 'booking:approve')}
+      viewerRole={currentUser.role}
     />
   )
 }

@@ -28,113 +28,92 @@ body {
 
 /* ═══════════════════════════════════════════════════════════════
    HYBRID DESIGN: Pop Neo-Academic + Modern Clean EdTech
-   High contrast font colors & crisp borders
 ═══════════════════════════════════════════════════════════════ */
 
-/* Pop Neo-Brutal Card with crisp 2px border & offset shadow */
 .neo-card {
   background-color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
-  transition: all 0.15s ease-in-out;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  transition: box-shadow 0.15s ease-in-out, border-color 0.15s ease-in-out;
 }
-
 .neo-card:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 4px 4px 0px 0px #0f172a;
+  border-color: #cbd5e1;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.08);
 }
-
 .neo-card-flat {
   background-color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 2.5px 2.5px 0px 0px #0f172a;
+  border: 1px solid #e2e8f0;
+  border-radius: 1rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
 }
-
-/* Accent Card variants with High-Contrast dark text */
 .neo-card-blue {
   background-color: #3b82f6;
   color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border: 1px solid #2563eb;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(37, 99, 235, 0.18);
 }
-
 .neo-card-yellow {
   background-color: #facc15;
   color: #0f172a;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border: 1px solid #eab308;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(234, 179, 8, 0.16);
 }
-
 .neo-card-green {
   background-color: #22c55e;
   color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border: 1px solid #16a34a;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(22, 163, 74, 0.16);
 }
-
 .neo-card-red {
   background-color: #ef4444;
   color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border: 1px solid #dc2626;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(220, 38, 38, 0.16);
 }
-
 .neo-card-dark {
   background-color: #0f172a;
   color: #ffffff;
-  border: 2px solid #0f172a;
-  border-radius: 14px;
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border: 1px solid #1e293b;
+  border-radius: 1rem;
+  box-shadow: 0 4px 10px rgba(15, 23, 42, 0.18);
 }
-
-/* Pop Button with Click Feel */
 .neo-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
   font-weight: 700;
-  border: 2px solid #0f172a;
-  border-radius: 10px;
-  box-shadow: 2px 2px 0px 0px #0f172a;
-  transition: all 0.1s ease;
+  border: 1px solid #cbd5e1;
+  border-radius: 0.75rem;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
+  transition: background-color 0.1s ease, border-color 0.1s ease, box-shadow 0.1s ease;
 }
-
 .neo-btn:hover {
-  transform: translate(-1px, -1px);
-  box-shadow: 3px 3px 0px 0px #0f172a;
+  border-color: #94a3b8;
+  box-shadow: 0 2px 5px rgba(15, 23, 42, 0.08);
 }
-
 .neo-btn:active {
-  transform: translate(1px, 1px);
-  box-shadow: 1px 1px 0px 0px #0f172a;
+  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
-
 .neo-btn-primary {
   background-color: #2563eb;
   color: #ffffff;
 }
-
 .neo-btn-primary:hover {
   background-color: #1d4ed8;
 }
-
 .neo-btn-white {
   background-color: #ffffff;
   color: #0f172a;
 }
-
 .neo-btn-white:hover {
   background-color: #f1f5f9;
 }
-
-/* Pop Pill Badge */
 .neo-badge {
   display: inline-flex;
   align-items: center;
@@ -142,32 +121,30 @@ body {
   font-weight: 700;
   font-size: 0.72rem;
   padding: 0.2rem 0.55rem;
-  border: 1.5px solid #0f172a;
+  border: 1px solid #cbd5e1;
   border-radius: 9999px;
-  box-shadow: 1px 1.5px 0px 0px #0f172a;
+  box-shadow: none;
   line-height: 1;
 }
-
-/* Mobile Dock Solid Container with border & shadow */
 .mobile-dock-solid {
   background-color: #ffffff;
-  border: 2px solid #0f172a;
+  border: 1px solid #e2e8f0;
   border-radius: 9999px;
-  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.25), 3px 3px 0px 0px #0f172a;
+  box-shadow: 0 10px 25px -5px rgba(15, 23, 42, 0.16);
 }
 
 /* ─── Scrollbar ─── */
-::-webkit-scrollbar {
-  width: 6px;
-  height: 6px;
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 999px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+html, body {
+  max-width: 100%;
+  overflow-x: clip; /* lebih aman dari hidden, tidak merusak position: sticky */
 }
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
-  border-radius: 999px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+
+img, svg, video, canvas {
+  max-width: 100%;
+  height: auto;
 }

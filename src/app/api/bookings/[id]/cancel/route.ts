@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { bookings, bookingStatusHistory } from '@/db/schema'
+import { auditLogs, bookings, bookingStatusHistory } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -19,6 +19,13 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   await db.update(bookings).set({ status: 'CANCELLED' }).where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
   await db.insert(bookingStatusHistory).values({ bookingId: id, oldStatus: 'PENDING', newStatus: 'CANCELLED', changedByUserId: session.user.id, reason: 'Dibatalkan oleh pemohon' })
+  await db.insert(auditLogs).values({
+    actorUserId: session.user.id,
+    action: 'BOOKING_CANCELLED',
+    targetType: 'BOOKING',
+    targetId: id,
+    reason: 'Dibatalkan oleh pemohon',
+  })
 
   return NextResponse.json({ success: true })
 }

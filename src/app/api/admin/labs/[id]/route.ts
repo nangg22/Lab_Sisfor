@@ -39,13 +39,11 @@ export async function DELETE(request: Request, { params }: { params: Promise<{ i
   const { id } = await params
 
   try {
-    // 1. Hapus fasilitas terkait lab
+    // neon-http tidak support transaksi — jalankan DELETE sequential.
+    // ON DELETE CASCADE di schema sudah handle relasi child tables,
+    // tapi laboratoryFacilities tidak punya cascade jadi dihapus manual dulu.
     await db.delete(laboratoryFacilities).where(eq(laboratoryFacilities.laboratoryId, id))
-
-    // 2. Hapus bookings terkait lab (jika ada)
     await db.delete(bookings).where(eq(bookings.laboratoryId, id))
-
-    // 3. Hapus data laboratorium
     await db.delete(laboratories).where(eq(laboratories.id, id))
 
     return NextResponse.json({ success: true })
