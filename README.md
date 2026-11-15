@@ -18,7 +18,13 @@ Sistem Informasi Peminjaman Laboratorium — Prodi Sistem Informasi, Universitas
 2. Salin PostgreSQL **Connection String** yang disediakan di dashboard.
 
 ### 2. Konfigurasi Environment Variables
-Buat atau edit file `.env.local` di folder `sip-lab/`:
+Salin `.env.example` menjadi `.env.local` di folder `sip-lab/`:
+
+```bash
+Copy-Item .env.example .env.local
+```
+
+Kemudian isi nilai rahasia di `.env.local`:
 
 ```env
 # Neon Database
@@ -28,7 +34,11 @@ DATABASE_URL=postgresql://user:password@ep-xxx.neon.tech/neondb?sslmode=require
 NEXTAUTH_SECRET=generate_dengan_openssl_rand_base64_32
 NEXTAUTH_URL=http://localhost:3000
 NEXT_PUBLIC_APP_URL=http://localhost:3000
+ADMIN_EMAIL=admin@sisfor.uisi.ac.id
+ADMIN_PASSWORD=password-admin-lokal
 ```
+
+Jangan pernah commit `.env.local`. Setiap anggota tim membuat file ini sendiri.
 
 > **Tips generate secret:** Jalankan `openssl rand -base64 32` di terminal / git bash.
 
@@ -50,8 +60,52 @@ npm run dev
 Buka [http://localhost:3000](http://localhost:3000) di browser Anda.
 
 ### 5. Membuat / Mengubah Akun Menjadi Admin
-1. Buka [http://localhost:3000/auth/register](http://localhost:3000/auth/register) dan lakukan registrasi akun.
-2. Buka **Neon SQL Editor** pada dashboard Neon, lalu jalankan query:
+Jalankan script berikut setelah `ADMIN_EMAIL` dan `ADMIN_PASSWORD` diisi:
+
+```bash
+node --env-file=.env.local src/db/create-admin.mjs
+```
+
+Script akan membuat atau memperbarui akun Admin di Neon.
+
+### 6. Workflow Kolaborasi Git
+
+```bash
+git clone https://github.com/nangg22/Lab_Sisfor.git
+cd Lab_Sisfor/sip-lab
+npm install
+Copy-Item .env.example .env.local
+```
+
+Jangan mengedit langsung branch `master`. Buat branch untuk setiap pekerjaan:
+
+```bash
+git checkout master
+git pull origin master
+git checkout -b feat/nama-fitur
+```
+
+Setelah selesai:
+
+```bash
+npx tsc --noEmit
+git add .
+git commit -m "feat: deskripsi perubahan"
+git push -u origin feat/nama-fitur
+```
+
+Buat Pull Request ke `master`, minta anggota lain melakukan review, lalu merge setelah valid.
+Sebelum mulai pekerjaan berikutnya, selalu jalankan:
+
+```bash
+git checkout master
+git pull origin master
+```
+
+> Gunakan database development terpisah untuk eksperimen. Jangan menjalankan migration atau seed ke database production tanpa persetujuan tim.
+
+### 7. Membuat Admin Manual (Alternatif)
+Jika diperlukan, buka **Neon SQL Editor** pada dashboard Neon, lalu jalankan query:
 
 ```sql
 UPDATE users SET role = 'admin' WHERE email = 'email_anda@xxx.com';

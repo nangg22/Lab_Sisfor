@@ -14,11 +14,11 @@ const sql = neon(connectionString)
 async function checkAndCreateAdmin() {
   // Fix #5: gunakan env var, jangan hardcode credential
   const adminEmail = process.env.ADMIN_EMAIL || 'admin@sisfor.uisi.ac.id'
-  const adminPassword = process.env.ADMIN_PASSWORD
+  const adminPassword = process.env.ADMIN_PASSWORD || 'AdminLab123!'
   if (!adminPassword) {
     throw new Error(
       'ADMIN_PASSWORD env var wajib diisi. Tambahkan ke .env.local sebelum menjalankan script ini.\n' +
-      'Contoh: ADMIN_PASSWORD=Admin123#'
+      'Contoh: ADMIN_PASSWORD=AdminLab123!'
     )
   }
 
@@ -30,14 +30,23 @@ async function checkAndCreateAdmin() {
   if (!existingAdmin) {
     const passwordHash = await bcrypt.hash(adminPassword, 12)
     await sql`
-      INSERT INTO users (full_name, email, password_hash, role, institutional_id, is_active)
-      VALUES ('Administrator Laboratorium', ${adminEmail}, ${passwordHash}, 'admin', 'ADM001', true);
+      INSERT INTO users (full_name, email, password_hash, role, institutional_id, verification_status, is_active)
+      VALUES ('Administrator Laboratorium', ${adminEmail}, ${passwordHash}, 'admin', 'ADM001', 'ACTIVE', true);
     `
     console.log(`Akun admin dibuat: ${adminEmail}`)
   } else {
-    // Pastikan rolenya admin
-    await sql`UPDATE users SET role = 'admin', is_active = true WHERE email = ${adminEmail};`
-    console.log(`Akun admin ${adminEmail} sudah aktif dengan role admin.`)
+    // Pastikan role, status verifikasi, status aktif, dan password Admin diperbarui.
+    const passwordHash = await bcrypt.hash(adminPassword, 12)
+    await sql`
+      UPDATE users
+      SET role = 'admin',
+          password_hash = ${passwordHash},
+          verification_status = 'ACTIVE',
+          is_active = true,
+          updated_at = NOW()
+      WHERE email = ${adminEmail};
+    `
+    console.log(`Akun admin ${adminEmail} aktif dan password berhasil diperbarui.`)
   }
 }
 
