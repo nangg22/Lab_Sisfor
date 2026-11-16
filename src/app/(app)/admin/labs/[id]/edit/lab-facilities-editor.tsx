@@ -210,7 +210,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
           <div className="flex flex-col items-center justify-center py-10 text-center border border-dashed border-slate-200 rounded-xl">
             <PackageOpen className="h-9 w-9 text-slate-300 mb-2" strokeWidth={1.5} />
             <p className="text-sm font-black text-slate-500">Belum ada fasilitas terdaftar.</p>
-            <p className="text-xs font-bold text-slate-400 mt-0.5">Klik tombol "Tambah" untuk menambahkan.</p>
+            <p className="text-xs font-bold text-slate-400 mt-0.5">Klik tombol &quot;Tambah&quot; untuk menambahkan.</p>
           </div>
         ) : (
           facilities.map(f => {

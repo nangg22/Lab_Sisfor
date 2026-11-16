@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { auditLogs, users, bookings, bookingApprovalActions, bookingStatusHistory, laboratories, notifications } from '@/db/schema'
+import { auditLogs, users, bookings, bookingApprovalActions, bookingStatusHistory, laboratories, notifications, laboratoryAssignments } from '@/db/schema'
 import { eq, and } from 'drizzle-orm'
 import { hasPermission } from '@/lib/permissions'
 
@@ -26,6 +26,10 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   const [booking] = await db.select().from(bookings).where(eq(bookings.id, id)).limit(1)
   if (!booking) return NextResponse.json({ error: 'Pengajuan tidak ditemukan.' }, { status: 404 })
+  if (currentUser.role === 'aslab') {
+    const [assignment] = await db.select({ id: laboratoryAssignments.id }).from(laboratoryAssignments).where(and(eq(laboratoryAssignments.userId, session.user.id), eq(laboratoryAssignments.laboratoryId, booking.laboratoryId))).limit(1)
+    if (!assignment) return NextResponse.json({ error: 'Anda tidak ditugaskan pada laboratorium ini.' }, { status: 403 })
+  }
   if (booking.status !== 'PENDING') return NextResponse.json({ error: 'Pengajuan sudah diproses.' }, { status: 400 })
 
   // Conflict check saat APPROVE
@@ -54,11 +58,31 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
 
   // Update status — WHERE status = 'PENDING' sebagai atomic guard
   // Jika dua admin approve bersamaan, hanya satu yang akan berhasil update.
-  const updated = await db
-    .update(bookings)
-    .set({ status: decision })
-    .where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
-    .returning({ id: bookings.id })
+  let updated: { id: string }[]
+  try {
+    updated = await db
+      .update(bookings)
+      .set({ status: decision })
+      .where(and(eq(bookings.id, id), eq(bookings.status, 'PENDING')))
+      .returning({ id: bookings.id })
+  } catch (error) {
+    // PostgreSQL exclusion constraint is the final race-safe conflict guard.
+    if (decision === 'APPROVED' && (error as { code?: string }).code === '23P01') {
+      await db.insert(auditLogs).values({
+        actorUserId: session.user.id,
+        action: 'BOOKING_APPROVAL_CONFLICT',
+        targetType: 'BOOKING',
+        targetId: id,
+        reason: 'Persetujuan ditolak karena jadwal bertabrakan dengan booking lain.',
+        metadata: { laboratoryId: booking.laboratoryId, bookingDate: booking.bookingDate, startTime: booking.startTime, endTime: booking.endTime },
+      })
+      return NextResponse.json(
+        { error: 'Konflik jadwal: booking lain telah disetujui untuk waktu tersebut.' },
+        { status: 409 }
+      )
+    }
+    throw error
+  }
 
   if (updated.length === 0) {
     return NextResponse.json({ error: 'Pengajuan sudah diproses oleh admin lain.' }, { status: 400 })

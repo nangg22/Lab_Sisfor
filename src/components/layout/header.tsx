@@ -88,9 +88,9 @@ export function Header({ isAdmin }: HeaderProps) {
   }
 
   return (
-    <header className="sticky top-0 z-20 flex h-16 w-full items-center justify-between border-b border-slate-200 bg-white px-6">
+    <header className="sticky top-0 z-20 flex min-h-16 w-full items-center justify-between gap-4 border-b border-slate-200 bg-white px-4 shadow-[0_1px_8px_rgba(15,23,42,0.04)] md:px-6">
       {/* Breadcrumbs */}
-      <nav className="flex items-center gap-1.5 text-xs text-slate-600 font-bold">
+      <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5 text-xs text-slate-600 font-bold">
         <Link href="/dashboard" className="hover:text-blue-600 transition-colors">
           Beranda
         </Link>
@@ -103,7 +103,7 @@ export function Header({ isAdmin }: HeaderProps) {
             <span key={seg} className="flex items-center gap-1.5">
               <ChevronRight className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.5} />
               {isLast ? (
-                <span className="font-black text-slate-900 capitalize">{label}</span>
+                <span className="max-w-[12rem] truncate font-black text-slate-900 capitalize">{label}</span>
               ) : (
                 <Link href={href} className="hover:text-blue-600 transition-colors capitalize">
                   {label}
@@ -115,7 +115,7 @@ export function Header({ isAdmin }: HeaderProps) {
       </nav>
 
       {/* Right Controls: Date/Time + Notifications + Action Button */}
-      <div className="flex items-center gap-4">
+      <div className="flex shrink-0 items-center gap-2 sm:gap-4">
         <div className="hidden sm:block text-xs font-bold text-slate-600 bg-slate-100 border border-slate-200 rounded-md px-2.5 py-1 shadow-sm">
           {currentDate}
         </div>

@@ -3,6 +3,7 @@ import { auth } from '@/auth'
 import { db } from '@/db'
 import { auditLogs, bookings, bookingStatusHistory, laboratories, notifications, users } from '@/db/schema'
 import { eq, and, inArray } from 'drizzle-orm'
+import { validateBookingTiming } from '@/lib/booking-rules'
 
 export async function POST(request: Request) {
   const session = await auth()
@@ -22,7 +23,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { laboratoryId, bookingDate, startTime, endTime, purpose, participantCount, notes } = body
 
-    if (!laboratoryId || !bookingDate || !startTime || !endTime || !purpose) {
+    if (!laboratoryId || !bookingDate || !startTime || !endTime || typeof purpose !== 'string') {
       return NextResponse.json({ error: 'Data tidak lengkap.' }, { status: 400 })
     }
 
@@ -33,10 +34,22 @@ export async function POST(request: Request) {
     if (endTime <= startTime) {
       return NextResponse.json({ error: 'Waktu selesai harus setelah waktu mulai.' }, { status: 400 })
     }
-    if (purpose.trim().length < 10) {
-      return NextResponse.json({ error: 'Tujuan peminjaman minimal 10 karakter.' }, { status: 400 })
+    const timingError = validateBookingTiming(bookingDate, startTime, endTime)
+    if (timingError) {
+      return NextResponse.json({ error: timingError }, { status: 400 })
     }
-    if (participantCount !== null && participantCount !== undefined && participantCount <= 0) {
+    const trimmedPurpose = purpose.trim()
+    if (trimmedPurpose.length < 15) {
+      return NextResponse.json({ error: 'Tujuan peminjaman minimal 15 karakter.' }, { status: 400 })
+    }
+    if (trimmedPurpose.length > 250) {
+      return NextResponse.json({ error: 'Tujuan peminjaman maksimal 250 karakter.' }, { status: 400 })
+    }
+    const parsedParticipantCount = participantCount === null || participantCount === undefined || participantCount === ''
+      ? null
+      : Number(participantCount)
+
+    if (parsedParticipantCount !== null && (!Number.isInteger(parsedParticipantCount) || parsedParticipantCount <= 0)) {
       return NextResponse.json({ error: 'Jumlah peserta harus lebih dari 0.' }, { status: 400 })
     }
 
@@ -51,7 +64,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Laboratorium tidak ditemukan atau sedang tidak aktif.' }, { status: 404 })
     }
 
-    if (participantCount !== null && participantCount !== undefined && Number(participantCount) > lab.capacity) {
+    if (parsedParticipantCount !== null && parsedParticipantCount > lab.capacity) {
       return NextResponse.json({ error: `Jumlah peserta melebihi kapasitas lab (${lab.capacity} orang).` }, { status: 400 })
     }
 
@@ -93,8 +106,8 @@ export async function POST(request: Request) {
         bookingDate,
         startTime,
         endTime,
-        purpose: purpose.trim(),
-        participantCount: participantCount ? parseInt(participantCount) : null,
+        purpose: trimmedPurpose,
+        participantCount: parsedParticipantCount,
         notes: notes ? notes.trim() : null,
         status: 'PENDING',
       })

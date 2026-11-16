@@ -9,7 +9,7 @@ import {
   date,
   time,
   timestamp,
-  smallint,
+  unique,
 } from 'drizzle-orm/pg-core'
 import { relations } from 'drizzle-orm'
 
@@ -63,6 +63,15 @@ export const laboratoryFacilities = pgTable('laboratory_facilities', {
   quantity: integer('quantity'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
+
+export const laboratoryAssignments = pgTable('laboratory_assignments', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  laboratoryId: uuid('laboratory_id').notNull().references(() => laboratories.id, { onDelete: 'cascade' }),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+}, (table) => ({
+  userLabUnique: unique('laboratory_assignments_user_lab_unique').on(table.userId, table.laboratoryId),
+}))
 
 // ─── BOOKINGS ─────────────────────────────────────────────────────────────────
 
@@ -141,6 +150,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   bookings: many(bookings),
   approvalActions: many(bookingApprovalActions),
   notifications: many(notifications),
+  laboratoryAssignments: many(laboratoryAssignments),
 }))
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -150,6 +160,7 @@ export const notificationsRelations = relations(notifications, ({ one }) => ({
 export const laboratoriesRelations = relations(laboratories, ({ many }) => ({
   facilities: many(laboratoryFacilities),
   bookings: many(bookings),
+  assignments: many(laboratoryAssignments),
 }))
 
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
@@ -162,12 +173,18 @@ export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   statusHistory: many(bookingStatusHistory),
 }))
 
+export const laboratoryAssignmentsRelations = relations(laboratoryAssignments, ({ one }) => ({
+  user: one(users, { fields: [laboratoryAssignments.userId], references: [users.id] }),
+  laboratory: one(laboratories, { fields: [laboratoryAssignments.laboratoryId], references: [laboratories.id] }),
+}))
+
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
 export type Laboratory = typeof laboratories.$inferSelect
 export type LaboratoryFacility = typeof laboratoryFacilities.$inferSelect
+export type LaboratoryAssignment = typeof laboratoryAssignments.$inferSelect
 export type Booking = typeof bookings.$inferSelect
 export type BookingApprovalAction = typeof bookingApprovalActions.$inferSelect
 export type BookingStatusHistory = typeof bookingStatusHistory.$inferSelect

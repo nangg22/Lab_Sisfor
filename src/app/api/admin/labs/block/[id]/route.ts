@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { bookings, users, bookingStatusHistory } from '@/db/schema'
+import { bookings, users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 
 interface Params {

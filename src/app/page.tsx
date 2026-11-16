@@ -8,9 +8,7 @@ import {
   Sparkles,
   ArrowRight,
   LogIn,
-  CheckCircle2,
   Clock,
-  Layers,
 } from 'lucide-react'
 
 export default async function HomePage() {

@@ -140,11 +140,11 @@ export default async function EditLabPage({ params }: Props) {
             href="/admin/labs"
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border border-rose-600 text-rose-600 hover:bg-rose-50 transition-colors"
           >
-            Hapus Ruangan Ini →
+          Hapus Ruangan Ini &rarr;
           </Link>
         </div>
         <p className="text-[11px] font-bold text-slate-400 mt-2">
-          * Gunakan opsi "Hapus Ruangan" dari halaman Manajemen Lab (menu titik tiga pada kartu lab).
+          * Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).
         </p>
       </div>
     </div>

@@ -3,8 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Input, Textarea } from '@/components/ui/input'
 import { formatTime } from '@/lib/utils'
+import { BOOKING_RULES } from '@/lib/booking-rules'
 import { AlertCircle, Clock, Calendar, Users, Info } from 'lucide-react'
 
 interface Lab { id: string; name: string; location: string; capacity: number }
@@ -48,12 +48,11 @@ export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime,
 
   useEffect(() => {
     if (!labId || !date) {
-      setBookedSlots([])
       return
     }
 
     let isMounted = true
-    setLoadingSlots(true)
+    const loadingTimer = window.setTimeout(() => setLoadingSlots(true), 0)
 
     fetch(`/api/bookings/slots?laboratoryId=${labId}&bookingDate=${date}`)
       .then((res) => res.json())
@@ -69,6 +68,7 @@ export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime,
 
     return () => {
       isMounted = false
+      window.clearTimeout(loadingTimer)
     }
   }, [labId, date])
 
@@ -86,6 +86,12 @@ export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime,
     if (!endTime) e.endTime = 'Isi waktu selesai.'
     if (startTime && endTime && endTime <= startTime) {
       e.endTime = 'Waktu selesai harus setelah waktu mulai.'
+    }
+    if (startTime && endTime && startTime < BOOKING_RULES.operatingStart) {
+      e.startTime = `Jam operasional lab dimulai pukul ${BOOKING_RULES.operatingStart} WIB.`
+    }
+    if (startTime && endTime && endTime > BOOKING_RULES.operatingEnd) {
+      e.endTime = `Jam operasional lab berakhir pukul ${BOOKING_RULES.operatingEnd} WIB.`
     }
 
     // Validasi Tujuan ketat

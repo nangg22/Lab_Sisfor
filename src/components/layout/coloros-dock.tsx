@@ -50,8 +50,8 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
   // Batasi penggunaan navigasi bawah ini khusus untuk layar seluler (Mobile View: md:hidden)
   // Dilengkapi container solid, border tegas 2px, dan bayangan offset agar tidak transparan/bug
   return (
-    <div className="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 pointer-events-auto md:hidden w-[92%] max-w-sm">
-      <nav className="mobile-dock-solid flex items-center justify-around px-2 py-2">
+    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[92%] max-w-sm -translate-x-1/2 pointer-events-auto md:hidden">
+      <nav aria-label="Navigasi seluler" className="mobile-dock-solid flex items-center justify-around px-2 py-2">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -61,6 +61,7 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
             <Link
               key={item.href}
               href={item.href}
+              aria-current={isActive ? 'page' : undefined}
               className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tight transition-all duration-150 ${
                 isActive
                   ? 'bg-slate-900 text-white shadow-sm -translate-y-0.5'

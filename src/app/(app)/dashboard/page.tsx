@@ -184,7 +184,11 @@ export default async function DashboardPage() {
             </span>
             <span className="neo-badge bg-slate-100 text-slate-900 text-[10px]">{totalBookings} Total</span>
           </div>
-          <div className="flex h-3 w-full overflow-hidden rounded border border-slate-200 bg-slate-100">
+          <div
+            role="img"
+            aria-label={`Distribusi status: ${approvedCount} disetujui, ${pendingCount} menunggu, ${blockedCount} maintenance, ${cancelledCount} dibatalkan, ${rejectedCount} ditolak`}
+            className="flex h-3 w-full overflow-hidden rounded border border-slate-200 bg-slate-100"
+          >
             {approvedCount  > 0 && <div style={{ width: `${pApproved}%`  }} className="bg-emerald-400" />}
             {pendingCount   > 0 && <div style={{ width: `${pPending}%`   }} className="bg-amber-300" />}
             {blockedCount   > 0 && <div style={{ width: `${pBlocked}%`   }} className="bg-slate-900" />}
@@ -243,6 +247,7 @@ export default async function DashboardPage() {
           {/* Desktop: table */}
           <div className="hidden sm:block overflow-x-auto">
             <table className="w-full text-left text-xs">
+              <caption className="sr-only">Daftar pengajuan peminjaman terbaru</caption>
               <thead>
                 <tr className="border-b border-slate-200 bg-amber-100 text-[11px] font-black text-slate-900 uppercase tracking-wider">
                   <th className="px-4 py-3 whitespace-nowrap">Laboratorium</th>
@@ -297,7 +302,9 @@ export default async function DashboardPage() {
           </div>
 
           <div className="divide-y divide-slate-200 flex-1">
-            {labsPreview.map((lab) => (
+            {labsPreview.length === 0 ? (
+              <p className="px-4 py-10 text-center text-xs font-bold text-slate-500">Belum ada laboratorium aktif.</p>
+            ) : labsPreview.map((lab) => (
               <div key={lab.id} className="px-4 py-3 hover:bg-slate-50 transition-colors">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">

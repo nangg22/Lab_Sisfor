@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition, useRef, useEffect } from 'react'
-import type { RoleCode } from '@/db/schema'
 import {
   Search,
   AlertTriangle,
@@ -10,8 +9,6 @@ import {
   KeyRound,
   UserX,
   UserCheck,
-  Check,
-  X,
 } from 'lucide-react'
 
 interface User {
@@ -50,7 +47,7 @@ const ROLE_COLORS: Record<string, string> = {
 
 export function UserManagementTable({ users: initialUsers, currentUserId }: Props) {
   const [userList, setUserList] = useState(initialUsers)
-  const [isPending, startTransition] = useTransition()
+  const [, startTransition] = useTransition()
   const [loadingId, setLoadingId] = useState<string | null>(null)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
   const [search, setSearch] = useState('')

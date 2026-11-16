@@ -8,7 +8,7 @@ import { CheckCircle2, AlertCircle } from 'lucide-react'
 
 interface Props { userId: string; initialFullName: string; initialInstitutionalId: string; role: string }
 
-export function ProfileForm({ userId, initialFullName, initialInstitutionalId, role }: Props) {
+export function ProfileForm({ initialFullName, initialInstitutionalId, role }: Props) {
   const router = useRouter()
   const [fullName, setFullName] = useState(initialFullName)
   const [institutionalId, setInstitutionalId] = useState(initialInstitutionalId)

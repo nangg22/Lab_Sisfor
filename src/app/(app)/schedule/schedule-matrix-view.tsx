@@ -7,18 +7,15 @@ import { BlockLabModal } from './block-lab-modal'
 import {
   Calendar as CalendarIcon,
   Clock,
-  CheckCircle,
   X,
-  ArrowRight,
   ChevronLeft,
   ChevronRight,
   User,
-  Info,
   Building2,
   CalendarDays,
   ListFilter,
 } from 'lucide-react'
-import { formatDate, formatTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 
 interface LabItem {
   id: string

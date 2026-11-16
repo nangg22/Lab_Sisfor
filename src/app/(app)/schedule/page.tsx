@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { laboratories, bookings, users } from '@/db/schema'
-import { eq, and, or, inArray } from 'drizzle-orm'
+import { eq, and, inArray } from 'drizzle-orm'
 import { ScheduleMatrixView } from './schedule-matrix-view'
 
 interface Props {

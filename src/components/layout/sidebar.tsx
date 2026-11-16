@@ -14,16 +14,19 @@ import {
   LogOut,
   Building2,
   ShieldCheck,
+  PanelLeftClose,
+  PanelLeftOpen,
 } from 'lucide-react'
 
 interface SidebarProps {
   userName: string
-  userEmail: string
   userRole: RoleCode
   pendingCount?: number
+  isOpen: boolean
+  onToggle: () => void
 }
 
-export function Sidebar({ userName, userEmail, userRole, pendingCount }: SidebarProps) {
+export function Sidebar({ userName, userRole, pendingCount, isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const isAdmin = userRole === 'admin'
   const canAudit = hasPermission(userRole, 'audit:read')
@@ -72,25 +75,28 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
     .toUpperCase()
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r-2 border-slate-200 bg-white md:flex">
+    <>
+    <aside aria-label="Navigasi utama" className={`group/sidebar fixed inset-y-4 left-4 z-30 hidden flex-col overflow-hidden rounded-3xl border border-slate-200/90 bg-white shadow-[0_14px_35px_rgba(15,23,42,0.10),0_3px_10px_rgba(15,23,42,0.05)] transition-[width,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5 hover:shadow-[0_20px_45px_rgba(15,23,42,0.14),0_5px_14px_rgba(15,23,42,0.06)] md:flex ${isOpen ? 'w-64' : 'w-16'}`}>
       {/* Brand Header */}
-      <div className="flex h-16 items-center gap-3 border-b border-slate-200 px-6 bg-amber-300">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-900 text-white font-black text-sm border border-slate-200 shadow-sm">
+      <div className={`relative flex border-b border-slate-200 bg-amber-300 transition-[height,padding,gap] duration-500 ${isOpen ? 'h-20 items-center gap-3 px-5' : 'h-24 items-start justify-center px-2 pt-3'}`}>
+        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-900 text-white font-black text-sm shadow-[0_4px_10px_rgba(15,23,42,0.18)] ring-2 ring-white/60">
           SL
         </div>
-        <div className="min-w-0">
-          <span className="block text-sm font-black tracking-tight text-slate-900 leading-none truncate">
+        <div className={`min-w-0 overflow-hidden transition-[width,opacity] duration-300 ${isOpen ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
+          <span className="block text-sm font-black tracking-tight text-slate-950 leading-none truncate">
             SIP-Lab Sisfor
           </span>
           <span className="block text-[11px] font-bold text-slate-800 mt-1 truncate">
             UISI · Sistem Informasi
           </span>
         </div>
+        <button type="button" onClick={onToggle} aria-label={isOpen ? 'Tutup sidebar' : 'Buka sidebar'} title={isOpen ? 'Tutup sidebar' : 'Buka sidebar'} className={`absolute flex h-7 w-7 items-center justify-center rounded-lg bg-slate-900/10 text-slate-900 transition-colors hover:bg-slate-900 hover:text-white focus-visible:outline-slate-900 ${isOpen ? 'top-3 right-3' : 'bottom-2 left-1/2 -translate-x-1/2'}`}>
+          {isOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />}
+        </button>
       </div>
-
       {/* Main Nav Items */}
-      <div className="flex-1 overflow-y-auto px-4 py-5">
-        <div className="px-2 pb-2.5 text-[10px] font-black uppercase tracking-wider text-slate-500">
+      <div className={`flex-1 overflow-y-auto py-5 transition-[padding] duration-500 ${isOpen ? 'px-3.5' : 'px-2'}`}>
+        <div className={`overflow-hidden px-3 pb-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 transition-[height,opacity] duration-300 ${isOpen ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}>
           {isAdmin ? 'Menu Administrator' : 'Menu Layanan Mahasiswa'}
         </div>
         <nav className="space-y-1.5">
@@ -104,27 +110,29 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
               <Link
                 key={item.name}
                 href={item.href}
-                className={`group flex items-center justify-between rounded-xl px-3.5 py-2.5 text-xs font-bold transition-all ${
+                aria-current={isActive ? 'page' : undefined}
+                title={isOpen ? undefined : item.name}
+                className={`group flex items-center justify-between rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${isOpen ? 'px-3' : 'justify-center px-0'} ${
                   isActive
-                    ? 'bg-blue-600 text-white border border-slate-200 shadow-sm translate-x-0.5'
-                    : 'text-slate-700 hover:bg-slate-100 border border-transparent'
+                    ? 'bg-slate-900 text-white shadow-[0_5px_12px_rgba(15,23,42,0.16)]'
+                    : 'text-slate-600 hover:translate-x-0.5 hover:bg-amber-50 hover:text-slate-950'
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <Icon
                     className={`h-4 w-4 shrink-0 transition-colors ${
-                      isActive ? 'text-white' : 'text-slate-500 group-hover:text-slate-900'
+                      isActive ? 'text-amber-300' : 'text-slate-400 group-hover:text-amber-600'
                     }`}
                     strokeWidth={2.2}
                   />
-                  <span>{item.name}</span>
+                  <span className={`overflow-hidden whitespace-nowrap transition-[width,opacity] duration-300 ${isOpen ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>{item.name}</span>
                 </div>
                 {item.badge !== undefined && item.badge > 0 && (
                   <span
                     className={`ml-auto inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[10px] font-black border border-slate-200 ${
-                      isActive
-                        ? 'bg-amber-300 text-slate-950 shadow-sm'
-                        : 'bg-rose-500 text-white shadow-sm'
+                        isActive
+                          ? 'bg-amber-300 text-slate-950'
+                          : 'bg-rose-500 text-white'
                     }`}
                   >
                     {item.badge}
@@ -137,13 +145,13 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
       </div>
 
       {/* User Profile Section at Bottom */}
-      <div className="border-t-2 border-slate-200 p-3.5 bg-slate-50">
-        <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-white p-2.5 shadow-sm">
+      <div className={`border-t border-slate-200 bg-slate-50/80 transition-[padding] duration-500 ${isOpen ? 'p-3.5' : 'p-2'}`}>
+        <div className={`flex items-center justify-between p-1 ${isOpen ? '' : 'justify-center'}`}>
           <Link href="/profile" className="flex items-center gap-2.5 min-w-0 flex-1">
-            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 border border-slate-200 text-slate-950 text-xs font-black">
+              <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 text-xs font-black">
               {initials}
             </div>
-            <div className="min-w-0 flex-1">
+            <div className={`min-w-0 flex-1 overflow-hidden transition-[width,opacity] duration-300 ${isOpen ? 'w-auto opacity-100' : 'w-0 opacity-0'}`}>
               <p className="text-xs font-black text-slate-900 truncate">{userName}</p>
               <p className="text-[10px] font-bold text-slate-500 truncate capitalize">{userRole}</p>
             </div>
@@ -151,12 +159,14 @@ export function Sidebar({ userName, userEmail, userRole, pendingCount }: Sidebar
           <button
             onClick={() => signOut({ callbackUrl: '/auth/login' })}
             title="Keluar"
-            className="p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-slate-200"
+            aria-label="Keluar dari akun"
+            className={`p-1.5 text-slate-500 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition-colors border border-transparent hover:border-slate-200 ${isOpen ? '' : 'hidden'}`}
           >
             <LogOut className="h-4 w-4" />
           </button>
         </div>
       </div>
     </aside>
+    </>
   )
 }

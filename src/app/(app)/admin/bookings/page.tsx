@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { bookings, laboratories, users } from '@/db/schema'
-import { eq, desc } from 'drizzle-orm'
+import { bookings, laboratories, users, laboratoryAssignments } from '@/db/schema'
+import { eq, desc, inArray } from 'drizzle-orm'
 import { BookingsManagementView } from './bookings-management-view'
 import { hasPermission } from '@/lib/permissions'
 
@@ -23,6 +23,10 @@ export default async function AdminBookingsPage({
 
   if (!currentUser?.isActive || !hasPermission(currentUser.role, 'booking:read_all')) redirect('/dashboard')
 
+  const assignedLabIds = currentUser.role === 'aslab'
+    ? (await db.select({ laboratoryId: laboratoryAssignments.laboratoryId }).from(laboratoryAssignments).where(eq(laboratoryAssignments.userId, session.user.id))).map((row) => row.laboratoryId)
+    : null
+
   const allBookings = await db
     .select({
       id: bookings.id,
@@ -39,6 +43,7 @@ export default async function AdminBookingsPage({
     .from(bookings)
     .leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id))
     .leftJoin(users, eq(bookings.userId, users.id))
+    .where(assignedLabIds ? (assignedLabIds.length > 0 ? inArray(bookings.laboratoryId, assignedLabIds) : eq(bookings.id, '00000000-0000-0000-0000-000000000000')) : undefined)
     .orderBy(desc(bookings.createdAt))
 
   const filtered =

@@ -2,7 +2,7 @@ import { notFound, redirect } from 'next/navigation'
 import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { bookings, laboratories, users, bookingApprovalActions, bookingStatusHistory } from '@/db/schema'
+import { bookings, laboratories, users, bookingApprovalActions, bookingStatusHistory, laboratoryAssignments } from '@/db/schema'
 import { eq, and, asc } from 'drizzle-orm'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime, formatDateTime } from '@/lib/utils'
@@ -26,6 +26,11 @@ export default async function AdminBookingDetailPage({ params }: Props) {
 
   if (!result[0]) notFound()
   const b = result[0]
+
+  if (currentUser.role === 'aslab') {
+    const [assignment] = await db.select({ id: laboratoryAssignments.id }).from(laboratoryAssignments).where(and(eq(laboratoryAssignments.userId, session.user.id), eq(laboratoryAssignments.laboratoryId, b.laboratoryId))).limit(1)
+    if (!assignment) redirect('/admin/bookings')
+  }
 
   const conflictingBookings = await db.select({ id: bookings.id, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, userName: users.fullName }).from(bookings).leftJoin(users, eq(bookings.userId, users.id)).where(and(eq(bookings.laboratoryId, b.laboratoryId), eq(bookings.bookingDate, b.bookingDate), eq(bookings.status, 'APPROVED')))
   const hasConflict = conflictingBookings.some((c) => b.startTime < c.endTime && b.endTime > c.startTime && c.id !== id)

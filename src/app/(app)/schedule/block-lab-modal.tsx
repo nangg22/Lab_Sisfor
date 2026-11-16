@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import { useRouter } from 'next/navigation'
-import { Lock, X, AlertCircle, FlaskConical, Calendar, Clock, FileText } from 'lucide-react'
+import { Lock, X, AlertCircle } from 'lucide-react'
 
 interface LabItem {
   id: string
@@ -473,14 +473,14 @@ export function BlockLabModal({ labs, defaultDate }: Props) {
   const [loading, setLoading]     = useState(false)
   const [error, setError]         = useState<string | null>(null)
   const firstInputRef             = useRef<HTMLSelectElement>(null)
-  const [mounted, setMounted]     = useState(false)
+  const [mounted]                 = useState(() => typeof document !== 'undefined')
+
+  const handleClose = useCallback(() => {
+    setOpen(false)
+    setError(null)
+  }, [])
 
   // Portal needs document — only available client-side
-  useEffect(() => { setMounted(true) }, [])
-
-  // Sync date when user navigates to a different day
-  useEffect(() => { setDate(defaultDate) }, [defaultDate])
-
   // Auto-focus first input when opened
   useEffect(() => {
     if (open) setTimeout(() => firstInputRef.current?.focus(), 50)
@@ -492,7 +492,7 @@ export function BlockLabModal({ labs, defaultDate }: Props) {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') handleClose() }
     window.addEventListener('keydown', handler)
     return () => window.removeEventListener('keydown', handler)
-  }, [open])
+  }, [handleClose, open])
 
   // Prevent body scroll when open
   useEffect(() => {
@@ -503,11 +503,6 @@ export function BlockLabModal({ labs, defaultDate }: Props) {
     }
     return () => { document.body.style.overflow = '' }
   }, [open])
-
-  const handleClose = useCallback(() => {
-    setOpen(false)
-    setError(null)
-  }, [])
 
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault()
