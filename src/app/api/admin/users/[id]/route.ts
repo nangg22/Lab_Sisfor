@@ -31,7 +31,11 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const body = await request.json()
-  const { role, isActive, verificationStatus, reason } = body as { role?: string; isActive?: boolean; verificationStatus?: string; reason?: string }
+  const { fullName, role, isActive, verificationStatus, reason } = body as { fullName?: string; role?: string; isActive?: boolean; verificationStatus?: string; reason?: string }
+
+  if (fullName !== undefined && (fullName.trim().length < 2 || fullName.trim().length > 150)) {
+    return NextResponse.json({ error: 'Nama harus memiliki 2 sampai 150 karakter' }, { status: 400 })
+  }
 
   const validRoles = ['mahasiswa', 'dosen', 'aslab', 'kaprodi', 'pembina_lab', 'admin']
   if (role !== undefined && !validRoles.includes(role)) {
@@ -45,6 +49,7 @@ export async function PATCH(request: Request, { params }: Params) {
   }
 
   const updateData: Record<string, unknown> = { updatedAt: new Date() }
+  if (fullName !== undefined) updateData.fullName = fullName.trim()
   if (role !== undefined) updateData.role = role
   if (isActive !== undefined) {
     updateData.isActive = isActive
@@ -61,7 +66,7 @@ export async function PATCH(request: Request, { params }: Params) {
     .update(users)
     .set(updateData)
     .where(eq(users.id, id))
-    .returning({ id: users.id, role: users.role, isActive: users.isActive, verificationStatus: users.verificationStatus })
+    .returning({ id: users.id, fullName: users.fullName, role: users.role, isActive: users.isActive, verificationStatus: users.verificationStatus })
 
   if (!updated) {
     return NextResponse.json({ error: 'User tidak ditemukan' }, { status: 404 })
@@ -69,11 +74,11 @@ export async function PATCH(request: Request, { params }: Params) {
 
   await db.insert(auditLogs).values({
     actorUserId: session.user.id,
-    action: verificationStatus === 'ACTIVE' ? 'USER_VERIFIED' : verificationStatus === 'REJECTED' ? 'USER_VERIFICATION_REJECTED' : role !== undefined ? 'USER_ROLE_CHANGED' : 'USER_STATUS_CHANGED',
+    action: verificationStatus === 'ACTIVE' ? 'USER_VERIFIED' : verificationStatus === 'REJECTED' ? 'USER_VERIFICATION_REJECTED' : fullName !== undefined ? 'USER_PROFILE_UPDATED' : role !== undefined ? 'USER_ROLE_CHANGED' : 'USER_STATUS_CHANGED',
     targetType: 'USER',
     targetId: id,
     reason: reason?.trim() || null,
-    metadata: { role, isActive, verificationStatus },
+    metadata: { fullName, role, isActive, verificationStatus },
   })
 
   return NextResponse.json(updated)

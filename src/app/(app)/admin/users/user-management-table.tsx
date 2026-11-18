@@ -124,16 +124,38 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
     setPendingRoleChange({ user, newRole })
   }
 
+  async function executeNameUpdate(user: User, newName: string) {
+    setLoadingId(user.id)
+    try {
+      const res = await fetch(`/api/admin/users/${user.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ fullName: newName }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error || 'Gagal memperbarui nama pengguna.', 'error')
+        return
+      }
+      setUserList((prev) => prev.map((u) => u.id === user.id ? { ...u, fullName: data.fullName } : u))
+      showToast('Nama pengguna berhasil diperbarui.', 'success')
+    } catch {
+      showToast('Terjadi kesalahan jaringan.', 'error')
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
   function handleActionClick(action: 'edit' | 'reset' | 'toggle' | 'verify' | 'reject', user: User) {
     setActiveMenuId(null)
     if (action === 'edit') {
       const newName = prompt(`Ubah Nama Pengguna (${user.fullName}):`, user.fullName)
       if (newName && newName.trim() && newName !== user.fullName) {
-        showToast(`Nama pengguna ${user.fullName} diperbarui.`, 'success')
+        executeNameUpdate(user, newName.trim())
       }
     } else if (action === 'reset') {
       if (confirm(`Kirim tautan reset kata sandi ke email ${user.email}?`)) {
-        showToast(`Email reset password telah dikirim ke ${user.email}.`, 'success')
+        showToast('Reset password belum tersedia karena provider email belum dikonfigurasi.', 'error')
       }
     } else if (action === 'verify') {
       executeUpdate(user.id, 'isActive', true)
