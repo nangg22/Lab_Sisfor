@@ -29,6 +29,14 @@ export const users = pgTable('users', {
   updatedAt: timestamp('updated_at').notNull().defaultNow(),
 })
 
+export const emailVerificationTokens = pgTable('email_verification_tokens', {
+  id: uuid('id').defaultRandom().primaryKey(),
+  userId: uuid('user_id').notNull().references(() => users.id, { onDelete: 'cascade' }),
+  tokenHash: varchar('token_hash', { length: 64 }).notNull().unique(),
+  expiresAt: timestamp('expires_at').notNull(),
+  createdAt: timestamp('created_at').notNull().defaultNow(),
+})
+
 export const auditLogs = pgTable('audit_logs', {
   id: uuid('id').defaultRandom().primaryKey(),
   actorUserId: uuid('actor_user_id').references(() => users.id),
@@ -151,6 +159,11 @@ export const usersRelations = relations(users, ({ many }) => ({
   approvalActions: many(bookingApprovalActions),
   notifications: many(notifications),
   laboratoryAssignments: many(laboratoryAssignments),
+  emailVerificationTokens: many(emailVerificationTokens),
+}))
+
+export const emailVerificationTokensRelations = relations(emailVerificationTokens, ({ one }) => ({
+  user: one(users, { fields: [emailVerificationTokens.userId], references: [users.id] }),
 }))
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
@@ -182,6 +195,7 @@ export const laboratoryAssignmentsRelations = relations(laboratoryAssignments, (
 
 export type User = typeof users.$inferSelect
 export type NewUser = typeof users.$inferInsert
+export type EmailVerificationToken = typeof emailVerificationTokens.$inferSelect
 export type Laboratory = typeof laboratories.$inferSelect
 export type LaboratoryFacility = typeof laboratoryFacilities.$inferSelect
 export type LaboratoryAssignment = typeof laboratoryAssignments.$inferSelect

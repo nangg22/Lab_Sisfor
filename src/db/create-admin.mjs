@@ -2,36 +2,65 @@ import { neon } from '@neondatabase/serverless'
 import * as fs from 'fs'
 import bcrypt from 'bcryptjs'
 
-let connectionString = process.env.DATABASE_URL
-if (!connectionString && fs.existsSync('.env.local')) {
+const env = { ...process.env }
+
+if (fs.existsSync('.env.local')) {
   const content = fs.readFileSync('.env.local', 'utf-8')
-  const match = content.match(/DATABASE_URL=["']?(.*?)["']?(\r?\n|$)/)
-  if (match) connectionString = match[1].trim()
+  for (const line of content.split(/\r?\n/)) {
+    const match = line.match(/^\s*([A-Z][A-Z0-9_]*)\s*=\s*["']?(.*?)["']?\s*$/)
+    if (match && !env[match[1]]) env[match[1]] = match[2]
+  }
+}
+
+const connectionString = env.DATABASE_URL
+if (!connectionString) {
+  throw new Error('DATABASE_URL env var wajib diisi.')
 }
 
 const sql = neon(connectionString)
 
 async function checkAndCreateAdmin() {
-  // Fix #5: gunakan env var, jangan hardcode credential
-  const adminEmail = process.env.ADMIN_EMAIL || 'admin@sisfor.uisi.ac.id'
-  const adminPassword = process.env.ADMIN_PASSWORD || 'AdminLab123!'
-  if (!adminPassword) {
+  const adminEmail = env.ADMIN_EMAIL?.trim().toLowerCase()
+  const adminPassword = env.ADMIN_PASSWORD
+  if (!adminEmail || !adminPassword) {
     throw new Error(
-      'ADMIN_PASSWORD env var wajib diisi. Tambahkan ke .env.local sebelum menjalankan script ini.\n' +
-      'Contoh: ADMIN_PASSWORD=AdminLab123!'
+      'ADMIN_EMAIL dan ADMIN_PASSWORD env var wajib diisi. Tambahkan ke .env.local sebelum menjalankan script ini.'
     )
   }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail)) {
+    throw new Error('ADMIN_EMAIL harus berupa alamat email yang valid.')
+  }
+  if (adminPassword.length < 12) {
+    throw new Error('ADMIN_PASSWORD harus memiliki minimal 12 karakter.')
+  }
 
-  const users = await sql`SELECT id, full_name, email, role FROM users;`
-  console.log('User saat ini:', users)
+  const institutionalId = env.ADMIN_INSTITUTIONAL_ID?.trim() || 'ADM001'
 
-  const existingAdmin = users.find((u) => u.email === adminEmail)
+  const [existingAdmin] = await sql`
+    SELECT id, email
+    FROM users
+    WHERE LOWER(email) = ${adminEmail}
+    LIMIT 1;
+  `
 
   if (!existingAdmin) {
+    const [institutionalIdOwner] = await sql`
+      SELECT email
+      FROM users
+      WHERE institutional_id = ${institutionalId}
+      LIMIT 1;
+    `
+    if (institutionalIdOwner) {
+      throw new Error(
+        `ADMIN_INSTITUTIONAL_ID ${institutionalId} sudah digunakan oleh akun lain. ` +
+        'Gunakan nilai yang berbeda.'
+      )
+    }
+
     const passwordHash = await bcrypt.hash(adminPassword, 12)
     await sql`
       INSERT INTO users (full_name, email, password_hash, role, institutional_id, verification_status, is_active)
-      VALUES ('Administrator Laboratorium', ${adminEmail}, ${passwordHash}, 'admin', 'ADM001', 'ACTIVE', true);
+      VALUES ('Administrator Laboratorium', ${adminEmail}, ${passwordHash}, 'admin', ${institutionalId}, 'ACTIVE', true);
     `
     console.log(`Akun admin dibuat: ${adminEmail}`)
   } else {
@@ -50,5 +79,8 @@ async function checkAndCreateAdmin() {
   }
 }
 
-checkAndCreateAdmin().catch(console.error)
+checkAndCreateAdmin().catch((error) => {
+  console.error(error instanceof Error ? error.message : error)
+  process.exitCode = 1
+})
 

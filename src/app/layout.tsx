@@ -1,13 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter } from 'next/font/google'
 import './globals.css'
-
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-sans',
-  weight: ['300', '400', '500', '600', '700', '800'],
-})
 
 export const metadata: Metadata = {
   title: 'SIP-Lab Sisfor — Sistem Informasi Peminjaman Laboratorium',
@@ -22,7 +14,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="id" className={`${inter.variable} h-full`}>
+    <html lang="id" className="h-full" data-scroll-behavior="smooth">
       <body className="min-h-full">{children}</body>
     </html>
   )

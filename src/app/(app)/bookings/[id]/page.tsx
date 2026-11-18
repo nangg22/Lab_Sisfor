@@ -57,7 +57,7 @@ export default async function BookingDetailPage({ params }: Props) {
       </nav>
 
       {/* Hero */}
-      <div className="neo-card p-4 sm:p-5 bg-white">
+      <div className="neo-card booking-detail-hero p-4 sm:p-5 bg-white" style={{ viewTransitionName: `booking-card-${b.id}` }}>
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-xl sm:text-2xl font-black tracking-tight text-slate-900">{b.labName}</h1>

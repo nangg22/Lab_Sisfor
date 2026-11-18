@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
-import { users } from '@/db/schema'
+import { emailVerificationTokens, users } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
+import { createEmailVerificationToken } from '@/lib/email-verification'
 
 export async function POST(request: Request) {
   try {
@@ -38,17 +39,31 @@ export async function POST(request: Request) {
 
     const passwordHash = await bcrypt.hash(password, 12)
 
-    await db.insert(users).values({
-      fullName: fullName.trim(),
-      institutionalId: institutionalId?.trim() || null,
-      email: normalizedEmail,
-      passwordHash,
-      role: normalizedRole,
-      verificationStatus: 'PENDING',
-      isActive: false,
+    const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken()
+    await db.transaction(async (tx) => {
+      const [newUser] = await tx.insert(users).values({
+        fullName: fullName.trim(),
+        institutionalId: institutionalId?.trim() || null,
+        email: normalizedEmail,
+        passwordHash,
+        role: normalizedRole,
+        verificationStatus: 'PENDING',
+        isActive: false,
+      }).returning({ id: users.id })
+
+      await tx.insert(emailVerificationTokens).values({
+        userId: newUser.id,
+        tokenHash,
+        expiresAt,
+      })
     })
 
-    return NextResponse.json({ success: true }, { status: 201 })
+    const verificationUrl = `/auth/verify-email?token=${rawToken}`
+    return NextResponse.json({
+      success: true,
+      verificationRequired: true,
+      ...(process.env.NODE_ENV !== 'production' ? { verificationUrl } : {}),
+    }, { status: 201 })
   } catch (error) {
     console.error('Register error:', error)
     return NextResponse.json({ error: 'Terjadi kesalahan server.' }, { status: 500 })

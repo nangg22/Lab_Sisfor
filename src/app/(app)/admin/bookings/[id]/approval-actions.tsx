@@ -11,6 +11,8 @@ export function ApprovalActions({ bookingId, hasConflict }: Props) {
   const [action, setAction]   = useState<'APPROVED' | 'REJECTED' | null>(null)
   const [reason, setReason]   = useState('')
   const [loading, setLoading] = useState(false)
+  const [completed, setCompleted] = useState(false)
+  const [conflict, setConflict] = useState(false)
   const [error, setError]     = useState<string | null>(null)
 
   async function handleDecision() {
@@ -30,19 +32,26 @@ export function ApprovalActions({ bookingId, hasConflict }: Props) {
 
     const data = await res.json()
     if (!res.ok) {
-      setError(data.error ?? 'Gagal memproses keputusan.')
+      const isConflict = res.status === 409
+      setConflict(isConflict)
+      setError(isConflict ? 'Booking baru saja diproses admin lain. Status telah berubah.' : data.error ?? 'Gagal memproses keputusan.')
       setLoading(false)
+      if (isConflict) window.setTimeout(() => router.refresh(), 900)
       return
     }
 
-    router.refresh()
-    setAction(null)
-    setReason('')
-    setLoading(false)
+    setCompleted(true)
+    window.setTimeout(() => {
+      router.refresh()
+      setAction(null)
+      setReason('')
+      setCompleted(false)
+      setLoading(false)
+    }, 650)
   }
 
   return (
-    <div className="neo-card overflow-hidden">
+    <div className={`neo-card overflow-hidden ${conflict ? 'approval-conflict-pulse' : ''}`}>
       {/* Stripe header */}
       <div
         aria-hidden="true"
@@ -79,6 +88,7 @@ export function ApprovalActions({ bookingId, hasConflict }: Props) {
         {error && (
           <div
             role="alert"
+            aria-live="assertive"
             className="flex items-center gap-2.5 rounded-xl bg-rose-50 border border-slate-200 shadow-sm px-4 py-3"
           >
             <AlertCircle className="h-4 w-4 text-rose-600 shrink-0" strokeWidth={2} />
@@ -159,13 +169,18 @@ export function ApprovalActions({ bookingId, hasConflict }: Props) {
                 type="button"
                 onClick={handleDecision}
                 disabled={loading}
-                className={`neo-btn py-2.5 text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 ${
+                className={`approval-submit-button neo-btn py-2.5 text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0 ${completed ? 'approval-submit-button--completed' : ''} ${
                   action === 'APPROVED'
                     ? 'neo-btn-primary'
                     : 'bg-rose-600 text-white border border-slate-200 shadow-sm hover:bg-rose-700 hover:translate-x-[-1px] hover:translate-y-[-1px] hover:shadow-sm active:translate-x-[1px] active:translate-y-[1px] active:shadow-sm'
                 }`}
               >
-                {loading ? (
+                {completed ? (
+                  <>
+                    <CheckCircle className="approval-checkmark h-4 w-4" strokeWidth={3} aria-hidden="true" />
+                    Berhasil
+                  </>
+                ) : loading ? (
                   <>
                     <svg className="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
                       <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity={0.25} />

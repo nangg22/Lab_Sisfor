@@ -1,5 +1,7 @@
 'use client'
 
+import { useState } from 'react'
+
 interface Props {
   booking: {
     id: string
@@ -20,12 +22,55 @@ interface Props {
 }
 
 export function PrintTicketButton({ booking }: Props) {
+  const [tilt, setTilt] = useState({ x: 0, y: 0 })
+
+  function handlePointerMove(event: React.PointerEvent<HTMLDivElement>) {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return
+    const rect = event.currentTarget.getBoundingClientRect()
+    const x = (event.clientX - rect.left) / rect.width
+    const y = (event.clientY - rect.top) / rect.height
+    setTilt({ x: (0.5 - y) * 8, y: (x - 0.5) * 10 })
+  }
+
+  function resetTilt() {
+    setTilt({ x: 0, y: 0 })
+  }
+
   function handlePrint() {
     window.print()
   }
 
   return (
-    <div className="flex flex-col sm:flex-row gap-3">
+    <div className="space-y-4">
+      <div
+        className={`ticket-card ticket-card--${booking.status.toLowerCase()}`}
+        style={{ '--ticket-rotate-x': `${tilt.x}deg`, '--ticket-rotate-y': `${tilt.y}deg` } as React.CSSProperties}
+        onPointerMove={handlePointerMove}
+        onPointerLeave={resetTilt}
+        onPointerCancel={resetTilt}
+      >
+        <div className="ticket-card__sheen" aria-hidden="true" />
+        <div className="ticket-card__header">
+          <div>
+            <p className="ticket-card__eyebrow">SIP-LAB SISFOR · UISI</p>
+            <h3>Tiket Peminjaman Lab</h3>
+          </div>
+          <span className="ticket-card__status">{booking.status}</span>
+        </div>
+        <div className="ticket-card__perforation" aria-hidden="true" />
+        <div className="ticket-card__body">
+          <div><span>Laboratorium</span><strong>{booking.labName ?? 'Laboratorium'}</strong></div>
+          <div><span>Jadwal penggunaan</span><strong>{booking.bookingDate} · {booking.startTime}–{booking.endTime} WIB</strong></div>
+          <div><span>Pemohon</span><strong>{booking.userName ?? 'Pengguna'}</strong></div>
+          <div><span>Tujuan</span><strong>{booking.purpose}</strong></div>
+        </div>
+        <div className="ticket-card__footer">
+          <span>ID {booking.id.slice(0, 8).toUpperCase()}</span>
+          <span>Geser untuk melihat efek tiket</span>
+        </div>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3">
       <button
         onClick={handlePrint}
         className="inline-flex items-center justify-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-medium text-white hover:bg-emerald-700 transition-colors shadow-sm"
@@ -40,6 +85,7 @@ export function PrintTicketButton({ booking }: Props) {
         </svg>
         Cetak Bukti / Tiket Peminjaman
       </button>
+      </div>
 
       {/* Area khusus cetak / Print Styling */}
       <style jsx global>{`

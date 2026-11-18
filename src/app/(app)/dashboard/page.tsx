@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { ViewTransitionLink } from '@/components/ui/view-transition-link'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { users, laboratories, bookings } from '@/db/schema'
@@ -227,7 +228,7 @@ export default async function DashboardPage() {
               <p className="px-4 py-8 text-center text-xs font-bold text-slate-500">Belum ada aktivitas peminjaman.</p>
             ) : (
               recentBookings.map((b) => (
-                <Link key={b.id} href={`/bookings/${b.id}`} className="block px-4 py-3 hover:bg-slate-50 transition-colors">
+                <ViewTransitionLink key={b.id} href={`/bookings/${b.id}`} style={{ viewTransitionName: `booking-card-${b.id}` }} className="block px-4 py-3 hover:bg-slate-50 transition-colors">
                   <div className="flex items-start justify-between gap-2 mb-1">
                     <span className="text-xs font-black text-slate-900 leading-tight">{b.labName ?? '—'}</span>
                     <StatusBadge status={b.status} />
@@ -239,7 +240,7 @@ export default async function DashboardPage() {
                   {isAdmin && b.userName && (
                     <p className="text-[10px] font-black text-slate-700 mt-0.5">👤 {b.userName}</p>
                   )}
-                </Link>
+                </ViewTransitionLink>
               ))
             )}
           </div>
@@ -262,7 +263,7 @@ export default async function DashboardPage() {
                   recentBookings.map((b) => (
                     <tr key={b.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-4 py-3">
-                        <Link href={`/bookings/${b.id}`} className="font-bold text-slate-900 hover:text-blue-600">{b.labName ?? '—'}</Link>
+                        <ViewTransitionLink href={`/bookings/${b.id}`} style={{ viewTransitionName: `booking-card-${b.id}` }} className="font-bold text-slate-900 hover:text-blue-600">{b.labName ?? '—'}</ViewTransitionLink>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <span className="font-bold text-slate-900 block">{formatDate(b.bookingDate)}</span>

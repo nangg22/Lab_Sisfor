@@ -114,10 +114,11 @@ export function Sidebar({ userName, userRole, pendingCount, isOpen, onToggle }: 
                 title={isOpen ? undefined : item.name}
                 className={`group flex items-center justify-between rounded-xl py-2.5 text-xs font-bold transition-all duration-200 ${isOpen ? 'px-3' : 'justify-center px-0'} ${
                   isActive
-                    ? 'bg-slate-900 text-white shadow-[0_5px_12px_rgba(15,23,42,0.16)]'
+                    ? 'relative bg-slate-900 text-white shadow-[0_5px_12px_rgba(15,23,42,0.16)]'
                     : 'text-slate-600 hover:translate-x-0.5 hover:bg-amber-50 hover:text-slate-950'
                 }`}
               >
+                {isActive && <span className="sidebar-active-pill" aria-hidden="true" />}
                 <div className="flex items-center gap-3">
                   <Icon
                     className={`h-4 w-4 shrink-0 transition-colors ${

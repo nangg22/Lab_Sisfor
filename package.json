@@ -8,6 +8,7 @@
     "start": "next start",
     "lint": "eslint",
     "db:push": "drizzle-kit push",
+    "db:create-admin": "node src/db/create-admin.mjs",
     "db:seed": "node --env-file=.env.local src/db/seed.mjs",
     "db:studio": "drizzle-kit studio",
     "test:concurrency": "node --env-file=.env.local scripts/test-concurrent-approval.mjs"

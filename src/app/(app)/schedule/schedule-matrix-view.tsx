@@ -2,7 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { BlockLabModal } from './block-lab-modal'
 import {
   Calendar as CalendarIcon,
@@ -63,6 +62,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
     labName: string
     labLocation: string
   } | null>(null)
+  const [dragSelection, setDragSelection] = useState<{ labId: string; startHour: number; endHour: number } | null>(null)
 
   // Navigate Date
   function changeDate(days: number) {
@@ -85,6 +85,28 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
   const currentBookings = selectedLabId === 'ALL'
     ? bookings
     : bookings.filter((b) => b.laboratoryId === selectedLabId)
+
+  function getSelection() {
+    if (!dragSelection) return null
+    const first = Math.min(dragSelection.startHour, dragSelection.endHour)
+    const last = Math.max(dragSelection.startHour, dragSelection.endHour)
+    return { first, last, duration: last - first + 1 }
+  }
+
+  function selectionHasConflict(labId: string, first: number, last: number) {
+    const start = `${first.toString().padStart(2, '0')}:00:00`
+    const end = `${(last + 1).toString().padStart(2, '0')}:00:00`
+    return currentBookings.some((b) => b.laboratoryId === labId && b.startTime < end && b.endTime > start)
+  }
+
+  function finishSelection() {
+    if (!dragSelection) return
+    const first = Math.min(dragSelection.startHour, dragSelection.endHour)
+    const last = Math.max(dragSelection.startHour, dragSelection.endHour)
+    if (selectionHasConflict(dragSelection.labId, first, last)) return
+    router.push(`/bookings/new?lab=${dragSelection.labId}&date=${selectedDate}&start=${first.toString().padStart(2, '0')}:00&end=${(last + 1).toString().padStart(2, '0')}:00`)
+    setDragSelection(null)
+  }
 
   return (
     <div className="space-y-5">
@@ -199,7 +221,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
           </div>
 
           {/* Timetable Body (Rows per Hour) */}
-          <div className="min-w-[900px] divide-y divide-slate-200">
+          <div className="min-w-[900px] divide-y divide-slate-200" onPointerUp={finishSelection} onPointerCancel={() => setDragSelection(null)}>
             {HOURS.map((hour) => {
               const hourStr = hour.toString().padStart(2, '0')
               const hourTime = `${hourStr}:00:00`
@@ -222,9 +244,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                       return b.startTime < nextHourTime && b.endTime > hourTime
                     })
 
+                    const selection = getSelection()
+                    const isPreview = Boolean(dragSelection?.labId === lab.id && selection && hour >= selection.first && hour <= selection.last)
+                    const hasPreviewConflict = isPreview && selectionHasConflict(lab.id, selection!.first, selection!.last)
+
                     return (
                       <div
                         key={lab.id}
+                        onPointerEnter={() => {
+                          if (dragSelection?.labId === lab.id) setDragSelection({ ...dragSelection, endHour: hour })
+                        }}
                         className="flex-1 p-1 border-r border-slate-200 last:border-r-0 relative hover:bg-blue-50 transition-colors group"
                       >
                         {matchedBookings.length > 0 ? (
@@ -266,13 +295,21 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                           })
                         ) : (
                           // Slot Kosong (Bisa di-klik untuk ajukan peminjaman)
-                          <Link
-                            href={`/bookings/new?lab=${lab.id}&date=${selectedDate}&start=${hourStr}:00`}
-                            className="w-full h-full min-h-[50px] flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity rounded-md bg-emerald-50 border border-dashed border-emerald-500 text-[10px] font-bold text-emerald-700"
-                            title={`Klik untuk pinjam ${lab.name} jam ${hourStr}:00`}
+                          <div
+                            role="button"
+                            tabIndex={0}
+                            onPointerDown={(event) => {
+                              event.currentTarget.setPointerCapture(event.pointerId)
+                              setDragSelection({ labId: lab.id, startHour: hour, endHour: hour })
+                            }}
+                            onKeyDown={(event) => {
+                              if (event.key === 'Enter' || event.key === ' ') router.push(`/bookings/new?lab=${lab.id}&date=${selectedDate}&start=${hourStr}:00`)
+                            }}
+                            className={`w-full h-full min-h-[50px] flex items-center justify-center transition-all rounded-md border border-dashed text-[10px] font-bold select-none touch-none cursor-crosshair ${isPreview ? (hasPreviewConflict ? 'bg-rose-100 border-rose-500 text-rose-700 animate-pulse' : 'bg-amber-200/80 border-amber-500 text-slate-900 shadow-inner backdrop-blur-sm') : 'opacity-0 group-hover:opacity-100 bg-emerald-50 border-emerald-500 text-emerald-700'}`}
+                            title={isPreview ? `${selection!.duration} jam${hasPreviewConflict ? ' — bentrok' : ''}` : `Geser untuk memilih waktu mulai ${lab.name} ${hourStr}:00`}
                           >
-                            + Pinjam Slot Ini
-                          </Link>
+                            {isPreview ? `${selection!.duration} jam${hasPreviewConflict ? ' · Bentrok' : ' · Lepas untuk pilih'}` : '+ Geser untuk pilih'}
+                          </div>
                         )}
                       </div>
                     )

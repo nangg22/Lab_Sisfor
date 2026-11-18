@@ -21,6 +21,7 @@ export default function RegisterPage() {
   const [showPassword, setShowPassword]     = useState(false)
   const [role, setRole]                     = useState<Role>('mahasiswa')
   const [error, setError]                   = useState<string | null>(null)
+  const [verificationUrl, setVerificationUrl] = useState<string | null>(null)
   const [loading, setLoading]               = useState(false)
   const [mounted, setMounted]               = useState(false)
 
@@ -51,6 +52,11 @@ export default function RegisterPage() {
       return
     }
 
+    if (data.verificationUrl) {
+      setVerificationUrl(data.verificationUrl)
+      setLoading(false)
+      return
+    }
     router.push('/auth/login?registered=pending')
     router.refresh()
   }
@@ -82,6 +88,13 @@ export default function RegisterPage() {
 
           <div className="auth-card-body">
             <h1 className="auth-card-heading">Buat Akun</h1>
+
+            {verificationUrl && (
+              <div className="auth-error" role="status" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#047857' }}>
+                <Mail className="h-4 w-4 shrink-0" aria-hidden="true" />
+                <span>Akun dibuat. Untuk pengujian lokal, buka <Link href={verificationUrl} className="auth-link">link verifikasi ini</Link>.</span>
+              </div>
+            )}
 
             {error && (
               <div className="auth-error" role="alert">
