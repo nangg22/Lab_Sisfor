@@ -219,12 +219,19 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
   .sidebar-active-pill,
   .approval-submit-button--completed,
   .approval-checkmark {
     animation: none;
   }
   .approval-conflict-pulse { animation: none; }
+  .approval-submit-button,
+  .ticket-card,
+  .ticket-card__sheen,
+  .skip-link {
+    transition: none;
+  }
   .ticket-card { transform: none; transition: none; }
   .ticket-card__sheen { display: none; }
 }
