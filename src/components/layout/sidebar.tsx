@@ -29,43 +29,26 @@ interface SidebarProps {
 export function Sidebar({ userName, userRole, pendingCount, isOpen, onToggle }: SidebarProps) {
   const pathname = usePathname()
   const isAdmin = userRole === 'admin'
+  const isStaff = ['admin', 'aslab', 'kaprodi', 'pembina_lab'].includes(userRole)
   const canAudit = hasPermission(userRole, 'audit:read')
 
-  const adminNav = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Jadwal Ruang', href: '/schedule', icon: CalendarDays },
-    {
-      name: 'Kelola Pengajuan',
-      href: '/admin/bookings',
-      icon: ClipboardList,
-      badge: pendingCount,
-    },
-    { name: 'Manajemen Lab', href: '/admin/labs', icon: Building2 },
-    { name: 'Pengguna', href: '/admin/users', icon: Users },
-    ...(canAudit ? [{ name: 'Audit Log', href: '/admin/audit', icon: ShieldCheck }] : []),
+  const staffNav = [
+    { name: 'Dashboard',        href: '/dashboard',       icon: LayoutDashboard },
+    { name: 'Jadwal Ruang',     href: '/schedule',        icon: CalendarDays },
+    { name: 'Kelola Pengajuan', href: '/admin/bookings',  icon: ClipboardList, badge: pendingCount },
+    ...(hasPermission(userRole, 'lab:manage')  ? [{ name: 'Manajemen Lab', href: '/admin/labs',   icon: Building2  }] : []),
+    ...(hasPermission(userRole, 'user:manage') ? [{ name: 'Pengguna',      href: '/admin/users',  icon: Users      }] : []),
+    ...(canAudit                               ? [{ name: 'Audit Log',     href: '/admin/audit',  icon: ShieldCheck }] : []),
   ]
 
   const userNav = [
-    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
-    { name: 'Jadwal Ruang', href: '/schedule', icon: CalendarDays },
-    { name: 'Laboratorium', href: '/labs', icon: FlaskConical },
-    {
-      name: 'Riwayat Pengajuan',
-      href: '/bookings',
-      icon: ClipboardList,
-      badge: pendingCount,
-    },
+    { name: 'Dashboard',          href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Jadwal Ruang',       href: '/schedule',  icon: CalendarDays },
+    { name: 'Laboratorium',       href: '/labs',       icon: FlaskConical },
+    { name: 'Riwayat Pengajuan',  href: '/bookings',   icon: ClipboardList, badge: pendingCount },
   ]
 
-  const navigation = isAdmin
-    ? adminNav
-    : canAudit
-      ? [
-          ...userNav,
-          { name: 'Pengawasan Booking', href: '/admin/bookings', icon: ClipboardList },
-          { name: 'Audit Log', href: '/admin/audit', icon: ShieldCheck },
-        ]
-      : userNav
+  const navigation = isStaff ? staffNav : userNav
 
   const initials = userName
     .split(' ')
@@ -97,7 +80,7 @@ export function Sidebar({ userName, userRole, pendingCount, isOpen, onToggle }: 
       {/* Main Nav Items */}
       <div className={`flex-1 overflow-y-auto py-5 transition-[padding] duration-500 ${isOpen ? 'px-3.5' : 'px-2'}`}>
         <div className={`overflow-hidden px-3 pb-2.5 text-[10px] font-black uppercase tracking-wider text-slate-400 transition-[height,opacity] duration-300 ${isOpen ? 'h-auto opacity-100' : 'h-0 opacity-0'}`}>
-          {isAdmin ? 'Menu Administrator' : 'Menu Layanan Mahasiswa'}
+          {isStaff ? 'Menu Staf / Admin' : 'Menu Layanan Mahasiswa'}
         </div>
         <nav className="space-y-1.5">
           {navigation.map((item) => {

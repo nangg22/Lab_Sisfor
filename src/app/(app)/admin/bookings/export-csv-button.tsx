@@ -1,6 +1,6 @@
 'use client'
 
-import { Button } from '@/components/ui/button'
+import { FileDown } from 'lucide-react'
 
 interface ExportBooking {
   id: string
@@ -27,68 +27,38 @@ export function ExportCsvButton({ bookings, currentFilter }: Props) {
       return
     }
 
-    const headers = [
-      'ID Booking',
-      'Nama Peminjam',
-      'Role',
-      'Laboratorium',
-      'Tanggal Peminjaman',
-      'Jam Mulai',
-      'Jam Selesai',
-      'Tujuan Peminjaman',
-      'Status',
-      'Tanggal Dibuat',
-    ]
-
-    const escapeCsv = (val: string | null | undefined) => {
-      if (val === null || val === undefined) return '""'
-      const str = String(val).replace(/"/g, '""')
-      return `"${str}"`
-    }
+    const headers = ['ID Booking','Nama Peminjam','Role','Laboratorium','Tanggal Peminjaman','Jam Mulai','Jam Selesai','Tujuan Peminjaman','Status','Tanggal Dibuat']
+    const esc = (v: string | null | undefined) => { const s = String(v ?? '').replace(/"/g, '""'); return `"${s}"` }
 
     const rows = bookings.map((b) => [
-      escapeCsv(b.id),
-      escapeCsv(b.userName),
-      escapeCsv(b.userRole),
-      escapeCsv(b.labName),
-      escapeCsv(b.bookingDate),
-      escapeCsv(b.startTime.slice(0, 5)),
-      escapeCsv(b.endTime.slice(0, 5)),
-      escapeCsv(b.purpose),
-      escapeCsv(b.status),
-      escapeCsv(new Date(b.createdAt).toLocaleString('id-ID')),
+      esc(b.id), esc(b.userName), esc(b.userRole), esc(b.labName),
+      esc(b.bookingDate), esc(b.startTime.slice(0, 5)), esc(b.endTime.slice(0, 5)),
+      esc(b.purpose), esc(b.status), esc(new Date(b.createdAt).toLocaleString('id-ID')),
     ])
 
-    const csvContent =
-      '\uFEFF' + [headers.join(','), ...rows.map((e) => e.join(','))].join('\r\n')
+    const csv = '\uFEFF' + [headers.join(','), ...rows.map((r) => r.join(','))].join('\r\n')
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    const tag  = currentFilter && currentFilter !== 'ALL' ? `-${currentFilter.toLowerCase()}` : ''
+    const date = new Date().toISOString().split('T')[0]
 
-    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
-    const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
-    const today = new Date().toISOString().split('T')[0]
-    const filterTag = currentFilter && currentFilter !== 'ALL' ? `-${currentFilter.toLowerCase()}` : ''
-
-    link.setAttribute('href', url)
-    link.setAttribute('download', `rekap-peminjaman-lab${filterTag}-${today}.csv`)
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
+    a.href = url
+    a.download = `rekap-peminjaman-lab${tag}-${date}.csv`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
     URL.revokeObjectURL(url)
   }
 
   return (
-    <Button
+    <button
       type="button"
-      variant="outline"
-      size="sm"
       onClick={handleExport}
-      className="inline-flex items-center gap-1.5 text-gray-700 hover:text-gray-900 border-gray-300"
+      className="neo-btn neo-btn-white px-3.5 py-2 text-xs font-black"
     >
-      <svg className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-      </svg>
+      <FileDown className="h-4 w-4" strokeWidth={2} />
       Ekspor CSV
-    </Button>
+    </button>
   )
 }
-

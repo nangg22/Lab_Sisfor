@@ -50,51 +50,44 @@ export default async function EditLabPage({ params }: Props) {
   return (
     <div className="max-w-3xl space-y-6">
       {/* Breadcrumb Back */}
-      <div className="flex items-center gap-3">
-        <Link
-          href="/admin/labs"
-          className="inline-flex items-center gap-1.5 text-xs font-black text-slate-600 hover:text-slate-900 transition-colors"
-        >
-          <ArrowLeft className="h-3.5 w-3.5" />
-          Kembali ke Manajemen Lab
+      <nav className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+        <Link href="/admin/labs" className="hover:text-blue-600 transition-colors flex items-center gap-1">
+          <ArrowLeft className="h-3.5 w-3.5" />Manajemen Lab
         </Link>
-      </div>
+      </nav>
 
       {/* Page Title */}
-      <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-400 border border-slate-200 shadow-sm text-slate-900 font-black text-lg">
-          {lab.name.charAt(0)}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap">
-            <h1 className="text-xl font-black text-slate-900 tracking-tight">{lab.name}</h1>
-            <span className={`inline-flex items-center gap-1.5 text-[11px] font-black px-2.5 py-1 rounded-full border border-slate-200 shadow-sm ${
-              lab.isActive ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'
-            }`}>
-              <span className={`h-1.5 w-1.5 rounded-full ${lab.isActive ? 'bg-slate-950' : 'bg-slate-500'}`} />
-              {lab.isActive ? 'Aktif' : 'Nonaktif'}
-            </span>
+      <div className="neo-card p-4 sm:p-5 bg-white flex flex-wrap items-start justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-300 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] text-slate-950 font-black text-lg">
+            {lab.name.charAt(0)}
           </div>
-          <p className="text-sm font-bold text-slate-500 mt-0.5 flex items-center gap-1.5">
-            <MapPin className="h-3.5 w-3.5 shrink-0" />
-            {lab.location}
-          </p>
+          <div className="min-w-0">
+            <h1 className="text-xl font-black text-slate-900 tracking-tight truncate">{lab.name}</h1>
+            <p className="text-xs font-bold text-slate-500 mt-0.5 flex items-center gap-1">
+              <MapPin className="h-3.5 w-3.5 shrink-0" />{lab.location}
+            </p>
+          </div>
         </div>
+        <span className={`neo-badge text-[11px] self-start shrink-0 ${lab.isActive ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+          <span className={`h-2 w-2 rounded-full ${lab.isActive ? 'bg-slate-950' : 'bg-slate-500'}`} />
+          {lab.isActive ? 'Aktif' : 'Nonaktif'}
+        </span>
       </div>
 
       {/* Quick Stats Row */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="neo-card bg-white p-4 text-center">
+        <div className="neo-card p-4 text-center bg-white">
           <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{lab.capacity}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Kapasitas</p>
         </div>
-        <div className="neo-card bg-white p-4 text-center">
+        <div className="neo-card p-4 text-center bg-white">
           <Layers className="h-5 w-5 text-amber-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{facilities.length}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Fasilitas</p>
         </div>
-        <div className="neo-card bg-white p-4 text-center">
+        <div className="neo-card p-4 text-center bg-white">
           <Calendar className="h-5 w-5 text-emerald-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{totalBookings}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Total Booking</p>
@@ -105,18 +98,11 @@ export default async function EditLabPage({ params }: Props) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Activity className="h-4 w-4 text-slate-600" />
-          <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider">Pengaturan Ruangan</h2>
+          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Pengaturan Ruangan</h2>
         </div>
         <LabForm
           mode="edit"
-          lab={{
-            id: lab.id,
-            name: lab.name,
-            location: lab.location,
-            capacity: lab.capacity,
-            description: lab.description,
-            isActive: lab.isActive,
-          }}
+          lab={{ id: lab.id, name: lab.name, location: lab.location, capacity: lab.capacity, description: lab.description, isActive: lab.isActive }}
         />
       </div>
 
@@ -124,27 +110,19 @@ export default async function EditLabPage({ params }: Props) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <FlaskConical className="h-4 w-4 text-slate-600" />
-          <h2 className="text-sm font-black text-slate-700 uppercase tracking-wider">Kelola Fasilitas & Inventaris</h2>
+          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Kelola Fasilitas &amp; Inventaris</h2>
         </div>
         <LabFacilitiesEditor laboratoryId={lab.id} initialFacilities={facilities} />
       </div>
 
       {/* Danger Zone */}
-      <div className="neo-card bg-white border-rose-500 p-5" style={{ borderColor: '#f43f5e', boxShadow: '0 4px 10px rgba(244, 63, 94, 0.12)' }}>
-        <h3 className="text-sm font-black text-rose-700 mb-1">Zona Berbahaya</h3>
-        <p className="text-xs font-bold text-slate-600 mb-4">
-          Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus untuk mencegah kehilangan data.
+      <div className="neo-card-red p-5">
+        <h3 className="text-sm font-black uppercase tracking-wide mb-1">Zona Berbahaya</h3>
+        <p className="text-xs font-bold opacity-90 mb-4">
+          Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus.
         </p>
-        <div className="flex gap-3">
-          <Link
-            href="/admin/labs"
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-black rounded-xl border border-rose-600 text-rose-600 hover:bg-rose-50 transition-colors"
-          >
-          Hapus Ruangan Ini &rarr;
-          </Link>
-        </div>
-        <p className="text-[11px] font-bold text-slate-400 mt-2">
-          * Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).
+        <p className="text-[11px] font-bold opacity-75">
+          Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).
         </p>
       </div>
     </div>

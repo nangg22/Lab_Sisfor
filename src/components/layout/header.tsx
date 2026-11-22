@@ -7,6 +7,7 @@ import { NotificationBell } from './notification-bell'
 
 interface HeaderProps {
   isAdmin?: boolean
+  isStaff?: boolean
 }
 
 const BREADCRUMB_MAP: Record<string, string> = {
@@ -20,7 +21,7 @@ const BREADCRUMB_MAP: Record<string, string> = {
   profile: 'Profil',
 }
 
-export function Header({ isAdmin }: HeaderProps) {
+export function Header({ isAdmin, isStaff }: HeaderProps) {
   const pathname = usePathname()
   const segments = pathname.split('/').filter(Boolean)
 

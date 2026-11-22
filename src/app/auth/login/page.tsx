@@ -159,10 +159,15 @@ export default function LoginPage() {
           </div>
 
           <div className="auth-card-footer">
-            Belum punya akun?{' '}
-            <Link href="/auth/register" className="auth-link">
-              Daftar di sini
-            </Link>
+            <div>
+              Belum punya akun?{' '}
+              <Link href="/auth/register" className="auth-link">Daftar di sini</Link>
+            </div>
+            <div style={{ marginTop: '0.5rem', fontSize: '0.75rem' }}>
+              <Link href="/auth/forgot-password" className="auth-link">
+                Lupa kata sandi?
+              </Link>
+            </div>
           </div>
         </div>
 

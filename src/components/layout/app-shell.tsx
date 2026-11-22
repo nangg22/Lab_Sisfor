@@ -16,6 +16,7 @@ interface Props {
 export function AppShell({ children, userName, userRole, pendingCount }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const isAdmin = userRole === 'admin'
+  const isStaff = ['admin', 'aslab', 'kaprodi', 'pembina_lab'].includes(userRole)
 
   return (
     <div className="min-h-screen bg-slate-50">
@@ -29,7 +30,7 @@ export function AppShell({ children, userName, userRole, pendingCount }: Props) 
       />
 
       <div className={`flex flex-col transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${sidebarOpen ? 'md:pl-72' : 'md:pl-24'}`}>
-        <Header isAdmin={isAdmin} />
+        <Header isAdmin={isAdmin} isStaff={isStaff} />
         <main id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-8 md:pb-8 pb-28">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>

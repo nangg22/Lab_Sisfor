@@ -1,8 +1,6 @@
 import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
-  // cacheComponents: false karena app menggunakan auth per-request (cookies)
-  // Ref: https://nextjs.org/docs/messages/middleware-to-proxy
   turbopack: {
     rules: {
       '*.css': {
@@ -10,6 +8,21 @@ const nextConfig: NextConfig = {
         as: '*.css',
       },
     },
+  },
+
+  async headers() {
+    return [
+      {
+        source: '/(.*)',
+        headers: [
+          { key: 'X-Frame-Options',           value: 'DENY' },
+          { key: 'X-Content-Type-Options',     value: 'nosniff' },
+          { key: 'Referrer-Policy',            value: 'strict-origin-when-cross-origin' },
+          { key: 'Permissions-Policy',         value: 'camera=(), microphone=(), geolocation=()' },
+          { key: 'X-DNS-Prefetch-Control',     value: 'on' },
+        ],
+      },
+    ]
   },
 }
 

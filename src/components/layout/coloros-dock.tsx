@@ -19,32 +19,21 @@ interface Props {
 export function ColorOSDock({ userRole, pendingCount }: Props) {
   const pathname = usePathname()
 
+  const isStaff = ['admin', 'aslab', 'kaprodi', 'pembina_lab'].includes(userRole)
+
   const navItems = [
+    { href: '/dashboard', label: 'Beranda', icon: Home },
+    { href: '/schedule',  label: 'Jadwal',  icon: CalendarDays },
     {
-      href: '/dashboard',
-      label: 'Beranda',
-      icon: Home,
-    },
-    {
-      href: '/schedule',
-      label: 'Jadwal',
-      icon: CalendarDays,
-    },
-    {
-      href: userRole === 'admin' ? '/admin/bookings' : '/bookings',
-      label: userRole === 'admin' ? 'Kelola' : 'Riwayat',
+      href:  isStaff ? '/admin/bookings' : '/bookings',
+      label: isStaff ? 'Kelola' : 'Riwayat',
       badge: pendingCount,
-      icon: ClipboardList,
+      icon:  ClipboardList,
     },
-    ...(userRole === 'admin'
+    ...(isStaff
       ? [{ href: '/admin/labs', label: 'Lab', icon: LayoutGrid, badge: undefined }]
       : []),
-    {
-      href: '/profile',
-      label: 'Profil',
-      icon: User,
-      badge: undefined,
-    },
+    { href: '/profile', label: 'Profil', icon: User, badge: undefined },
   ]
 
   // Batasi penggunaan navigasi bawah ini khusus untuk layar seluler (Mobile View: md:hidden)
@@ -70,7 +59,7 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
             >
               <div className="relative">
                 <Icon
-                  className="h-4.5 w-4.5"
+                  className="h-[18px] w-[18px]"
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {item.badge !== undefined && item.badge > 0 && (

@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 import { formatTime } from '@/lib/utils'
-import { BOOKING_RULES } from '@/lib/booking-rules'
-import { AlertCircle, Clock, Calendar, Users, Info } from 'lucide-react'
+import { AlertCircle, Clock, Calendar, Users, Info, CheckCircle2, Send } from 'lucide-react'
 
 interface Lab { id: string; name: string; location: string; capacity: number }
 interface Slot { id: string; startTime: string; endTime: string; purpose: string }
@@ -17,112 +15,78 @@ interface Props {
   userId: string
 }
 
-// Filter kata informal atau tidak pantas untuk keperluan akademik
+const BOOKING_RULES = { operatingStart: '06:00', operatingEnd: '21:00' }
+
 const INFORMAL_WORDS = [
   'gabut', 'nongkrong', 'main game', 'mabar', 'tidur', 'santai', 'pacaran', 'rebahan',
-  'iseng', 'gajelas', 'capek', 'healing'
+  'iseng', 'gajelas', 'capek', 'healing',
 ]
+
+// Shared input class
+const INPUT_CLS = 'w-full rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-sm font-medium text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+const LABEL_CLS = 'block text-[11px] font-black uppercase tracking-wide text-slate-700 mb-1.5'
 
 export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime, userId }: Props) {
   const router = useRouter()
-  const [labId, setLabId] = useState(defaultLabId ?? '')
-  const [date, setDate] = useState(defaultDate ?? '')
-  const [startTime, setStartTime] = useState(defaultStartTime ?? '')
-  const [endTime, setEndTime] = useState(
+  const [labId, setLabId]                   = useState(defaultLabId ?? '')
+  const [date, setDate]                     = useState(defaultDate ?? '')
+  const [startTime, setStartTime]           = useState(defaultStartTime ?? '')
+  const [endTime, setEndTime]               = useState(
     defaultStartTime
       ? `${(parseInt(defaultStartTime.split(':')[0], 10) + 1).toString().padStart(2, '0')}:00`
       : ''
   )
-  const [purpose, setPurpose] = useState('')
+  const [purpose, setPurpose]               = useState('')
   const [participantCount, setParticipantCount] = useState('')
-  const [notes, setNotes] = useState('')
-  const [errors, setErrors] = useState<Record<string, string>>({})
-  const [loading, setLoading] = useState(false)
-  const [serverError, setServerError] = useState<string | null>(null)
-
-  // Booked slots state
-  const [bookedSlots, setBookedSlots] = useState<Slot[]>([])
-  const [loadingSlots, setLoadingSlots] = useState(false)
+  const [notes, setNotes]                   = useState('')
+  const [errors, setErrors]                 = useState<Record<string, string>>({})
+  const [loading, setLoading]               = useState(false)
+  const [serverError, setServerError]       = useState<string | null>(null)
+  const [bookedSlots, setBookedSlots]       = useState<Slot[]>([])
+  const [loadingSlots, setLoadingSlots]     = useState(false)
 
   const selectedLab = labs.find((l) => l.id === labId)
 
   useEffect(() => {
-    if (!labId || !date) {
-      return
-    }
-
+    if (!labId || !date) return
     let isMounted = true
-    const loadingTimer = window.setTimeout(() => setLoadingSlots(true), 0)
-
+    setLoadingSlots(true)
     fetch(`/api/bookings/slots?laboratoryId=${labId}&bookingDate=${date}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (isMounted) {
-          setBookedSlots(data.slots || [])
-          setLoadingSlots(false)
-        }
-      })
-      .catch(() => {
-        if (isMounted) setLoadingSlots(false)
-      })
-
-    return () => {
-      isMounted = false
-      window.clearTimeout(loadingTimer)
-    }
+      .then((r) => r.json())
+      .then((data) => { if (isMounted) { setBookedSlots(data.slots || []); setLoadingSlots(false) } })
+      .catch(() => { if (isMounted) setLoadingSlots(false) })
+    return () => { isMounted = false }
   }, [labId, date])
 
   function validate(): boolean {
     const e: Record<string, string> = {}
     if (!labId) e.lab = 'Pilih laboratorium.'
     if (!date) e.date = 'Pilih tanggal peminjaman.'
-    
     const todayStr = new Date().toISOString().split('T')[0]
-    if (date && date < todayStr) {
-      e.date = 'Tanggal peminjaman tidak boleh di masa lalu.'
-    }
-
+    if (date && date < todayStr) e.date = 'Tanggal peminjaman tidak boleh di masa lalu.'
     if (!startTime) e.startTime = 'Isi waktu mulai.'
     if (!endTime) e.endTime = 'Isi waktu selesai.'
-    if (startTime && endTime && endTime <= startTime) {
-      e.endTime = 'Waktu selesai harus setelah waktu mulai.'
-    }
-    if (startTime && endTime && startTime < BOOKING_RULES.operatingStart) {
-      e.startTime = `Jam operasional lab dimulai pukul ${BOOKING_RULES.operatingStart} WIB.`
-    }
-    if (startTime && endTime && endTime > BOOKING_RULES.operatingEnd) {
-      e.endTime = `Jam operasional lab berakhir pukul ${BOOKING_RULES.operatingEnd} WIB.`
-    }
-
-    // Validasi Tujuan ketat
+    if (startTime && endTime && endTime <= startTime) e.endTime = 'Waktu selesai harus setelah waktu mulai.'
+    if (startTime && startTime < BOOKING_RULES.operatingStart) e.startTime = `Jam operasional dimulai pukul ${BOOKING_RULES.operatingStart} WIB.`
+    if (endTime && endTime > BOOKING_RULES.operatingEnd) e.endTime = `Jam operasional berakhir pukul ${BOOKING_RULES.operatingEnd} WIB.`
     const trimmedPurpose = purpose.trim()
     if (!trimmedPurpose) {
       e.purpose = 'Isi tujuan peminjaman secara jelas.'
     } else if (trimmedPurpose.length < 15) {
       e.purpose = `Tujuan peminjaman minimal 15 karakter (${trimmedPurpose.length}/15).`
     } else if (trimmedPurpose.length > 250) {
-      e.purpose = `Tujuan peminjaman maksimal 250 karakter.`
+      e.purpose = 'Tujuan peminjaman maksimal 250 karakter.'
     } else {
-      // Cek kata informal
-      const lower = trimmedPurpose.toLowerCase()
-      const foundInformal = INFORMAL_WORDS.find((word) => lower.includes(word))
-      if (foundInformal) {
-        e.purpose = `Mohon gunakan kalimat akademik/formal resmi (kata "${foundInformal}" tidak diizinkan).`
-      }
+      const foundInformal = INFORMAL_WORDS.find((w) => trimmedPurpose.toLowerCase().includes(w))
+      if (foundInformal) e.purpose = `Mohon gunakan kalimat akademik/formal (kata "${foundInformal}" tidak diizinkan).`
     }
-
     if (selectedLab && participantCount) {
       const pCount = parseInt(participantCount, 10)
-      if (isNaN(pCount) || pCount <= 0) {
-        e.participantCount = 'Jumlah peserta harus lebih dari 0.'
-      } else if (pCount > selectedLab.capacity) {
-        e.participantCount = `⚠️ Perhatian: Jumlah peserta (${pCount}) melebihi daya tampung lab (${selectedLab.capacity} orang).`
-      }
+      if (isNaN(pCount) || pCount <= 0) e.participantCount = 'Jumlah peserta harus lebih dari 0.'
+      else if (pCount > selectedLab.capacity) e.participantCount = `⚠️ Jumlah peserta (${pCount}) melebihi daya tampung lab (${selectedLab.capacity} orang).`
     }
-
     setErrors(e)
-    const blocking = Object.entries(e).filter(([k, v]) => !(k === 'participantCount' && v.startsWith('⚠️')))
-    return blocking.length === 0
+    return Object.entries(e).filter(([k, v]) => !(k === 'participantCount' && v.startsWith('⚠️'))).length === 0
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -130,195 +94,169 @@ export function BookingForm({ labs, defaultLabId, defaultDate, defaultStartTime,
     setServerError(null)
     if (!validate()) return
     setLoading(true)
-
     const res = await fetch('/api/bookings', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        userId,
-        laboratoryId: labId,
-        bookingDate: date,
-        startTime,
-        endTime,
-        purpose: purpose.trim(),
-        participantCount: participantCount ? parseInt(participantCount, 10) : null,
-        notes: notes.trim() || null,
-      }),
+      body: JSON.stringify({ userId, laboratoryId: labId, bookingDate: date, startTime, endTime, purpose: purpose.trim(), participantCount: participantCount ? parseInt(participantCount, 10) : null, notes: notes.trim() || null }),
     })
-
     const data = await res.json()
-    if (!res.ok) {
-      setServerError(data.error ?? 'Terjadi kesalahan sistem saat menyimpan pengajuan.')
-      setLoading(false)
-      return
-    }
-
+    if (!res.ok) { setServerError(data.error ?? 'Terjadi kesalahan sistem.'); setLoading(false); return }
     router.push(`/bookings/${data.id}`)
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form onSubmit={handleSubmit} className="space-y-5" noValidate>
+      {/* Server error */}
       {serverError && (
-        <div className="flex items-center gap-2.5 rounded-xl border border-rose-300 bg-rose-50 p-4 text-sm font-semibold text-rose-800">
-          <AlertCircle className="h-5 w-5 shrink-0" strokeWidth={2} />
-          <span>{serverError}</span>
+        <div className="flex items-center gap-2.5 rounded-xl bg-rose-50 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] px-4 py-3 text-xs font-bold text-rose-700" role="alert">
+          <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />{serverError}
         </div>
       )}
 
-      {/* Lab Selector */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-800">
-          Pilih Laboratorium <span className="text-rose-600">*</span>
-        </label>
-        <select
-          value={labId}
-          onChange={(e) => setLabId(e.target.value)}
-          className="w-full rounded-xl border border-slate-300 bg-white/80 px-3.5 py-2.5 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-        >
+      {/* Lab selector */}
+      <div>
+        <label htmlFor="bf-lab" className={LABEL_CLS}>Pilih Laboratorium <span className="text-rose-500">*</span></label>
+        <select id="bf-lab" value={labId} onChange={(e) => setLabId(e.target.value)} className={INPUT_CLS + ' cursor-pointer'}>
           <option value="">-- Pilih Laboratorium --</option>
           {labs.map((l) => (
-            <option key={l.id} value={l.id}>
-              {l.name} — {l.location} (Kapasitas: {l.capacity} orang)
-            </option>
+            <option key={l.id} value={l.id}>{l.name} — {l.location} (Kapasitas: {l.capacity} orang)</option>
           ))}
         </select>
-        {errors.lab && <p className="text-xs font-semibold text-rose-600">{errors.lab}</p>}
+        {errors.lab && <p className="text-xs font-bold text-rose-600 mt-1">{errors.lab}</p>}
       </div>
 
       {/* Tanggal & Waktu */}
       <div className="grid gap-4 sm:grid-cols-3">
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-            <Calendar className="h-4 w-4 text-slate-500" />
-            Tanggal <span className="text-rose-600">*</span>
+        <div>
+          <label htmlFor="bf-date" className={LABEL_CLS}>
+            <Calendar className="inline h-3 w-3 mr-1 mb-0.5" aria-hidden="true" />
+            Tanggal <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="date"
-            value={date}
-            min={new Date().toISOString().split('T')[0]}
-            onChange={(e) => setDate(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white/80 px-3 py-2 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
-          {errors.date && <p className="text-xs font-semibold text-rose-600">{errors.date}</p>}
+          <input id="bf-date" type="date" value={date} min={new Date().toISOString().split('T')[0]} onChange={(e) => setDate(e.target.value)} className={INPUT_CLS} />
+          {errors.date && <p className="text-xs font-bold text-rose-600 mt-1">{errors.date}</p>}
         </div>
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-slate-500" />
-            Jam Mulai <span className="text-rose-600">*</span>
+        <div>
+          <label htmlFor="bf-start" className={LABEL_CLS}>
+            <Clock className="inline h-3 w-3 mr-1 mb-0.5" aria-hidden="true" />
+            Jam Mulai <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="time"
-            value={startTime}
-            onChange={(e) => setStartTime(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white/80 px-3 py-2 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
-          {errors.startTime && <p className="text-xs font-semibold text-rose-600">{errors.startTime}</p>}
+          <input id="bf-start" type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className={INPUT_CLS} />
+          {errors.startTime && <p className="text-xs font-bold text-rose-600 mt-1">{errors.startTime}</p>}
         </div>
-
-        <div className="space-y-1.5">
-          <label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-            <Clock className="h-4 w-4 text-slate-500" />
-            Jam Selesai <span className="text-rose-600">*</span>
+        <div>
+          <label htmlFor="bf-end" className={LABEL_CLS}>
+            <Clock className="inline h-3 w-3 mr-1 mb-0.5" aria-hidden="true" />
+            Jam Selesai <span className="text-rose-500">*</span>
           </label>
-          <input
-            type="time"
-            value={endTime}
-            onChange={(e) => setEndTime(e.target.value)}
-            className="w-full rounded-xl border border-slate-300 bg-white/80 px-3 py-2 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
-          />
-          {errors.endTime && <p className="text-xs font-semibold text-rose-600">{errors.endTime}</p>}
+          <input id="bf-end" type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className={INPUT_CLS} />
+          {errors.endTime && <p className="text-xs font-bold text-rose-600 mt-1">{errors.endTime}</p>}
         </div>
       </div>
 
-      {/* Live slot status info */}
+      {/* Live slot info */}
       {labId && date && (
-        <div className="rounded-xl border border-blue-200 bg-blue-50/70 p-3.5 text-xs text-blue-900 space-y-1">
-          <div className="flex items-center gap-1.5 font-bold">
-            <Info className="h-4 w-4 text-blue-600" />
-            <span>Jadwal Terisi pada Tanggal Ini:</span>
+        <div className={`flex items-start gap-3 rounded-xl border-2 border-slate-900 px-4 py-3 shadow-[2px_2px_0px_0px_#0f172a] ${bookedSlots.length > 0 ? 'bg-amber-50' : 'bg-emerald-50'}`}>
+          <Info className={`h-4 w-4 shrink-0 mt-0.5 ${bookedSlots.length > 0 ? 'text-amber-600' : 'text-emerald-600'}`} strokeWidth={2} />
+          <div>
+            <p className="text-[11px] font-black uppercase tracking-wide text-slate-700">Jadwal Terisi Hari Ini</p>
+            {loadingSlots ? (
+              <p className="text-xs font-bold text-slate-500 mt-0.5">Memeriksa ketersediaan...</p>
+            ) : bookedSlots.length > 0 ? (
+              <ul className="mt-1 space-y-0.5">
+                {bookedSlots.map((s) => (
+                  <li key={s.id} className="text-xs font-bold text-slate-700">
+                    <span className="font-black">{formatTime(s.startTime)}–{formatTime(s.endTime)}</span>: {s.purpose}
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-xs font-bold text-emerald-700 mt-0.5 flex items-center gap-1">
+                <CheckCircle2 className="h-3.5 w-3.5" strokeWidth={2.5} />Semua slot masih tersedia.
+              </p>
+            )}
           </div>
-          {loadingSlots ? (
-            <p className="text-slate-500 font-medium animate-pulse">Memeriksa ketersediaan slot...</p>
-          ) : bookedSlots.length > 0 ? (
-            <ul className="list-disc list-inside space-y-0.5 text-slate-700 font-medium">
-              {bookedSlots.map((s) => (
-                <li key={s.id}>
-                  <strong>{formatTime(s.startTime)} – {formatTime(s.endTime)}</strong>: {s.purpose}
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-emerald-700 font-semibold">Seluruh slot waktu masih tersedia untuk dipinjam.</p>
-          )}
         </div>
       )}
 
-      {/* Tujuan Peminjaman */}
-      <div className="space-y-1.5">
-        <div className="flex items-center justify-between">
-          <label className="text-sm font-semibold text-slate-800">
-            Tujuan / Keperluan Kegiatan <span className="text-rose-600">*</span>
+      {/* Tujuan */}
+      <div>
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor="bf-purpose" className={LABEL_CLS + ' mb-0'}>
+            Tujuan / Keperluan Kegiatan <span className="text-rose-500">*</span>
           </label>
-          <span className="text-xs font-semibold text-slate-500">
-            {purpose.length}/250 karakter
-          </span>
+          <span className="text-[10px] font-bold text-slate-400">{purpose.length}/250</span>
         </div>
         <textarea
+          id="bf-purpose"
           rows={3}
           value={purpose}
           maxLength={250}
           onChange={(e) => setPurpose(e.target.value)}
-          placeholder="Contoh: Praktikum Mata Kuliah Pemrograman Web lanjut (Kelas SI-3A) bersama asisten lab."
-          className="w-full rounded-xl border border-slate-300 bg-white/80 p-3 text-sm text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 font-medium leading-relaxed"
+          placeholder="Contoh: Praktikum Mata Kuliah Pemrograman Web (Kelas SI-3A) bersama asisten lab."
+          className={INPUT_CLS + ' resize-none'}
         />
-        <p className="text-[11px] text-slate-500 font-medium">
-          Gunakan bahasa formal akademik minimal 15 karakter. Hindari istilah informal.
-        </p>
-        {errors.purpose && <p className="text-xs font-semibold text-rose-600">{errors.purpose}</p>}
+        <p className="text-[10px] font-bold text-slate-400 mt-1">Gunakan bahasa formal akademik, min. 15 karakter.</p>
+        {errors.purpose && <p className="text-xs font-bold text-rose-600 mt-1">{errors.purpose}</p>}
       </div>
 
-      {/* Jumlah Peserta */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-800 flex items-center gap-1.5">
-          <Users className="h-4 w-4 text-slate-500" />
-          Perkiraan Jumlah Peserta
+      {/* Jumlah peserta */}
+      <div>
+        <label htmlFor="bf-participants" className={LABEL_CLS}>
+          <Users className="inline h-3 w-3 mr-1 mb-0.5" aria-hidden="true" />
+          Perkiraan Jumlah Peserta <span className="text-slate-400 font-bold normal-case tracking-normal">(Opsional)</span>
         </label>
         <input
+          id="bf-participants"
           type="number"
           min="1"
           value={participantCount}
           onChange={(e) => setParticipantCount(e.target.value)}
-          placeholder={selectedLab ? `Maksimal daya tampung: ${selectedLab.capacity} orang` : 'Contoh: 30'}
-          className="w-full rounded-xl border border-slate-300 bg-white/80 px-3.5 py-2.5 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          placeholder={selectedLab ? `Maks. ${selectedLab.capacity} orang` : 'Contoh: 30'}
+          className={INPUT_CLS}
         />
         {errors.participantCount && (
-          <p className={`text-xs font-semibold ${errors.participantCount.startsWith('⚠️') ? 'text-amber-700' : 'text-rose-600'}`}>
+          <p className={`text-xs font-bold mt-1 ${errors.participantCount.startsWith('⚠️') ? 'text-amber-700' : 'text-rose-600'}`}>
             {errors.participantCount}
           </p>
         )}
       </div>
 
-      {/* Catatan Tambahan */}
-      <div className="space-y-1.5">
-        <label className="text-sm font-semibold text-slate-800">
-          Catatan Tambahan (Opsional)
+      {/* Catatan */}
+      <div>
+        <label htmlFor="bf-notes" className={LABEL_CLS}>
+          Catatan Tambahan <span className="text-slate-400 font-bold normal-case tracking-normal">(Opsional)</span>
         </label>
         <input
+          id="bf-notes"
           type="text"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          placeholder="Contoh: Membutuhkan proyektor kabel HDMI dan akses stopkontak tambahan"
-          className="w-full rounded-xl border border-slate-300 bg-white/80 px-3.5 py-2.5 text-sm text-slate-900 font-medium focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20"
+          placeholder="Contoh: Membutuhkan proyektor HDMI dan stopkontak tambahan"
+          className={INPUT_CLS}
         />
       </div>
 
-      {/* Action Submit */}
-      <div className="pt-2">
-        <Button type="submit" loading={loading} className="w-full py-3 text-sm font-bold shadow-md shadow-blue-500/25">
-          Kirim Pengajuan Peminjaman
-        </Button>
-      </div>
+      {/* Submit */}
+      <button
+        type="submit"
+        disabled={loading}
+        className="neo-btn neo-btn-primary w-full py-3 text-sm font-black disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0"
+      >
+        {loading ? (
+          <>
+            <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" opacity={0.25} />
+              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" opacity={0.75} />
+            </svg>
+            Mengirim Pengajuan…
+          </>
+        ) : (
+          <>
+            <Send className="h-4 w-4" strokeWidth={2.5} />
+            Kirim Pengajuan Peminjaman
+          </>
+        )}
+      </button>
     </form>
   )
 }

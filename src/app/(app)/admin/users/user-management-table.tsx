@@ -146,6 +146,28 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
     }
   }
 
+  async function executePasswordReset(user: User) {
+    setLoadingId(user.id)
+    try {
+      const res = await fetch('/api/auth/request-password-reset', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: user.email }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        showToast(data.error || 'Gagal membuat reset password.', 'error')
+        return
+      }
+      showToast(data.resetUrl ? 'Link reset lokal berhasil dibuat.' : `Instruksi reset dikirim ke ${user.email}.`, 'success')
+      if (data.resetUrl && navigator.clipboard) await navigator.clipboard.writeText(data.resetUrl)
+    } catch {
+      showToast('Terjadi kesalahan jaringan.', 'error')
+    } finally {
+      setLoadingId(null)
+    }
+  }
+
   function handleActionClick(action: 'edit' | 'reset' | 'toggle' | 'verify' | 'reject', user: User) {
     setActiveMenuId(null)
     if (action === 'edit') {
@@ -155,7 +177,7 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       }
     } else if (action === 'reset') {
       if (confirm(`Kirim tautan reset kata sandi ke email ${user.email}?`)) {
-        showToast('Reset password belum tersedia karena provider email belum dikonfigurasi.', 'error')
+        executePasswordReset(user)
       }
     } else if (action === 'verify') {
       executeUpdate(user.id, 'isActive', true)
@@ -198,11 +220,12 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       {/* Toast */}
       {toast && (
         <div
-          className={`fixed top-4 right-4 z-50 rounded-md px-4 py-3 text-xs font-semibold shadow-md transition-all ${
+          className={`fixed top-4 right-4 z-50 rounded-xl border-2 border-slate-900 px-4 py-3 text-xs font-bold shadow-[3px_3px_0px_0px_#0f172a] transition-all ${
             toast.type === 'success'
-              ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/20'
-              : 'bg-rose-50 text-rose-800 ring-1 ring-rose-600/20'
+              ? 'bg-emerald-50 text-emerald-800'
+              : 'bg-rose-50 text-rose-800'
           }`}
+          role="status"
         >
           {toast.msg}
         </div>
@@ -210,44 +233,44 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
 
       {/* Confirmation Modal */}
       {pendingRoleChange && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs animate-in fade-in">
-          <div className="bg-white max-w-md w-full rounded-2xl p-6 shadow-xl border border-slate-200">
-            <div className="flex items-center gap-3 text-amber-600 mb-3">
-              <div className="p-2 rounded-md bg-amber-50">
-                <AlertTriangle className="h-5 w-5" />
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50">
+          <div className="neo-card max-w-md w-full overflow-hidden shadow-[6px_6px_0px_0px_#0f172a]">
+            <div
+              aria-hidden="true"
+              style={{ height: '5px', background: 'repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 12px,#0f172a 12px,#0f172a 14px)' }}
+            />
+            <div className="px-5 py-4 border-b-2 border-slate-900 bg-slate-50 flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] shrink-0">
+                <AlertTriangle className="h-4 w-4 text-slate-900" />
               </div>
-              <h3 className="text-base font-bold text-slate-900">Konfirmasi Perubahan Role</h3>
+              <h3 className="text-sm font-black uppercase tracking-tight text-slate-900">Konfirmasi Perubahan Role</h3>
             </div>
-            <p className="text-xs text-slate-600 leading-relaxed">
-              Apakah Anda yakin ingin mengubah peran pengguna{' '}
-              <strong className="text-slate-900">{pendingRoleChange.user.fullName}</strong> dari{' '}
-              <span className="font-semibold text-slate-800 uppercase">{pendingRoleChange.user.role}</span> menjadi{' '}
-              <span className="font-semibold text-blue-600 uppercase">{pendingRoleChange.newRole}</span>?
-            </p>
-            {pendingRoleChange.newRole === 'admin' && (
-              <p className="mt-3 text-xs bg-amber-50 text-amber-800 p-2.5 rounded-md border border-amber-200">
-                ⚠️ Akun ini akan memiliki hak istimewa penuh untuk menyetujui jadwal dan mengubah data laboratorium.
+            <div className="p-5 space-y-3">
+              <p className="text-xs font-bold text-slate-700 leading-relaxed">
+                Ubah peran <span className="font-black text-slate-900">{pendingRoleChange.user.fullName}</span> dari{' '}
+                <span className="font-black text-slate-800 uppercase">{pendingRoleChange.user.role}</span> menjadi{' '}
+                <span className="font-black text-blue-600 uppercase">{pendingRoleChange.newRole}</span>?
               </p>
-            )}
-            <div className="mt-6 flex items-center justify-end gap-2.5">
-              <button
-                type="button"
-                onClick={() => setPendingRoleChange(null)}
-                className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors"
-              >
-                Batal
-              </button>
-              <button
-                type="button"
-                onClick={async () => {
-                  const { user, newRole } = pendingRoleChange
-                  setPendingRoleChange(null)
-                  await executeUpdate(user.id, 'role', newRole)
-                }}
-                className="rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white shadow-xs hover:bg-blue-700 transition-colors"
-              >
-                Simpan Perubahan
-              </button>
+              {pendingRoleChange.newRole === 'admin' && (
+                <div className="flex items-start gap-2 rounded-xl bg-amber-50 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] px-3.5 py-3 text-xs font-bold text-amber-800">
+                  <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                  Akun ini akan memiliki hak penuh untuk menyetujui jadwal dan mengubah data laboratorium.
+                </div>
+              )}
+              <div className="flex items-center justify-end gap-2.5 pt-1">
+                <button type="button" onClick={() => setPendingRoleChange(null)} className="neo-btn neo-btn-white px-4 py-2 text-xs font-black">Batal</button>
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const { user, newRole } = pendingRoleChange
+                    setPendingRoleChange(null)
+                    await executeUpdate(user.id, 'role', newRole)
+                  }}
+                  className="neo-btn neo-btn-primary px-4 py-2 text-xs font-black"
+                >
+                  Simpan Perubahan
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -256,34 +279,34 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-3">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
+          <Search className="absolute left-3 top-2.5 h-4 w-4 text-slate-400 pointer-events-none" />
           <input
             type="text"
-            placeholder="Cari nama pengguna, email, NIM/NIP..."
+            placeholder="Cari nama, email, NIM/NIP..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             aria-label="Cari pengguna"
-            className="w-full rounded-md border border-slate-300 bg-white pl-9 pr-4 py-2 text-xs text-slate-900 placeholder-slate-400 focus:border-blue-600 focus:outline-none focus:ring-1 focus:ring-blue-600 shadow-xs"
+            className="w-full rounded-lg border-2 border-slate-900 bg-white pl-9 pr-4 py-2 text-xs font-medium text-slate-900 placeholder-slate-400 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none focus:ring-2 focus:ring-blue-500/20"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value)}
           aria-label="Filter berdasarkan peran"
-          className="rounded-md border border-slate-300 bg-white px-3 py-2 text-xs text-slate-700 font-medium focus:border-blue-600 focus:outline-none shadow-xs"
+          className="rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-xs font-bold text-slate-700 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none cursor-pointer"
         >
           <option value="all">Semua Peran</option>
           <option value="mahasiswa">Mahasiswa</option>
           <option value="dosen">Dosen</option>
-              <option value="aslab">Asisten Lab</option>
-              <option value="kaprodi">Kaprodi</option>
-              <option value="pembina_lab">Pembina Lab</option>
+          <option value="aslab">Asisten Lab</option>
+          <option value="kaprodi">Kaprodi</option>
+          <option value="pembina_lab">Pembina Lab</option>
           <option value="admin">Admin</option>
         </select>
       </div>
 
       {/* Stats summary */}
-      <div className="flex gap-3 text-xs text-slate-500 font-medium">
+      <div className="flex gap-3 text-xs font-bold text-slate-500">
         <span>Total: <strong className="text-slate-800">{userList.length}</strong></span>
         <span>·</span>
         <span>Aktif: <strong className="text-emerald-700">{userList.filter(u => u.isActive).length}</strong></span>
@@ -291,25 +314,24 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
         <span>Nonaktif: <strong className="text-rose-700">{userList.filter(u => !u.isActive).length}</strong></span>
       </div>
 
-      {/* Table with Kebab Action Menu */}
-      <div className="overflow-visible rounded-2xl border border-slate-200 bg-white shadow-sm">
+      {/* Table */}
+      <div className="neo-card overflow-hidden">
+        <div className="overflow-x-auto w-full">
         <table className="w-full text-left text-xs">
           <thead>
-            <tr className="border-b border-slate-200 bg-slate-50/75 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="px-5 py-3">Nama Pengguna</th>
+            <tr className="bg-amber-100 border-b-2 border-slate-900 text-[11px] font-black text-slate-900 uppercase tracking-wider">
+              <th className="px-4 py-3">Nama Pengguna</th>
               <th className="px-4 py-3 hidden md:table-cell">NIM / NIP</th>
               <th className="px-4 py-3">Role</th>
               <th className="px-4 py-3 text-center">Status</th>
               <th className="px-4 py-3 text-right">Aksi</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-slate-100">
+          <tbody className="divide-y divide-slate-200">
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={5} className="px-5 py-10 text-center text-slate-400">
-                  {search || roleFilter !== 'all'
-                    ? 'Tidak ada pengguna yang sesuai filter.'
-                    : 'Belum ada pengguna terdaftar.'}
+                <td colSpan={5} className="px-4 py-10 text-center text-sm font-bold text-slate-400">
+                  {search || roleFilter !== 'all' ? 'Tidak ada pengguna yang sesuai filter.' : 'Belum ada pengguna terdaftar.'}
                 </td>
               </tr>
             ) : (
@@ -318,46 +340,33 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                 const isMenuOpen = activeMenuId === user.id
 
                 return (
-                  <tr
-                    key={user.id}
-                    className={`hover:bg-slate-50/75 transition-colors ${!user.isActive ? 'opacity-60 bg-slate-50/30' : ''}`}
-                  >
-                    <td className="px-5 py-3.5">
-                      <div className="flex items-center gap-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 border border-slate-200 text-slate-700 text-xs font-semibold">
+                  <tr key={user.id} className={`hover:bg-slate-50 transition-colors ${!user.isActive ? 'opacity-60' : ''}`}>
+                    <td className="px-4 py-3.5">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-300 border-2 border-slate-900 shadow-[1.5px_1.5px_0px_0px_#0f172a] text-slate-950 text-xs font-black">
                           {user.fullName.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0">
-                          <p className="font-semibold text-slate-900 truncate max-w-[200px]">
+                          <p className="font-black text-slate-900 truncate max-w-[180px]">
                             {user.fullName}
-                            {isSelf && (
-                              <span className="ml-1.5 text-[10px] bg-blue-50 text-blue-700 ring-1 ring-blue-600/20 px-1.5 py-0.2 rounded-sm font-semibold">
-                                Anda
-                              </span>
-                            )}
+                            {isSelf && <span className="ml-1.5 text-[9px] bg-blue-600 text-white border border-slate-900 px-1.5 py-0.5 rounded-full font-black">Anda</span>}
                           </p>
-                          <p className="text-[11px] text-slate-500 truncate max-w-[200px]">{user.email}</p>
+                          <p className="text-[10px] font-bold text-slate-500 truncate max-w-[180px]">{user.email}</p>
                         </div>
                       </div>
                     </td>
 
-                    <td className="px-4 py-3.5 text-slate-600 font-medium hidden md:table-cell">
-                      {user.institutionalId ?? '—'}
-                    </td>
+                    <td className="px-4 py-3.5 font-bold text-slate-600 hidden md:table-cell">{user.institutionalId ?? '—'}</td>
 
                     <td className="px-4 py-3.5">
                       {isSelf ? (
-                        <span className={`inline-block rounded-md px-2 py-0.5 text-[11px] font-semibold ${ROLE_COLORS[user.role] ?? 'bg-slate-100 text-slate-700'}`}>
-                          {ROLE_LABELS[user.role] ?? user.role}
-                        </span>
+                        <span className="neo-badge bg-amber-300 text-slate-950 text-[10px] uppercase">{ROLE_LABELS[user.role] ?? user.role}</span>
                       ) : (
                         <select
                           value={user.role}
                           disabled={loadingId === user.id}
                           onChange={(e) => handleRoleSelect(user, e.target.value)}
-                          className={`rounded-md border px-2 py-1 text-[11px] font-semibold focus:outline-none focus:ring-1 focus:ring-blue-600 cursor-pointer ${
-                            ROLE_COLORS[user.role] ?? 'bg-slate-50 text-slate-700 border-slate-300'
-                          }`}
+                          className="rounded-md border-2 border-slate-900 bg-white px-2 py-1 text-[11px] font-black shadow-[1.5px_1.5px_0px_0px_#0f172a] focus:outline-none cursor-pointer"
                         >
                           <option value="mahasiswa">Mahasiswa</option>
                           <option value="dosen">Dosen</option>
@@ -367,76 +376,50 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
                     </td>
 
                     <td className="px-4 py-3.5 text-center">
-                      <span
-                        className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-semibold ${
-                          user.isActive
-                            ? 'bg-emerald-50 text-emerald-800 ring-1 ring-emerald-600/20'
-                            : 'bg-slate-100 text-slate-600 ring-1 ring-slate-300'
-                        }`}
-                      >
-                        <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-                         {user.verificationStatus === 'PENDING'
-                           ? 'Menunggu Verifikasi'
-                           : user.isActive ? 'Aktif' : 'Nonaktif'}
+                      <span className={`neo-badge text-[10px] ${user.isActive ? 'bg-emerald-400 text-slate-950' : 'bg-slate-200 text-slate-700'}`}>
+                        <span className={`h-1.5 w-1.5 rounded-full ${user.isActive ? 'bg-slate-950' : 'bg-slate-500'}`} />
+                        {user.verificationStatus === 'PENDING' ? 'Verifikasi' : user.isActive ? 'Aktif' : 'Nonaktif'}
                       </span>
                     </td>
 
-                    {/* Kebab Dropdown Action Column */}
                     <td className="px-4 py-3.5 text-right relative">
                       <div className="relative inline-block text-left" ref={isMenuOpen ? menuRef : undefined}>
                         <button
                           type="button"
                           onClick={() => setActiveMenuId(isMenuOpen ? null : user.id)}
-                          className="inline-flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                          className="neo-btn neo-btn-white h-8 w-8 p-0 justify-center"
                           title="Menu Aksi"
                         >
                           <MoreVertical className="h-4 w-4" />
                         </button>
 
                         {isMenuOpen && (
-                          <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-md border border-slate-200 bg-white py-1 shadow-lg ring-1 ring-black/5 animate-in fade-in zoom-in-95">
-                            <button
-                              type="button"
-                              onClick={() => handleActionClick('edit', user)}
-                              className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                            >
-                              <UserCog className="h-3.5 w-3.5 text-slate-400" />
-                              <span>Edit Profil</span>
+                          <div className="absolute right-0 z-40 mt-1 w-48 origin-top-right neo-card overflow-hidden shadow-[4px_4px_0px_0px_#0f172a]">
+                            <button type="button" onClick={() => handleActionClick('edit', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-amber-50 transition-colors">
+                              <UserCog className="h-3.5 w-3.5 text-slate-500" />Edit Profil
                             </button>
-
-                            <button
-                              type="button"
-                              onClick={() => handleActionClick('reset', user)}
-                              className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-slate-700 hover:bg-slate-50 transition-colors"
-                            >
-                              <KeyRound className="h-3.5 w-3.5 text-slate-400" />
-                              <span>Reset Password</span>
+                            <button type="button" onClick={() => handleActionClick('reset', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-bold text-slate-700 hover:bg-amber-50 transition-colors">
+                              <KeyRound className="h-3.5 w-3.5 text-slate-500" />Reset Password
                             </button>
-
-                            <div className="border-t border-slate-100 my-1" />
-
+                            <div className="border-t-2 border-slate-100" />
                             {user.verificationStatus === 'PENDING' ? (
-                                <>
-                                  <button type="button" onClick={() => handleActionClick('verify', user)} className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50">
-                                    <UserCheck className="h-3.5 w-3.5" /><span>Verifikasi & Aktifkan</span>
-                                  </button>
-                                  <button type="button" onClick={() => handleActionClick('reject', user)} className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-rose-700 hover:bg-rose-50">
-                                    <UserX className="h-3.5 w-3.5" /><span>Tolak Verifikasi</span>
-                                  </button>
-                                </>
-                              ) : user.isActive ? (
-                                <>
-                                  <button type="button" disabled={isSelf} onClick={() => handleActionClick('toggle', user)} className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-red-600 hover:bg-red-50">
-                                    <UserX className="h-3.5 w-3.5" /><span>Nonaktifkan Akun</span>
-                                  </button>
-                                </>
-                              ) : (
-                                <>
-                                  <button type="button" disabled={isSelf} onClick={() => handleActionClick('toggle', user)} className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-medium text-emerald-700 hover:bg-emerald-50">
-                                    <UserCheck className="h-3.5 w-3.5" /><span>Aktifkan Akun</span>
-                                  </button>
-                                </>
-                              )}
+                              <>
+                                <button type="button" onClick={() => handleActionClick('verify', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-black text-emerald-700 hover:bg-emerald-50 transition-colors">
+                                  <UserCheck className="h-3.5 w-3.5" />Verifikasi & Aktifkan
+                                </button>
+                                <button type="button" onClick={() => handleActionClick('reject', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-black text-rose-700 hover:bg-rose-50 transition-colors">
+                                  <UserX className="h-3.5 w-3.5" />Tolak Verifikasi
+                                </button>
+                              </>
+                            ) : user.isActive ? (
+                              <button type="button" disabled={isSelf} onClick={() => handleActionClick('toggle', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-black text-rose-700 hover:bg-rose-50 transition-colors disabled:opacity-40">
+                                <UserX className="h-3.5 w-3.5" />Nonaktifkan Akun
+                              </button>
+                            ) : (
+                              <button type="button" disabled={isSelf} onClick={() => handleActionClick('toggle', user)} className="flex w-full items-center gap-2.5 px-4 py-2.5 text-xs font-black text-emerald-700 hover:bg-emerald-50 transition-colors disabled:opacity-40">
+                                <UserCheck className="h-3.5 w-3.5" />Aktifkan Akun
+                              </button>
+                            )}
                           </div>
                         )}
                       </div>
@@ -447,11 +430,10 @@ export function UserManagementTable({ users: initialUsers, currentUserId }: Prop
             )}
           </tbody>
         </table>
+        </div>
       </div>
 
-      <p className="text-[11px] text-slate-400">
-        Menampilkan {filtered.length} dari total {userList.length} pengguna terdaftar.
-      </p>
+      <p className="text-[11px] font-bold text-slate-400">Menampilkan {filtered.length} dari {userList.length} pengguna.</p>
     </div>
   )
 }

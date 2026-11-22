@@ -4,6 +4,8 @@ import { db } from '@/db'
 import { laboratories } from '@/db/schema'
 import { eq } from 'drizzle-orm'
 import { BookingForm } from './booking-form'
+import { ChevronRight } from 'lucide-react'
+import Link from 'next/link'
 
 interface Props { searchParams: Promise<{ lab?: string; date?: string; start?: string }> }
 
@@ -19,18 +21,33 @@ export default async function NewBookingPage({ searchParams }: Props) {
     .orderBy(laboratories.name)
 
   return (
-    <div className="max-w-2xl">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Ajukan Peminjaman</h1>
-        <p className="mt-1 text-gray-500">Isi form di bawah untuk mengajukan peminjaman laboratorium.</p>
+    <div className="max-w-2xl space-y-5">
+      {/* Breadcrumb */}
+      <nav className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+        <Link href="/bookings" className="hover:text-blue-600 transition-colors">Pengajuan Saya</Link>
+        <ChevronRight className="h-3.5 w-3.5 text-slate-400" strokeWidth={2.5} />
+        <span className="text-slate-900 font-black">Ajukan Baru</span>
+      </nav>
+
+      <div className="neo-card overflow-hidden">
+        <div
+          aria-hidden="true"
+          style={{ height: '5px', background: 'repeating-linear-gradient(90deg,#fbbf24 0px,#fbbf24 12px,#0f172a 12px,#0f172a 14px)' }}
+        />
+        <div className="px-5 py-4 border-b-2 border-slate-900 bg-slate-50">
+          <h1 className="text-sm font-black uppercase tracking-tight text-slate-900">Ajukan Peminjaman Lab</h1>
+          <p className="text-[11px] font-bold text-slate-500 mt-0.5">Isi form berikut untuk mengajukan peminjaman laboratorium.</p>
+        </div>
+        <div className="p-5">
+          <BookingForm
+            labs={labs}
+            defaultLabId={labId}
+            defaultDate={defaultDate}
+            defaultStartTime={defaultStart}
+            userId={session.user.id}
+          />
+        </div>
       </div>
-      <BookingForm
-        labs={labs}
-        defaultLabId={labId}
-        defaultDate={defaultDate}
-        defaultStartTime={defaultStart}
-        userId={session.user.id}
-      />
     </div>
   )
 }

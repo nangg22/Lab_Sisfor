@@ -4,6 +4,7 @@ import { db } from '@/db'
 import { users, bookings } from '@/db/schema'
 import { eq, and, count } from 'drizzle-orm'
 import { AppShell } from '@/components/layout/app-shell'
+import { isStaffRole } from '@/lib/permissions'
 import type { RoleCode } from '@/db/schema'
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
@@ -11,15 +12,23 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!session?.user) redirect('/auth/login')
 
   const [user] = await db
-    .select({ fullName: users.fullName, role: users.role })
+    .select({ fullName: users.fullName, role: users.role, isActive: users.isActive })
     .from(users)
     .where(eq(users.id, session.user.id))
     .limit(1)
 
   if (!user) redirect('/auth/login')
+  if (!user.isActive) redirect('/auth/login')
 
-  const [pendingResult] = user.role === 'admin'
-    ? await db.select({ total: count() }).from(bookings).where(eq(bookings.status, 'PENDING'))
+  const isStaff = isStaffRole(user.role)
+
+  // Staff (admin/aslab/pembina_lab/kaprodi) lihat semua PENDING,
+  // user biasa hanya milik sendiri
+  const [pendingResult] = isStaff
+    ? await db
+        .select({ total: count() })
+        .from(bookings)
+        .where(eq(bookings.status, 'PENDING'))
     : await db
         .select({ total: count() })
         .from(bookings)
@@ -27,5 +36,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
 
   const pendingCount = pendingResult?.total ?? 0
 
-  return <AppShell userName={user.fullName} userRole={user.role as RoleCode} pendingCount={pendingCount}>{children}</AppShell>
+  return (
+    <AppShell
+      userName={user.fullName}
+      userRole={user.role as RoleCode}
+      pendingCount={pendingCount}
+    >
+      {children}
+    </AppShell>
+  )
 }

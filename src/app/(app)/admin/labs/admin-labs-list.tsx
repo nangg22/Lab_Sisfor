@@ -164,54 +164,41 @@ export function AdminLabsList({ labs }: Props) {
                       type="button"
                       disabled={isLoading}
                       onClick={() => setActiveMenuId(isMenuOpen ? null : lab.id)}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-slate-300 text-slate-700 hover:text-slate-950 hover:bg-slate-100 transition-colors shadow-xs"
+                      className="neo-btn neo-btn-white h-8 w-8 p-0 justify-center disabled:opacity-50"
                       title="Opsi Pengaturan Lab"
                     >
                       <MoreVertical className="h-4 w-4" />
                     </button>
 
                     {isMenuOpen && (
-                      <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right rounded-xl border border-slate-200 bg-white py-1.5 shadow-sm animate-in fade-in zoom-in-95">
+                      <div className="absolute right-0 z-40 mt-1 w-44 origin-top-right neo-card overflow-hidden shadow-[4px_4px_0px_0px_#0f172a]">
                         <Link
                           href={`/admin/labs/${lab.id}/edit`}
                           onClick={() => setActiveMenuId(null)}
-                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-slate-800 hover:bg-slate-100 transition-colors"
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-bold text-slate-800 hover:bg-amber-50 transition-colors"
                         >
-                          <Pencil className="h-3.5 w-3.5 text-slate-600" />
-                          <span>Edit Lab</span>
+                          <Pencil className="h-3.5 w-3.5 text-slate-500" />
+                          Edit Lab
                         </Link>
 
                         <button
                           type="button"
                           onClick={() => handleToggleStatus(lab)}
-                          className={`flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold transition-colors ${
-                            lab.isActive
-                              ? 'text-amber-700 hover:bg-amber-50'
-                              : 'text-emerald-700 hover:bg-emerald-50'
+                          className={`flex w-full items-center gap-2 px-4 py-2.5 text-xs font-bold transition-colors ${
+                            lab.isActive ? 'text-amber-700 hover:bg-amber-50' : 'text-emerald-700 hover:bg-emerald-50'
                           }`}
                         >
-                          {lab.isActive ? (
-                            <>
-                              <PowerOff className="h-3.5 w-3.5" />
-                              <span>Nonaktifkan</span>
-                            </>
-                          ) : (
-                            <>
-                              <Power className="h-3.5 w-3.5" />
-                              <span>Aktifkan</span>
-                            </>
-                          )}
+                          {lab.isActive ? <><PowerOff className="h-3.5 w-3.5" />Nonaktifkan</> : <><Power className="h-3.5 w-3.5" />Aktifkan</>}
                         </button>
 
-                        <div className="border-t border-slate-200 my-1" />
+                        <div className="border-t-2 border-slate-100" />
 
                         <button
                           type="button"
                           onClick={() => handleDeleteLab(lab)}
-                          className="flex w-full items-center gap-2 px-3.5 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
+                          className="flex w-full items-center gap-2 px-4 py-2.5 text-xs font-bold text-rose-600 hover:bg-rose-50 transition-colors"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          <span>Hapus Ruangan</span>
+                          <Trash2 className="h-3.5 w-3.5" />Hapus Ruangan
                         </button>
                       </div>
                     )}
