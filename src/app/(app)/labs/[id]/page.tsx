@@ -5,7 +5,7 @@ import { db } from '@/db'
 import { laboratories, laboratoryFacilities, bookings } from '@/db/schema'
 import { eq, and, gte, lte } from 'drizzle-orm'
 import { formatDate, formatTime } from '@/lib/utils'
-import { MapPin, Users, Package, CalendarDays, ChevronRight, Plus } from 'lucide-react'
+import { MapPin, Users, Package, CalendarDays, ChevronRight, Plus, Monitor } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -63,23 +63,59 @@ export default async function LabDetailPage({ params }: Props) {
             </div>
           </div>
 
-          {/* Facilities */}
+          {/* Inventaris & Spesifikasi */}
           {facilities.length > 0 && (
             <div className="neo-card overflow-hidden">
-              <div className="bg-amber-100 border-b border-slate-200 px-4 py-3 flex items-center gap-2">
-                <Package className="h-4 w-4 text-slate-700" strokeWidth={2} />
-                <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">Fasilitas</h2>
+              <div className="bg-amber-100 border-b border-slate-200 px-4 py-3 flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2">
+                  <Package className="h-4 w-4 text-slate-700" strokeWidth={2} />
+                  <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">Inventaris &amp; Spesifikasi Lab</h2>
+                </div>
+                <span className="text-[11px] font-black text-slate-700 bg-white border border-slate-300 rounded-full px-2.5 py-0.5">
+                  {facilities.length} Item Tercatat
+                </span>
               </div>
-              <div className="p-4 grid gap-2.5 sm:grid-cols-2">
+              <div className="p-4 grid gap-3 sm:grid-cols-2">
                 {facilities.map((f) => (
-                  <div key={f.id} className="flex items-start gap-3 rounded-xl border border-slate-200 bg-white px-3.5 py-3 shadow-sm">
-                    <div className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full bg-amber-300 border border-slate-200" />
-                    <div className="min-w-0">
-                      <p className="text-xs font-black text-slate-900">
-                        {f.facilityName}
-                        {f.quantity && <span className="ml-1 text-slate-500 font-bold">({f.quantity} unit)</span>}
-                      </p>
-                      {f.details && <p className="text-[11px] font-bold text-slate-500 mt-0.5">{f.details}</p>}
+                  <div key={f.id} className="flex flex-col justify-between gap-2 rounded-xl border-2 border-slate-200 bg-white px-4 py-3.5 shadow-sm">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <p className="text-sm font-black text-slate-900 leading-snug">
+                          {f.facilityName}
+                        </p>
+                        {f.quantity && (
+                          <span className="shrink-0 rounded-full bg-amber-100 border border-amber-300 px-2 py-0.5 text-[10px] font-black text-amber-900">
+                            {f.quantity} unit
+                          </span>
+                        )}
+                      </div>
+                      {f.brandModel && (
+                        <p className="text-[11px] font-bold text-slate-700 mt-0.5">Merek/Tipe: {f.brandModel}</p>
+                      )}
+                      {f.details && (
+                        <p className="text-xs font-medium text-slate-600 mt-1.5 leading-relaxed bg-slate-50 rounded-lg px-2.5 py-2 border border-slate-100">
+                          <span className="font-black text-slate-700">Spek: </span>{f.details}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                      <span className="rounded-full bg-slate-100 border border-slate-200 px-2 py-0.5 text-[10px] font-black text-slate-700">
+                        {f.category || 'Lainnya'}
+                      </span>
+                      <span className={`rounded-full border px-2 py-0.5 text-[10px] font-black ${
+                        f.condition === 'Rusak'
+                          ? 'bg-rose-100 border-rose-300 text-rose-800'
+                          : f.condition === 'Perlu Perawatan'
+                          ? 'bg-amber-100 border-amber-300 text-amber-800'
+                          : 'bg-emerald-100 border-emerald-300 text-emerald-800'
+                      }`}>
+                        Kondisi: {f.condition || 'Baik'}
+                      </span>
+                      {f.isBorrowable && (
+                        <span className="rounded-full bg-blue-50 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-blue-700">
+                          Bisa Dipinjam Khusus
+                        </span>
+                      )}
                     </div>
                   </div>
                 ))}
@@ -121,10 +157,13 @@ export default async function LabDetailPage({ params }: Props) {
             <div className="bg-amber-100 border-b border-slate-200 px-4 py-3">
               <h3 className="text-xs font-black uppercase tracking-wider text-slate-900">Ingin Meminjam?</h3>
             </div>
-            <div className="p-4 space-y-3">
-              <p className="text-xs font-bold text-slate-600">Ajukan peminjaman lab ini. Status akan diperbarui setelah Admin memproses permohonan.</p>
+            <div className="p-4 space-y-2.5">
+              <p className="text-xs font-bold text-slate-600">Ajukan peminjaman ruangan lab atau peminjaman alat khusus (seperti komputer, TV, proyektor). Status akan diperbarui setelah Admin memproses permohonan.</p>
               <Link href={`/bookings/new?lab=${lab.id}`} className="neo-btn neo-btn-primary w-full py-2.5 text-xs font-black justify-center">
-                <Plus className="h-4 w-4" strokeWidth={2.5} />Ajukan Peminjaman
+                <Plus className="h-4 w-4" strokeWidth={2.5} />Pinjam Ruangan Lab
+              </Link>
+              <Link href={`/bookings/new?lab=${lab.id}&type=EQUIPMENT`} className="inline-flex items-center justify-center gap-2 w-full py-2.5 px-3 text-xs font-black rounded-xl border-2 border-slate-900 bg-amber-300 text-slate-950 hover:bg-amber-400 transition-colors shadow-[2px_2px_0px_0px_#0f172a]">
+                <Monitor className="h-4 w-4" strokeWidth={2.5} />Pinjam Alat Khusus (PC, dll.)
               </Link>
             </div>
           </div>

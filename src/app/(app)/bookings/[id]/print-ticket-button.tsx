@@ -5,6 +5,8 @@ import { useState } from 'react'
 interface Props {
   booking: {
     id: string
+    bookingType?: string | null
+    includedItems?: Array<{ name: string; quantity?: number | null; details?: string | null }> | null
     bookingDate: string
     startTime: string
     endTime: string
@@ -60,9 +62,16 @@ export function PrintTicketButton({ booking }: Props) {
         <div className="ticket-card__perforation" aria-hidden="true" />
         <div className="ticket-card__body">
           <div><span>Laboratorium</span><strong>{booking.labName ?? 'Laboratorium'}</strong></div>
+          <div><span>Jenis</span><strong>{booking.bookingType === 'EQUIPMENT' ? 'Peminjaman Khusus / Alat' : 'Peminjaman Ruangan Lab'}</strong></div>
           <div><span>Jadwal penggunaan</span><strong>{booking.bookingDate} · {booking.startTime}–{booking.endTime} WIB</strong></div>
           <div><span>Pemohon</span><strong>{booking.userName ?? 'Pengguna'}</strong></div>
           <div><span>Tujuan</span><strong>{booking.purpose}</strong></div>
+          {booking.includedItems && booking.includedItems.length > 0 && (
+            <div>
+              <span>Include Peminjaman</span>
+              <strong>{booking.includedItems.map((i) => `${i.name}${i.quantity ? ` (${i.quantity})` : ''}`).join(', ')}</strong>
+            </div>
+          )}
         </div>
         <div className="ticket-card__footer">
           <span>ID {booking.id.slice(0, 8).toUpperCase()}</span>
@@ -139,6 +148,12 @@ export function PrintTicketButton({ booking }: Props) {
             <span className="text-gray-900 capitalize font-medium">{booking.userRole}</span>
           </div>
           <div className="flex justify-between border-b border-gray-200 pb-2">
+            <span className="font-semibold text-gray-700">Jenis Peminjaman:</span>
+            <span className="text-gray-900 font-bold">
+              {booking.bookingType === 'EQUIPMENT' ? 'Peminjaman Khusus / Alat' : 'Peminjaman Ruangan Lab'}
+            </span>
+          </div>
+          <div className="flex justify-between border-b border-gray-200 pb-2">
             <span className="font-semibold text-gray-700">Laboratorium:</span>
             <span className="text-gray-900 font-bold">
               {booking.labName} ({booking.labLocation})
@@ -162,6 +177,14 @@ export function PrintTicketButton({ booking }: Props) {
             <span className="font-semibold text-gray-700">Perkiraan Peserta:</span>
             <span className="text-gray-900">{booking.participantCount || '—'} orang</span>
           </div>
+          {booking.includedItems && booking.includedItems.length > 0 && (
+            <div className="flex justify-between gap-4 border-b border-gray-200 pb-2">
+              <span className="font-semibold text-gray-700 shrink-0">Include Peminjaman:</span>
+              <span className="text-gray-900 text-right">
+                {booking.includedItems.map((i) => `${i.name}${i.quantity ? ` (${i.quantity} unit)` : ''}`).join(', ')}
+              </span>
+            </div>
+          )}
           <div className="flex justify-between border-b border-gray-200 pb-2">
             <span className="font-semibold text-gray-700">Status Persetujuan:</span>
             <span className="text-green-700 font-bold uppercase tracking-wider">

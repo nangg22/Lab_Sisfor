@@ -7,10 +7,10 @@ import { BookingForm } from './booking-form'
 import { ChevronRight } from 'lucide-react'
 import Link from 'next/link'
 
-interface Props { searchParams: Promise<{ lab?: string; date?: string; start?: string }> }
+interface Props { searchParams: Promise<{ lab?: string; date?: string; start?: string; type?: string }> }
 
 export default async function NewBookingPage({ searchParams }: Props) {
-  const { lab: labId, date: defaultDate, start: defaultStart } = await searchParams
+  const { lab: labId, date: defaultDate, start: defaultStart, type: defaultType } = await searchParams
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
 
@@ -44,6 +44,7 @@ export default async function NewBookingPage({ searchParams }: Props) {
             defaultLabId={labId}
             defaultDate={defaultDate}
             defaultStartTime={defaultStart}
+            defaultBookingType={defaultType === 'EQUIPMENT' ? 'EQUIPMENT' : 'ROOM'}
             userId={session.user.id}
           />
         </div>

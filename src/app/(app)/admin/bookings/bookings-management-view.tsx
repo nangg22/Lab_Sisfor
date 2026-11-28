@@ -2,10 +2,11 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime, formatDateTime } from '@/lib/utils'
 import { ExportCsvButton } from './export-csv-button'
-import { Search, Calendar, ClipboardList, ArrowRight, RotateCcw, FlaskConical, User, ArrowDownUp } from 'lucide-react'
+import { Search, Calendar, ClipboardList, ArrowRight, RotateCcw, FlaskConical, User, ArrowDownUp, ChevronLeft, ChevronRight } from 'lucide-react'
 
 interface BookingItem {
   id: string
@@ -26,6 +27,7 @@ interface Props {
   pendingCount: number
   canApprove: boolean
   viewerRole: string
+  pagination?: { currentPage: number; totalPages: number; totalCount: number }
 }
 
 const STATUS_FILTERS = [
@@ -44,7 +46,8 @@ const ROLE_LABELS: Record<string, string> = {
   admin: 'Admin',
 }
 
-export function BookingsManagementView({ bookings, currentFilter, pendingCount, canApprove, viewerRole }: Props) {
+export function BookingsManagementView({ bookings, currentFilter, pendingCount, canApprove, viewerRole, pagination }: Props) {
+  const router = useRouter()
   const [search, setSearch]         = useState('')
   const [dateFilter, setDateFilter] = useState('')
   const [sortBy, setSortBy]         = useState<'newest' | 'date'>('newest')
@@ -237,6 +240,68 @@ export function BookingsManagementView({ bookings, currentFilter, pendingCount, 
           {(search || dateFilter) && (
             <button onClick={handleResetFilters} className="mt-3 text-xs font-black text-blue-600 hover:underline">Reset semua filter</button>
           )}
+        </div>
+      )}
+
+      {/* Pagination */}
+      {pagination && pagination.totalPages > 1 && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-xs font-bold text-slate-500">
+            Halaman <span className="text-slate-900">{pagination.currentPage}</span> dari{' '}
+            <span className="text-slate-900">{pagination.totalPages}</span>
+            {' '}·{' '}
+            <span className="text-slate-900">{pagination.totalCount}</span> total pengajuan
+          </p>
+
+          <div className="flex items-center gap-2">
+            {pagination.currentPage > 1 && (
+              <Link
+                href={`/admin/bookings?${currentFilter && currentFilter !== 'ALL' ? `status=${currentFilter}&` : ''}page=${pagination.currentPage - 1}`}
+                className="neo-btn neo-btn-white px-3 py-2 text-xs font-black"
+              >
+                <ChevronLeft className="h-3.5 w-3.5" strokeWidth={2.5} />
+                Sebelumnya
+              </Link>
+            )}
+
+            {/* Page number pills */}
+            <div className="flex items-center gap-1">
+              {Array.from({ length: pagination.totalPages }, (_, i) => i + 1)
+                .filter((p) => p === 1 || p === pagination.totalPages || Math.abs(p - pagination.currentPage) <= 1)
+                .reduce<(number | '...')[]>((acc, p, i, arr) => {
+                  if (i > 0 && (p as number) - (arr[i - 1] as number) > 1) acc.push('...')
+                  acc.push(p)
+                  return acc
+                }, [])
+                .map((p, i) =>
+                  p === '...' ? (
+                    <span key={`ellipsis-${i}`} className="px-2 text-xs font-bold text-slate-400">…</span>
+                  ) : (
+                    <Link
+                      key={p}
+                      href={`/admin/bookings?${currentFilter && currentFilter !== 'ALL' ? `status=${currentFilter}&` : ''}page=${p}`}
+                      className={`inline-flex h-8 w-8 items-center justify-center rounded-lg border-2 text-xs font-black transition-all ${
+                        p === pagination.currentPage
+                          ? 'bg-amber-300 border-slate-900 text-slate-950 shadow-[2px_2px_0px_0px_#0f172a]'
+                          : 'bg-white border-slate-200 text-slate-700 hover:border-slate-900'
+                      }`}
+                    >
+                      {p}
+                    </Link>
+                  )
+                )}
+            </div>
+
+            {pagination.currentPage < pagination.totalPages && (
+              <Link
+                href={`/admin/bookings?${currentFilter && currentFilter !== 'ALL' ? `status=${currentFilter}&` : ''}page=${pagination.currentPage + 1}`}
+                className="neo-btn neo-btn-white px-3 py-2 text-xs font-black"
+              >
+                Berikutnya
+                <ChevronRight className="h-3.5 w-3.5" strokeWidth={2.5} />
+              </Link>
+            )}
+          </div>
         </div>
       )}
     </div>

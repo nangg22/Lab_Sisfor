@@ -20,7 +20,7 @@ export default async function BookingDetailPage({ params }: Props) {
   const [currentUser] = await db.select({ role: users.role }).from(users).where(eq(users.id, session.user.id)).limit(1)
 
   const result = await db
-    .select({ id: bookings.id, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, notes: bookings.notes, status: bookings.status, createdAt: bookings.createdAt, userId: bookings.userId, labName: laboratories.name, labLocation: laboratories.location, labCapacity: laboratories.capacity, userName: users.fullName, userRole: users.role, userInstitutionalId: users.institutionalId })
+    .select({ id: bookings.id, bookingType: bookings.bookingType, includedItems: bookings.includedItems, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, notes: bookings.notes, status: bookings.status, createdAt: bookings.createdAt, userId: bookings.userId, labName: laboratories.name, labLocation: laboratories.location, labCapacity: laboratories.capacity, userName: users.fullName, userRole: users.role, userInstitutionalId: users.institutionalId })
     .from(bookings).leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id)).leftJoin(users, eq(bookings.userId, users.id)).where(eq(bookings.id, id)).limit(1)
 
   if (!result[0]) notFound()
@@ -34,7 +34,11 @@ export default async function BookingDetailPage({ params }: Props) {
   const isAdmin = currentUser?.role === 'admin'
   const canCancel = b.status === 'PENDING' && b.userId === session.user.id
 
+  const isEquipmentLoan = b.bookingType === 'EQUIPMENT'
+  const includedItems = Array.isArray(b.includedItems) ? b.includedItems : []
+
   const rows = [
+    { label: 'Jenis Peminjaman',   value: isEquipmentLoan ? 'Peminjaman Khusus / Alat (Komputer, dll.)' : 'Peminjaman Ruangan Lab' },
     { label: 'Tanggal Peminjaman', value: formatDate(b.bookingDate) },
     { label: 'Waktu Pelaksanaan',  value: `${formatTime(b.startTime)} – ${formatTime(b.endTime)} WIB` },
     { label: 'Tujuan Kegiatan',    value: b.purpose },
@@ -82,6 +86,41 @@ export default async function BookingDetailPage({ params }: Props) {
         </div>
       </div>
 
+      {/* Include Peminjaman */}
+      <div className="neo-card overflow-hidden">
+        <div className="bg-amber-100 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+            {isEquipmentLoan ? 'Alat Khusus yang Dipinjam' : 'Include Peminjaman (Fasilitas & Inventaris)'}
+          </h2>
+          <span className="text-[10px] font-black bg-white border border-slate-300 rounded-full px-2 py-0.5 text-slate-700">
+            {includedItems.length} Item
+          </span>
+        </div>
+        <div className="p-4">
+          {includedItems.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {includedItems.map((item, idx) => (
+                <div key={`${item.facilityId ?? item.name}-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-slate-900">{item.name}</span>
+                    {item.quantity && (
+                      <span className="shrink-0 rounded-full bg-blue-100 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-blue-800">
+                        {item.quantity} unit
+                      </span>
+                    )}
+                  </div>
+                  {item.details && <p className="text-[11px] font-medium text-slate-600 mt-1">{item.details}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs font-bold text-slate-500">
+              {isEquipmentLoan ? 'Tidak ada item khusus tercatat.' : 'Penggunaan standar ruangan laboratorium.'}
+            </p>
+          )}
+        </div>
+      </div>
+
       {/* Last decision */}
       {lastApproval && (
         <div className={`flex items-start gap-3 rounded-xl border border-slate-200 px-4 py-3 shadow-sm ${lastApproval.decision === 'APPROVED' ? 'bg-emerald-50' : 'bg-rose-50'}`}>
@@ -119,7 +158,7 @@ export default async function BookingDetailPage({ params }: Props) {
               </ul>
             </div>
           </div>
-          <PrintTicketButton booking={{ id: b.id, bookingDate: formatDate(b.bookingDate), startTime: formatTime(b.startTime), endTime: formatTime(b.endTime), purpose: b.purpose, participantCount: b.participantCount, notes: b.notes, status: b.status, createdAt: formatDateTime(b.createdAt.toISOString()), labName: b.labName, labLocation: b.labLocation, userName: b.userName, userRole: b.userRole, userInstitutionalId: b.userInstitutionalId }} />
+          <PrintTicketButton booking={{ id: b.id, bookingType: b.bookingType, includedItems, bookingDate: formatDate(b.bookingDate), startTime: formatTime(b.startTime), endTime: formatTime(b.endTime), purpose: b.purpose, participantCount: b.participantCount, notes: b.notes, status: b.status, createdAt: formatDateTime(b.createdAt.toISOString()), labName: b.labName, labLocation: b.labLocation, userName: b.userName, userRole: b.userRole, userInstitutionalId: b.userInstitutionalId }} />
         </div>
       )}
 

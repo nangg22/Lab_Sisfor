@@ -21,7 +21,7 @@ export default async function AdminBookingDetailPage({ params }: Props) {
   if (!currentUser?.isActive || !hasPermission(currentUser.role, 'booking:read_all')) redirect('/dashboard')
 
   const result = await db
-    .select({ id: bookings.id, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, notes: bookings.notes, status: bookings.status, createdAt: bookings.createdAt, laboratoryId: bookings.laboratoryId, labName: laboratories.name, labLocation: laboratories.location, labCapacity: laboratories.capacity, userName: users.fullName, userRole: users.role, userInstitutionalId: users.institutionalId })
+    .select({ id: bookings.id, bookingType: bookings.bookingType, includedItems: bookings.includedItems, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, notes: bookings.notes, status: bookings.status, createdAt: bookings.createdAt, laboratoryId: bookings.laboratoryId, labName: laboratories.name, labLocation: laboratories.location, labCapacity: laboratories.capacity, userName: users.fullName, userRole: users.role, userInstitutionalId: users.institutionalId })
     .from(bookings).leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id)).leftJoin(users, eq(bookings.userId, users.id)).where(eq(bookings.id, id)).limit(1)
 
   if (!result[0]) notFound()
@@ -38,7 +38,11 @@ export default async function AdminBookingDetailPage({ params }: Props) {
   const approvals = await db.select({ id: bookingApprovalActions.id, decision: bookingApprovalActions.decision, reason: bookingApprovalActions.reason, decidedAt: bookingApprovalActions.decidedAt, approverName: users.fullName }).from(bookingApprovalActions).leftJoin(users, eq(bookingApprovalActions.approverUserId, users.id)).where(eq(bookingApprovalActions.bookingId, id)).orderBy(asc(bookingApprovalActions.decidedAt))
   const history = await db.select({ id: bookingStatusHistory.id, oldStatus: bookingStatusHistory.oldStatus, newStatus: bookingStatusHistory.newStatus, reason: bookingStatusHistory.reason, changedAt: bookingStatusHistory.changedAt, changerName: users.fullName }).from(bookingStatusHistory).leftJoin(users, eq(bookingStatusHistory.changedByUserId, users.id)).where(eq(bookingStatusHistory.bookingId, id)).orderBy(asc(bookingStatusHistory.changedAt))
 
+  const isEquipmentLoan = b.bookingType === 'EQUIPMENT'
+  const includedItems = Array.isArray(b.includedItems) ? b.includedItems : []
+
   const rows = [
+    { label: 'Jenis Peminjaman', value: isEquipmentLoan ? 'Peminjaman Khusus / Alat (Komputer, dll.)' : 'Peminjaman Ruangan Lab' },
     { label: 'Pemohon',         value: `${b.userName} (${b.userInstitutionalId ?? '—'})` },
     { label: 'Laboratorium',    value: `${b.labName} — ${b.labLocation}` },
     { label: 'Kapasitas Lab',   value: `${b.labCapacity} orang` },
@@ -100,6 +104,41 @@ export default async function AdminBookingDetailPage({ params }: Props) {
               <span className="text-sm font-bold text-slate-900 sm:col-span-3 break-words">{row.value}</span>
             </div>
           ))}
+        </div>
+      </div>
+
+      {/* Include Peminjaman */}
+      <div className="neo-card overflow-hidden">
+        <div className="bg-amber-100 border-b border-slate-200 px-4 py-3 flex items-center justify-between">
+          <h2 className="text-xs font-black uppercase tracking-wider text-slate-900">
+            {isEquipmentLoan ? 'Alat Khusus yang Dipinjam' : 'Include Peminjaman (Fasilitas & Inventaris)'}
+          </h2>
+          <span className="text-[10px] font-black bg-white border border-slate-300 rounded-full px-2 py-0.5 text-slate-700">
+            {includedItems.length} Item
+          </span>
+        </div>
+        <div className="p-4">
+          {includedItems.length > 0 ? (
+            <div className="grid gap-2 sm:grid-cols-2">
+              {includedItems.map((item, idx) => (
+                <div key={`${item.facilityId ?? item.name}-${idx}`} className="rounded-xl border border-slate-200 bg-slate-50 px-3.5 py-2.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-black text-slate-900">{item.name}</span>
+                    {item.quantity && (
+                      <span className="shrink-0 rounded-full bg-blue-100 border border-blue-200 px-2 py-0.5 text-[10px] font-black text-blue-800">
+                        {item.quantity} unit
+                      </span>
+                    )}
+                  </div>
+                  {item.details && <p className="text-[11px] font-medium text-slate-600 mt-1">{item.details}</p>}
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs font-bold text-slate-500">
+              {isEquipmentLoan ? 'Tidak ada item khusus tercatat.' : 'Penggunaan standar ruangan laboratorium.'}
+            </p>
+          )}
         </div>
       </div>
 

@@ -20,18 +20,27 @@ export async function PATCH(
   if (!session) return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
 
   const { id: laboratoryId, facilityId } = await params
-  const { facilityName, quantity, details } = await request.json()
+  const { facilityName, category, brandModel, quantity, condition, isBorrowable, details } = await request.json()
 
   if (!facilityName?.trim()) {
-    return NextResponse.json({ error: 'Nama fasilitas wajib diisi.' }, { status: 400 })
+    return NextResponse.json({ error: 'Nama inventaris/fasilitas wajib diisi.' }, { status: 400 })
+  }
+
+  const parsedQty = quantity !== null && quantity !== undefined && quantity !== '' ? parseInt(String(quantity), 10) : null
+  if (parsedQty !== null && (isNaN(parsedQty) || parsedQty < 1)) {
+    return NextResponse.json({ error: 'Jumlah unit harus minimal 1.' }, { status: 400 })
   }
 
   const [updated] = await db
     .update(laboratoryFacilities)
     .set({
       facilityName: facilityName.trim(),
-      quantity: quantity ? parseInt(quantity) : null,
-      details: details ? details.trim() : null,
+      category: typeof category === 'string' && category.trim() ? category.trim() : 'Lainnya',
+      brandModel: typeof brandModel === 'string' && brandModel.trim() ? brandModel.trim() : null,
+      quantity: parsedQty,
+      condition: typeof condition === 'string' && condition.trim() ? condition.trim() : 'Baik',
+      isBorrowable: typeof isBorrowable === 'boolean' ? isBorrowable : true,
+      details: typeof details === 'string' && details.trim() ? details.trim() : null,
     })
     .where(
       and(

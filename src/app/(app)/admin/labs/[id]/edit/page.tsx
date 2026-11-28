@@ -1,20 +1,13 @@
 import { notFound, redirect } from 'next/navigation'
+import Link from 'next/link'
 import { auth } from '@/auth'
 import { db } from '@/db'
-import { users, laboratories, laboratoryFacilities, bookings } from '@/db/schema'
+import { users, laboratories, laboratoryFacilities, bookings, laboratoryAssignments } from '@/db/schema'
 import { eq, count } from 'drizzle-orm'
-import Link from 'next/link'
 import { LabForm } from '../../lab-form'
 import { LabFacilitiesEditor } from './lab-facilities-editor'
-import {
-  ArrowLeft,
-  FlaskConical,
-  Users,
-  MapPin,
-  Calendar,
-  Layers,
-  Activity,
-} from 'lucide-react'
+import { LabAslabEditor } from './lab-aslab-editor'
+import { ArrowLeft, FlaskConical, Users, MapPin, Calendar, Layers, Activity } from 'lucide-react'
 
 interface Props { params: Promise<{ id: string }> }
 
@@ -22,6 +15,7 @@ export default async function EditLabPage({ params }: Props) {
   const { id } = await params
   const session = await auth()
   if (!session?.user) redirect('/auth/login')
+
   const [u] = await db.select({ role: users.role }).from(users).where(eq(users.id, session.user.id)).limit(1)
   if (u?.role !== 'admin') redirect('/dashboard')
 
@@ -32,31 +26,42 @@ export default async function EditLabPage({ params }: Props) {
     .select({
       id: laboratoryFacilities.id,
       facilityName: laboratoryFacilities.facilityName,
+      category: laboratoryFacilities.category,
+      brandModel: laboratoryFacilities.brandModel,
       quantity: laboratoryFacilities.quantity,
+      condition: laboratoryFacilities.condition,
+      isBorrowable: laboratoryFacilities.isBorrowable,
       details: laboratoryFacilities.details,
     })
     .from(laboratoryFacilities)
     .where(eq(laboratoryFacilities.laboratoryId, id))
     .orderBy(laboratoryFacilities.createdAt)
 
-  // Stat: total bookings for this lab
-  const [bookingCountRow] = await db
-    .select({ count: count() })
-    .from(bookings)
-    .where(eq(bookings.laboratoryId, id))
-
+  const [bookingCountRow] = await db.select({ count: count() }).from(bookings).where(eq(bookings.laboratoryId, id))
   const totalBookings = bookingCountRow?.count ?? 0
+
+  const assignments = await db
+    .select({ id: laboratoryAssignments.id, userId: laboratoryAssignments.userId, fullName: users.fullName, email: users.email, role: users.role })
+    .from(laboratoryAssignments)
+    .leftJoin(users, eq(laboratoryAssignments.userId, users.id))
+    .where(eq(laboratoryAssignments.laboratoryId, id))
+
+  const aslabCandidates = await db
+    .select({ id: users.id, fullName: users.fullName, email: users.email })
+    .from(users)
+    .where(eq(users.role, 'aslab'))
+    .orderBy(users.fullName)
 
   return (
     <div className="max-w-3xl space-y-6">
-      {/* Breadcrumb Back */}
+      {/* Breadcrumb */}
       <nav className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
         <Link href="/admin/labs" className="hover:text-blue-600 transition-colors flex items-center gap-1">
           <ArrowLeft className="h-3.5 w-3.5" />Manajemen Lab
         </Link>
       </nav>
 
-      {/* Page Title */}
+      {/* Header */}
       <div className="neo-card p-4 sm:p-5 bg-white flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-300 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] text-slate-950 font-black text-lg">
@@ -75,7 +80,7 @@ export default async function EditLabPage({ params }: Props) {
         </span>
       </div>
 
-      {/* Quick Stats Row */}
+      {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="neo-card p-4 text-center bg-white">
           <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" strokeWidth={2} />
@@ -94,19 +99,16 @@ export default async function EditLabPage({ params }: Props) {
         </div>
       </div>
 
-      {/* Section: Edit Lab Info */}
+      {/* Edit Lab Info */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Activity className="h-4 w-4 text-slate-600" />
           <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Pengaturan Ruangan</h2>
         </div>
-        <LabForm
-          mode="edit"
-          lab={{ id: lab.id, name: lab.name, location: lab.location, capacity: lab.capacity, description: lab.description, isActive: lab.isActive }}
-        />
+        <LabForm mode="edit" lab={{ id: lab.id, name: lab.name, location: lab.location, capacity: lab.capacity, description: lab.description, isActive: lab.isActive }} />
       </div>
 
-      {/* Section: Facilities Editor */}
+      {/* Facilities Editor */}
       <div>
         <div className="flex items-center gap-2 mb-3">
           <FlaskConical className="h-4 w-4 text-slate-600" />
@@ -115,15 +117,20 @@ export default async function EditLabPage({ params }: Props) {
         <LabFacilitiesEditor laboratoryId={lab.id} initialFacilities={facilities} />
       </div>
 
+      {/* Aslab Assignment */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Users className="h-4 w-4 text-slate-600" />
+          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Penugasan Asisten Lab</h2>
+        </div>
+        <LabAslabEditor laboratoryId={lab.id} initialAssignments={assignments} aslabCandidates={aslabCandidates} />
+      </div>
+
       {/* Danger Zone */}
       <div className="neo-card-red p-5">
         <h3 className="text-sm font-black uppercase tracking-wide mb-1">Zona Berbahaya</h3>
-        <p className="text-xs font-bold opacity-90 mb-4">
-          Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus.
-        </p>
-        <p className="text-[11px] font-bold opacity-75">
-          Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).
-        </p>
+        <p className="text-xs font-bold opacity-90 mb-2">Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus.</p>
+        <p className="text-[11px] font-bold opacity-75">Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).</p>
       </div>
     </div>
   )

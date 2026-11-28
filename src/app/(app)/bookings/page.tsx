@@ -14,7 +14,7 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
   if (!session?.user) redirect('/auth/login')
 
   const myBookings = await db
-    .select({ id: bookings.id, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, status: bookings.status, createdAt: bookings.createdAt, labName: laboratories.name, labLocation: laboratories.location })
+    .select({ id: bookings.id, bookingType: bookings.bookingType, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, participantCount: bookings.participantCount, status: bookings.status, createdAt: bookings.createdAt, labName: laboratories.name, labLocation: laboratories.location })
     .from(bookings).leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id)).where(eq(bookings.userId, session.user.id)).orderBy(desc(bookings.createdAt))
 
   const filtered = filterStatus && filterStatus !== 'ALL' ? myBookings.filter((b) => b.status === filterStatus) : myBookings
@@ -115,7 +115,14 @@ export default async function BookingsPage({ searchParams }: { searchParams: Pro
                             <FlaskConical className="h-3.5 w-3.5 text-white" strokeWidth={2} />
                           </div>
                           <div>
-                            <p className="font-black text-slate-900">{b.labName ?? '—'}</p>
+                            <div className="flex items-center gap-1.5">
+                              <p className="font-black text-slate-900">{b.labName ?? '—'}</p>
+                              {b.bookingType === 'EQUIPMENT' && (
+                                <span className="rounded-full bg-blue-100 border border-blue-300 px-1.5 py-0.5 text-[9px] font-black text-blue-800">
+                                  Alat Khusus
+                                </span>
+                              )}
+                            </div>
                             <p className="text-[10px] font-bold text-slate-400">{b.labLocation ?? '—'}</p>
                           </div>
                         </div>

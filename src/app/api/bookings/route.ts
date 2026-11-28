@@ -21,7 +21,39 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json()
-    const { laboratoryId, bookingDate, startTime, endTime, purpose, participantCount, notes } = body
+    const {
+      laboratoryId,
+      bookingDate,
+      startTime,
+      endTime,
+      purpose,
+      participantCount,
+      notes,
+      bookingType: rawBookingType,
+      includedItems: rawIncludedItems,
+    } = body
+
+    const bookingType = rawBookingType === 'EQUIPMENT' ? 'EQUIPMENT' : 'ROOM'
+    const includedItems = Array.isArray(rawIncludedItems)
+      ? rawIncludedItems
+          .filter((item) => item && typeof item.name === 'string' && item.name.trim().length > 0)
+          .map((item) => ({
+            facilityId: typeof item.facilityId === 'string' ? item.facilityId : undefined,
+            name: item.name.trim(),
+            quantity:
+              item.quantity !== null && item.quantity !== undefined && item.quantity !== ''
+                ? Math.max(1, Number(item.quantity) || 1)
+                : null,
+            details: typeof item.details === 'string' && item.details.trim() ? item.details.trim() : null,
+          }))
+      : []
+
+    if (bookingType === 'EQUIPMENT' && includedItems.length === 0) {
+      return NextResponse.json(
+        { error: 'Untuk peminjaman khusus/alat, pilih minimal 1 unit/inventaris yang ingin dipinjam.' },
+        { status: 400 }
+      )
+    }
 
     if (!laboratoryId || !bookingDate || !startTime || !endTime || typeof purpose !== 'string') {
       return NextResponse.json({ error: 'Data tidak lengkap.' }, { status: 400 })
@@ -73,7 +105,13 @@ export async function POST(request: Request) {
     // dan hanya admin yang bisa APPROVE. Double-booking di PENDING tidak menyebabkan masalah
     // nyata karena admin akan menolak salah satunya saat review.
     const existingSlots = await db
-      .select({ id: bookings.id, startTime: bookings.startTime, endTime: bookings.endTime, status: bookings.status })
+      .select({
+        id: bookings.id,
+        startTime: bookings.startTime,
+        endTime: bookings.endTime,
+        status: bookings.status,
+        bookingType: bookings.bookingType,
+      })
       .from(bookings)
       .where(
         and(
@@ -83,9 +121,14 @@ export async function POST(request: Request) {
         )
       )
 
-    const conflict = existingSlots.find(
-      (s) => startTime < s.endTime && endTime > s.startTime
-    )
+    const conflict = existingSlots.find((s) => {
+      const overlaps = startTime < s.endTime && endTime > s.startTime
+      if (!overlaps) return false
+      if (s.status === 'BLOCKED') return true
+      // Peminjaman ruangan bentrok dengan peminjaman ruangan lain.
+      // Peminjaman khusus alat (EQUIPMENT) tetap diperbolehkan selama lab tidak diblokir (akan direview admin).
+      return bookingType === 'ROOM' && s.bookingType !== 'EQUIPMENT'
+    })
 
     if (conflict) {
       return NextResponse.json(
@@ -103,6 +146,8 @@ export async function POST(request: Request) {
       .values({
         userId: session.user.id,
         laboratoryId,
+        bookingType,
+        includedItems: includedItems.length > 0 ? includedItems : null,
         bookingDate,
         startTime,
         endTime,
@@ -118,15 +163,15 @@ export async function POST(request: Request) {
       oldStatus: null,
       newStatus: 'PENDING',
       changedByUserId: session.user.id,
-      reason: 'Pengajuan dibuat',
+      reason: bookingType === 'EQUIPMENT' ? 'Pengajuan peminjaman khusus/alat dibuat' : 'Pengajuan peminjaman ruangan dibuat',
     })
     await db.insert(auditLogs).values({
       actorUserId: session.user.id,
       action: 'BOOKING_CREATED',
       targetType: 'BOOKING',
       targetId: booking.id,
-      reason: 'Pengajuan dibuat',
-      metadata: { laboratoryId, bookingDate, startTime, endTime },
+      reason: bookingType === 'EQUIPMENT' ? 'Pengajuan peminjaman khusus/alat dibuat' : 'Pengajuan peminjaman ruangan dibuat',
+      metadata: { laboratoryId, bookingType, includedItems, bookingDate, startTime, endTime },
     })
 
     // Notifikasi ke semua admin

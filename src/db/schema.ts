@@ -75,8 +75,12 @@ export const laboratoryFacilities = pgTable('laboratory_facilities', {
     .notNull()
     .references(() => laboratories.id, { onDelete: 'cascade' }),
   facilityName: varchar('facility_name', { length: 120 }).notNull(),
+  category: varchar('category', { length: 60 }).notNull().default('Lainnya'),
+  brandModel: varchar('brand_model', { length: 120 }),
   details: text('details'),
   quantity: integer('quantity'),
+  condition: varchar('condition', { length: 30 }).notNull().default('Baik'),
+  isBorrowable: boolean('is_borrowable').notNull().default(true),
   createdAt: timestamp('created_at').notNull().defaultNow(),
 })
 
@@ -99,6 +103,14 @@ export const bookings = pgTable('bookings', {
   laboratoryId: uuid('laboratory_id')
     .notNull()
     .references(() => laboratories.id),
+  bookingType: varchar('booking_type', { length: 20 }).notNull().default('ROOM'),
+  // bookingType: 'ROOM' | 'EQUIPMENT'
+  includedItems: jsonb('included_items').$type<Array<{
+    facilityId?: string
+    name: string
+    quantity?: number | null
+    details?: string | null
+  }>>(),
   bookingDate: date('booking_date').notNull(),
   startTime: time('start_time').notNull(),
   endTime: time('end_time').notNull(),
