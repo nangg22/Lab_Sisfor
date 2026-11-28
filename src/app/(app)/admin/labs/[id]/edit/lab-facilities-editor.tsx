@@ -156,8 +156,8 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
   }
 
   return (
-    <div className="neo-card bg-white p-6 mt-4">
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5">
+    <div className="neo-card mt-3 bg-white p-4 sm:mt-4 sm:p-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 mb-4 sm:mb-5">
         <div className="flex items-center gap-2.5">
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-blue-500 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a]">
             <Layers className="h-4 w-4 text-white" strokeWidth={2.5} />
@@ -176,7 +176,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
           <button
             type="button"
             onClick={() => { setShowAddForm(v => !v); setAddError(null) }}
-            className="neo-btn neo-btn-primary px-3 py-1.5 text-xs font-black"
+            className="neo-btn neo-btn-primary min-h-11 px-3 py-2 text-xs font-black"
           >
             <Plus className="h-3.5 w-3.5" />
             <span>Tambah Inventaris</span>
@@ -442,7 +442,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                       <button
                         type="button"
                         onClick={() => startEdit(f)}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-black rounded-lg border border-slate-300 text-slate-700 hover:bg-slate-100 hover:border-slate-400 transition-colors"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-slate-300 px-2.5 py-1.5 text-xs font-black text-slate-700 transition-colors hover:border-slate-400 hover:bg-slate-100"
                         title="Edit inventaris"
                       >
                         <Pencil className="h-3 w-3" />
@@ -452,7 +452,7 @@ export function LabFacilitiesEditor({ laboratoryId, initialFacilities }: Props) 
                         type="button"
                         onClick={() => handleDelete(f.id, f.facilityName)}
                         disabled={isDeleting}
-                        className="inline-flex items-center gap-1 px-2.5 py-1.5 text-xs font-black rounded-lg border border-rose-300 text-rose-600 hover:bg-rose-50 hover:border-rose-500 transition-colors disabled:opacity-50"
+                        className="inline-flex min-h-11 min-w-11 items-center justify-center gap-1 rounded-lg border border-rose-300 px-2.5 py-1.5 text-xs font-black text-rose-600 transition-colors hover:border-rose-500 hover:bg-rose-50 disabled:opacity-50"
                         title="Hapus inventaris"
                       >
                         <Trash2 className="h-3 w-3" />

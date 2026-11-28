@@ -7,7 +7,7 @@ import { FlaskConical, MapPin, Users, AlignLeft, Save, ArrowLeft, CheckCircle2, 
 interface Lab { id: string; name: string; location: string; capacity: number; description: string | null; isActive: boolean }
 interface Props { mode: 'create' | 'edit'; lab?: Lab }
 
-const INPUT = 'w-full rounded-lg border-2 border-slate-900 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20'
+const INPUT = 'min-h-11 w-full rounded-lg border-2 border-slate-900 bg-white px-3.5 py-2.5 text-sm font-bold text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] placeholder:text-slate-400 placeholder:font-normal focus:outline-none focus:ring-2 focus:ring-blue-500/20'
 const LABEL = 'flex items-center gap-1.5 text-[11px] font-black uppercase tracking-wide text-slate-700 mb-1.5'
 const ERR   = 'mt-1 text-xs font-bold text-rose-600'
 
@@ -82,7 +82,7 @@ export function LabForm({ mode, lab }: Props) {
         </div>
       </div>
 
-      <div className="p-5">
+      <div className="p-4 sm:p-5">
         {/* Alerts */}
         {serverError && (
           <div className="mb-5 flex items-center gap-2.5 rounded-xl bg-rose-50 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] px-4 py-3 text-xs font-bold text-rose-700" role="alert">
@@ -122,7 +122,7 @@ export function LabForm({ mode, lab }: Props) {
               <Users className="h-3.5 w-3.5 text-slate-500" />
               Kapasitas Maksimum <span className="text-rose-500">*</span>
             </label>
-            <div className="flex items-center gap-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3">
               <input type="number" min="1" max="300" value={capacity} onChange={(e) => setCapacity(e.target.value)} placeholder="30" className={INPUT + ' w-28' + (errors.capacity ? ' border-rose-600 shadow-[2px_2px_0px_0px_#e11d48]' : '')} />
               <span className="text-sm font-black text-slate-600">orang / kursi</span>
             </div>
@@ -164,11 +164,11 @@ export function LabForm({ mode, lab }: Props) {
           </div>
 
           {/* Actions */}
-          <div className="grid grid-cols-2 gap-3 pt-1">
-            <button type="button" onClick={() => router.back()} className="neo-btn neo-btn-white py-2.5 text-sm font-black justify-center">
+          <div className="grid grid-cols-2 gap-2.5 pt-1 sm:gap-3">
+            <button type="button" onClick={() => router.back()} className="neo-btn neo-btn-white min-h-12 px-3 py-2.5 text-sm font-black justify-center">
               <ArrowLeft className="h-4 w-4" />Kembali
             </button>
-            <button type="submit" disabled={loading} className="neo-btn neo-btn-primary py-2.5 text-sm font-black justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0">
+            <button type="submit" disabled={loading} className="neo-btn neo-btn-primary min-h-12 px-3 py-2.5 text-sm font-black justify-center disabled:opacity-50 disabled:cursor-not-allowed disabled:shadow-none disabled:translate-x-0 disabled:translate-y-0">
               <Save className="h-4 w-4" />
               {loading ? 'Menyimpan…' : mode === 'create' ? 'Tambah Lab' : 'Simpan Perubahan'}
             </button>

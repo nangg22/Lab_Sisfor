@@ -39,8 +39,8 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
   // Batasi penggunaan navigasi bawah ini khusus untuk layar seluler (Mobile View: md:hidden)
   // Dilengkapi container solid, border tegas 2px, dan bayangan offset agar tidak transparan/bug
   return (
-    <div className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[92%] max-w-sm -translate-x-1/2 pointer-events-auto md:hidden">
-      <nav aria-label="Navigasi seluler" className="mobile-dock-solid flex items-center justify-around px-2 py-2">
+    <div className="fixed bottom-[max(0.75rem,env(safe-area-inset-bottom))] left-1/2 z-50 w-[calc(100%-1rem)] max-w-md -translate-x-1/2 pointer-events-auto md:hidden">
+      <nav aria-label="Navigasi seluler" className="mobile-dock-solid flex items-center justify-around gap-1 px-1.5 py-1.5">
         {navItems.map((item) => {
           const isActive =
             pathname === item.href ||
@@ -51,7 +51,7 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
               key={item.href}
               href={item.href}
               aria-current={isActive ? 'page' : undefined}
-              className={`relative flex flex-col items-center gap-1 px-3 py-1.5 rounded-xl text-[10px] font-black tracking-tight transition-all duration-150 ${
+              className={`relative flex min-h-11 min-w-0 flex-1 flex-col items-center justify-center gap-0.5 rounded-xl px-1.5 py-1 text-[10px] font-black tracking-tight transition-all duration-150 ${
                 isActive
                   ? 'bg-slate-900 text-white shadow-sm -translate-y-0.5'
                   : 'text-slate-700 hover:text-slate-900 hover:bg-slate-100'
@@ -59,7 +59,7 @@ export function ColorOSDock({ userRole, pendingCount }: Props) {
             >
               <div className="relative">
                 <Icon
-                  className="h-[18px] w-[18px]"
+                  className="h-5 w-5"
                   strokeWidth={isActive ? 2.5 : 2}
                 />
                 {item.badge !== undefined && item.badge > 0 && (

@@ -1,25 +1,41 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/db'
 import { emailVerificationTokens, users } from '@/db/schema'
-import { eq } from 'drizzle-orm'
+import { eq, or } from 'drizzle-orm'
 import bcrypt from 'bcryptjs'
 import { createEmailVerificationToken } from '@/lib/email-verification'
+import { isEmailConfigured, sendVerificationEmail } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
     const { fullName, institutionalId, email, password, role } = await request.json()
     const normalizedEmail = String(email ?? '').toLowerCase().trim()
+    const normalizedInstId = String(institutionalId ?? '').trim()
     const normalizedRole = role === 'dosen' ? 'dosen' : role === 'mahasiswa' ? 'mahasiswa' : null
 
-    if (!fullName || !normalizedEmail || !password || !normalizedRole || !institutionalId?.trim()) {
+    if (!fullName?.trim() || !normalizedEmail || !password || !normalizedRole || !normalizedInstId) {
       return NextResponse.json({ error: 'Data tidak lengkap.' }, { status: 400 })
     }
 
-    if (!normalizedEmail.endsWith('@uisi.ac.id')) {
-      return NextResponse.json({ error: 'Registrasi hanya diperbolehkan menggunakan email @uisi.ac.id.' }, { status: 400 })
+    // Validasi domain email khusus sivitas akademika UISI
+    if (normalizedRole === 'mahasiswa' && !normalizedEmail.endsWith('@student.uisi.ac.id')) {
+      return NextResponse.json(
+        { error: 'Mahasiswa wajib menggunakan email resmi @student.uisi.ac.id.' },
+        { status: 400 }
+      )
     }
 
-    if (!/^[A-Za-z0-9./-]{4,50}$/.test(institutionalId.trim())) {
+    if (
+      normalizedRole === 'dosen' &&
+      (!normalizedEmail.endsWith('@uisi.ac.id') || normalizedEmail.endsWith('@student.uisi.ac.id'))
+    ) {
+      return NextResponse.json(
+        { error: 'Dosen wajib menggunakan email resmi @uisi.ac.id (bukan @student.uisi.ac.id).' },
+        { status: 400 }
+      )
+    }
+
+    if (!/^[A-Za-z0-9./-]{4,50}$/.test(normalizedInstId)) {
       return NextResponse.json({ error: 'NIM/NIP tidak valid.' }, { status: 400 })
     }
 
@@ -28,22 +44,25 @@ export async function POST(request: Request) {
     }
 
     const existing = await db
-      .select({ id: users.id })
+      .select({ id: users.id, email: users.email, institutionalId: users.institutionalId })
       .from(users)
-      .where(eq(users.email, normalizedEmail))
+      .where(or(eq(users.email, normalizedEmail), eq(users.institutionalId, normalizedInstId)))
       .limit(1)
 
     if (existing.length > 0) {
-      return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 409 })
+      if (existing[0].email === normalizedEmail) {
+        return NextResponse.json({ error: 'Email sudah terdaftar.' }, { status: 409 })
+      }
+      return NextResponse.json({ error: 'NIM/NIP sudah terdaftar pada akun lain.' }, { status: 409 })
     }
 
     const passwordHash = await bcrypt.hash(password, 12)
-
     const { rawToken, tokenHash, expiresAt } = createEmailVerificationToken()
+
     await db.transaction(async (tx) => {
       const [newUser] = await tx.insert(users).values({
         fullName: fullName.trim(),
-        institutionalId: institutionalId?.trim() || null,
+        institutionalId: normalizedInstId,
         email: normalizedEmail,
         passwordHash,
         role: normalizedRole,
@@ -59,6 +78,16 @@ export async function POST(request: Request) {
     })
 
     const verificationUrl = `/auth/verify-email?token=${rawToken}`
+
+    if (isEmailConfigured()) {
+      const origin = new URL(request.url).origin
+      try {
+        await sendVerificationEmail(normalizedEmail, fullName.trim(), `${origin}${verificationUrl}`)
+      } catch (mailErr) {
+        console.error('Send verification email failed:', mailErr)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       verificationRequired: true,

@@ -4,7 +4,7 @@ import { ViewTransitionLink } from '@/components/ui/view-transition-link'
 import { auth } from '@/auth'
 import { db } from '@/db'
 import { users, laboratories, bookings } from '@/db/schema'
-import { eq, desc, count } from 'drizzle-orm'
+import { eq, desc, asc, count, and, or, gte } from 'drizzle-orm'
 import { StatusBadge } from '@/components/ui/badge'
 import { formatDate, formatTime } from '@/lib/utils'
 import {
@@ -51,6 +51,7 @@ export default async function DashboardPage() {
         .leftJoin(users, eq(bookings.userId, users.id))
         .orderBy(desc(bookings.createdAt))
         .limit(6)
+
     : await db
         .select({ id: bookings.id, bookingDate: bookings.bookingDate, startTime: bookings.startTime, endTime: bookings.endTime, purpose: bookings.purpose, status: bookings.status, createdAt: bookings.createdAt, labName: laboratories.name, userName: users.fullName })
         .from(bookings)
@@ -59,6 +60,36 @@ export default async function DashboardPage() {
         .where(eq(bookings.userId, session.user.id))
         .orderBy(desc(bookings.createdAt))
         .limit(6)
+
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+  const upcomingBookingWhere = isAdmin
+    ? and(
+        gte(bookings.bookingDate, today),
+        or(eq(bookings.status, 'PENDING'), eq(bookings.status, 'APPROVED')),
+      )
+    : and(
+        eq(bookings.userId, session.user.id),
+        gte(bookings.bookingDate, today),
+        or(eq(bookings.status, 'PENDING'), eq(bookings.status, 'APPROVED')),
+      )
+
+  const upcomingBookings = await db
+    .select({
+      id: bookings.id,
+      bookingDate: bookings.bookingDate,
+      startTime: bookings.startTime,
+      endTime: bookings.endTime,
+      purpose: bookings.purpose,
+      status: bookings.status,
+      labName: laboratories.name,
+      userName: users.fullName,
+    })
+    .from(bookings)
+    .leftJoin(laboratories, eq(bookings.laboratoryId, laboratories.id))
+    .leftJoin(users, eq(bookings.userId, users.id))
+    .where(upcomingBookingWhere)
+    .orderBy(asc(bookings.bookingDate), asc(bookings.startTime))
+    .limit(5)
 
   const allBookingsForStats = isAdmin
     ? await db.select({ status: bookings.status }).from(bookings)
@@ -100,17 +131,17 @@ export default async function DashboardPage() {
           </div>
           {/* Buttons: full-width stacked on mobile, inline on sm+ */}
           <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row sm:gap-2.5">
-            <Link href="/schedule" className="neo-btn neo-btn-white py-2.5 text-xs font-black justify-center">
-              <CalendarDays className="h-4 w-4" />
+            <Link href="/schedule" className="neo-btn neo-btn-white px-3.5 py-3 text-sm font-black justify-center sm:px-5">
+              <CalendarDays className="h-5 w-5" />
               <span>Jadwal Ruang</span>
             </Link>
             {isAdmin ? (
-              <Link href="/admin/labs/new" className="neo-btn neo-btn-primary py-2.5 text-xs font-black justify-center">
-                <Plus className="h-4 w-4" strokeWidth={2.5} /><span>Tambah Lab</span>
+              <Link href="/admin/labs/new" className="neo-btn neo-btn-primary px-3.5 py-3 text-sm font-black justify-center sm:px-5">
+                <Plus className="h-5 w-5" strokeWidth={2.5} /><span>Tambah Lab</span>
               </Link>
             ) : (
-              <Link href="/bookings/new" className="neo-btn neo-btn-primary py-2.5 text-xs font-black justify-center">
-                <Plus className="h-4 w-4" strokeWidth={2.5} /><span>Ajukan Pinjam</span>
+              <Link href="/bookings/new" className="neo-btn neo-btn-primary px-3.5 py-3 text-sm font-black justify-center sm:px-5">
+                <Plus className="h-5 w-5" strokeWidth={2.5} /><span>Ajukan Pinjam</span>
               </Link>
             )}
           </div>
@@ -126,8 +157,8 @@ export default async function DashboardPage() {
             <span className="text-[11px] font-black uppercase tracking-wide text-slate-950 leading-tight">
               {isAdmin ? 'Pengajuan Masuk' : 'Pengajuan Saya'}
             </span>
-            <div className="p-1.5 rounded-md bg-slate-950 text-white shrink-0">
-              <Eye className="h-3.5 w-3.5" />
+            <div className="p-2 rounded-lg bg-slate-950 text-white shrink-0">
+              <Eye className="h-5 w-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -145,8 +176,8 @@ export default async function DashboardPage() {
             <span className="text-[11px] font-black uppercase tracking-wide text-slate-900 leading-tight">
               Laboratorium Aktif
             </span>
-            <div className="p-1.5 rounded-md bg-blue-600 text-white shrink-0">
-              <Building2 className="h-3.5 w-3.5" />
+            <div className="p-2 rounded-lg bg-blue-600 text-white shrink-0">
+              <Building2 className="h-5 w-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -164,8 +195,8 @@ export default async function DashboardPage() {
             <span className="text-[11px] font-black uppercase tracking-wide text-slate-900 leading-tight">
               {isAdmin ? 'Total Pengguna' : 'Slot Terjadwal'}
             </span>
-            <div className="p-1.5 rounded-md bg-emerald-600 text-white shrink-0">
-              <UserCheck className="h-3.5 w-3.5" />
+            <div className="p-2 rounded-lg bg-emerald-600 text-white shrink-0">
+              <UserCheck className="h-5 w-5" />
             </div>
           </div>
           <div className="flex items-baseline gap-1.5">
@@ -323,21 +354,104 @@ export default async function DashboardPage() {
           <div className="border-t-2 border-slate-200 p-3 bg-amber-50">
             {isAdmin ? (
               <div className="grid grid-cols-2 gap-2">
-                <Link href="/admin/labs/new" className="neo-btn neo-btn-white py-2 text-[11px] font-black justify-center">
-                  <Plus className="h-3.5 w-3.5" />Tambah Lab
+                <Link href="/admin/labs/new" className="neo-btn neo-btn-white py-2.5 text-xs font-black justify-center">
+                  <Plus className="h-4 w-4" />Tambah Lab
                 </Link>
-                <Link href="/admin/users" className="neo-btn neo-btn-white py-2 text-[11px] font-black justify-center">
-                  <UsersIcon className="h-3.5 w-3.5" />Pengguna
+                <Link href="/admin/users" className="neo-btn neo-btn-white py-2.5 text-xs font-black justify-center">
+                  <UsersIcon className="h-4 w-4" />Pengguna
                 </Link>
               </div>
             ) : (
-              <Link href="/bookings/new" className="neo-btn neo-btn-primary w-full py-2.5 text-xs font-black justify-center">
-                <Plus className="h-4 w-4" strokeWidth={2.5} />Ajukan Peminjaman
+              <Link href="/bookings/new" className="neo-btn neo-btn-primary w-full py-3 text-sm font-black justify-center">
+                <Plus className="h-5 w-5" strokeWidth={2.5} />Ajukan Peminjaman
               </Link>
             )}
           </div>
         </div>
 
+      </div>
+
+      {/* ── 4. Upcoming schedule + quick access ── */}
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
+        <section className="neo-card overflow-hidden lg:col-span-2">
+          <div className="flex items-center justify-between border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <div>
+              <h2 className="text-xs font-black tracking-tight text-slate-950 uppercase">Jadwal Terdekat</h2>
+              <p className="mt-0.5 text-[10px] font-bold text-slate-500">
+                {isAdmin ? 'Agenda penggunaan laboratorium berikutnya' : 'Penggunaan laboratorium yang akan datang'}
+              </p>
+            </div>
+            <Link href="/schedule" className="neo-btn neo-btn-white shrink-0 px-3 py-2 text-xs font-black">
+              Buka Kalender <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          {upcomingBookings.length === 0 ? (
+            <div className="flex items-center justify-between gap-4 px-4 py-5">
+              <div>
+                <p className="text-xs font-black text-slate-900">Belum ada jadwal mendatang.</p>
+                <p className="mt-1 text-[11px] font-medium text-slate-500">Pilih slot yang tersedia untuk mulai membuat pengajuan.</p>
+              </div>
+              <Link href={isAdmin ? '/schedule' : '/bookings/new'} className="neo-btn neo-btn-primary shrink-0 px-3 py-2.5 text-xs font-black">
+                <Plus className="h-4 w-4" /> {isAdmin ? 'Lihat Slot' : 'Ajukan'}
+              </Link>
+            </div>
+          ) : (
+            <div className="divide-y divide-slate-200">
+              {upcomingBookings.map((booking) => (
+                <ViewTransitionLink
+                  key={booking.id}
+                  href={`/bookings/${booking.id}`}
+                  className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-amber-50"
+                >
+                  <div className="flex h-11 w-14 shrink-0 flex-col items-center justify-center rounded-lg border border-amber-200 bg-amber-50 text-slate-950">
+                    <span className="text-[10px] font-black uppercase">{formatDate(booking.bookingDate).split(' ')[0]}</span>
+                    <span className="text-[11px] font-black">{booking.bookingDate.slice(8, 10)}</span>
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="truncate text-xs font-black text-slate-950">{booking.labName ?? 'Laboratorium'}</p>
+                    <p className="mt-0.5 truncate text-[11px] font-bold text-slate-500">
+                      {formatTime(booking.startTime)}–{formatTime(booking.endTime)} WIB · {booking.purpose}
+                    </p>
+                  </div>
+                  {isAdmin && booking.userName && (
+                    <span className="hidden max-w-32 truncate text-[11px] font-bold text-slate-600 sm:block">{booking.userName}</span>
+                  )}
+                  <StatusBadge status={booking.status} />
+                </ViewTransitionLink>
+              ))}
+            </div>
+          )}
+        </section>
+
+        <section className="neo-card overflow-hidden">
+          <div className="border-b border-slate-200 bg-slate-50 px-4 py-3">
+            <h2 className="text-xs font-black tracking-tight text-slate-950 uppercase">Akses Cepat</h2>
+            <p className="mt-0.5 text-[10px] font-bold text-slate-500">Langkah berikutnya untuk Anda</p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 p-3">
+            <Link href="/schedule" className="rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-blue-300 hover:bg-blue-50">
+              <CalendarDays className="mb-2 h-5 w-5 text-blue-600" />
+              <span className="block text-[11px] font-black text-slate-900">Lihat Jadwal</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-slate-500">Cek slot kosong</span>
+            </Link>
+            <Link href="/labs" className="rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-blue-300 hover:bg-blue-50">
+              <Building2 className="mb-2 h-5 w-5 text-blue-600" />
+              <span className="block text-[11px] font-black text-slate-900">Katalog Lab</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-slate-500">Fasilitas & kapasitas</span>
+            </Link>
+            <Link href={isAdmin ? '/admin/bookings' : '/bookings'} className="rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-blue-300 hover:bg-blue-50">
+              <Eye className="mb-2 h-5 w-5 text-blue-600" />
+              <span className="block text-[11px] font-black text-slate-900">Riwayat</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-slate-500">Lacak pengajuan</span>
+            </Link>
+            <Link href="/profile" className="rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-blue-300 hover:bg-blue-50">
+              <UserCheck className="mb-2 h-5 w-5 text-blue-600" />
+              <span className="block text-[11px] font-black text-slate-900">Profil Saya</span>
+              <span className="mt-0.5 block text-[10px] font-medium text-slate-500">Data akun & sandi</span>
+            </Link>
+          </div>
+        </section>
       </div>
     </div>
   )

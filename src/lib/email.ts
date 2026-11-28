@@ -118,3 +118,39 @@ export async function sendPasswordResetEmail(
     throw new Error(`Gagal mengirim email: ${error.message}`)
   }
 }
+
+export async function sendVerificationEmail(
+  to: string,
+  userName: string,
+  verifyUrl: string,
+): Promise<void> {
+  if (!resendApiKey) {
+    throw new Error('RESEND_API_KEY belum dikonfigurasi')
+  }
+
+  const resend = new Resend(resendApiKey)
+  const { error } = await resend.emails.send({
+    from: emailFrom,
+    to,
+    subject: 'Verifikasi Akun UISI — SIP-Lab Sisfor',
+    html: `
+      <div style="font-family:Arial,sans-serif;max-width:520px;margin:0 auto;padding:24px;border:2px solid #0f172a;border-radius:12px;">
+        <h2 style="margin:0 0 12px;color:#0f172a;">Verifikasi Email UISI Anda</h2>
+        <p style="color:#334155;font-size:14px;line-height:1.6;">
+          Halo <strong>${userName}</strong>,<br/>
+          Terima kasih telah mendaftar di <strong>SIP-Lab Sisfor UISI</strong>. Klik tombol di bawah untuk mengaktifkan akun Anda:
+        </p>
+        <p style="margin:24px 0;">
+          <a href="${verifyUrl}" style="background:#2563eb;color:#ffffff;padding:12px 24px;border-radius:8px;text-decoration:none;font-weight:bold;display:inline-block;">
+            Verifikasi &amp; Aktifkan Akun
+          </a>
+        </p>
+        <p style="color:#64748b;font-size:12px;">Atau salin link ini: <a href="${verifyUrl}">${verifyUrl}</a></p>
+      </div>
+    `,
+  })
+
+  if (error) {
+    throw new Error(`Gagal mengirim email verifikasi: ${error.message}`)
+  }
+}

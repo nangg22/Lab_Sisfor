@@ -31,7 +31,7 @@ export function AppShell({ children, userName, userRole, pendingCount }: Props) 
 
       <div className={`flex flex-col transition-[padding] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${sidebarOpen ? 'md:pl-72' : 'md:pl-24'}`}>
         <Header isAdmin={isAdmin} isStaff={isStaff} />
-        <main id="main-content" tabIndex={-1} className="flex-1 p-4 outline-none md:p-8 md:pb-8 pb-28">
+        <main id="main-content" tabIndex={-1} className="flex-1 p-3 pb-36 outline-none sm:p-4 sm:pb-32 md:p-8 md:pb-8">
           <div className="mx-auto max-w-6xl">{children}</div>
         </main>
       </div>

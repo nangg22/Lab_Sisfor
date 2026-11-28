@@ -1,14 +1,18 @@
 'use client'
 
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { AlertCircle, CheckCircle2, LoaderCircle } from 'lucide-react'
 import '../auth.css'
 
 export default function VerifyEmailPage() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
+  const requestedRef = useRef(false)
 
   useEffect(() => {
+    if (requestedRef.current) return
+    requestedRef.current = true
+
     const token = new URLSearchParams(window.location.search).get('token')
     if (!token) {
       window.setTimeout(() => setStatus('error'), 0)
@@ -19,7 +23,9 @@ export default function VerifyEmailPage() {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token }),
-    }).then((response) => setStatus(response.ok ? 'success' : 'error')).catch(() => setStatus('error'))
+    })
+      .then((response) => setStatus(response.ok ? 'success' : 'error'))
+      .catch(() => setStatus('error'))
   }, [])
 
   return (

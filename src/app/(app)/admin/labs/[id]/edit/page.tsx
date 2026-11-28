@@ -53,16 +53,16 @@ export default async function EditLabPage({ params }: Props) {
     .orderBy(users.fullName)
 
   return (
-    <div className="max-w-3xl space-y-6">
+    <div className="max-w-3xl space-y-4 sm:space-y-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-xs font-bold text-slate-500">
+      <nav className="flex items-center gap-1.5 px-1 text-xs font-bold text-slate-500 sm:px-0">
         <Link href="/admin/labs" className="hover:text-blue-600 transition-colors flex items-center gap-1">
           <ArrowLeft className="h-3.5 w-3.5" />Manajemen Lab
         </Link>
       </nav>
 
       {/* Header */}
-      <div className="neo-card p-4 sm:p-5 bg-white flex flex-wrap items-start justify-between gap-3">
+      <div className="neo-card bg-white p-3 sm:p-5 flex flex-wrap items-start justify-between gap-3">
         <div className="flex items-center gap-3 min-w-0">
           <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-300 border-2 border-slate-900 shadow-[3px_3px_0px_0px_#0f172a] text-slate-950 font-black text-lg">
             {lab.name.charAt(0)}
@@ -81,18 +81,18 @@ export default async function EditLabPage({ params }: Props) {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="neo-card p-4 text-center bg-white">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="neo-card bg-white p-3 text-center sm:p-4">
           <Users className="h-5 w-5 text-blue-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{lab.capacity}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Kapasitas</p>
         </div>
-        <div className="neo-card p-4 text-center bg-white">
+        <div className="neo-card bg-white p-3 text-center sm:p-4">
           <Layers className="h-5 w-5 text-amber-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{facilities.length}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Fasilitas</p>
         </div>
-        <div className="neo-card p-4 text-center bg-white">
+        <div className="neo-card bg-white p-3 text-center sm:p-4">
           <Calendar className="h-5 w-5 text-emerald-600 mx-auto mb-1" strokeWidth={2} />
           <p className="text-2xl font-black text-slate-900">{totalBookings}</p>
           <p className="text-[11px] font-black text-slate-500 uppercase tracking-wider">Total Booking</p>
@@ -103,7 +103,7 @@ export default async function EditLabPage({ params }: Props) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Activity className="h-4 w-4 text-slate-600" />
-          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Pengaturan Ruangan</h2>
+          <h2 className="text-[11px] font-black text-slate-700 uppercase tracking-wider sm:text-xs">Pengaturan Ruangan</h2>
         </div>
         <LabForm mode="edit" lab={{ id: lab.id, name: lab.name, location: lab.location, capacity: lab.capacity, description: lab.description, isActive: lab.isActive }} />
       </div>
@@ -112,7 +112,7 @@ export default async function EditLabPage({ params }: Props) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <FlaskConical className="h-4 w-4 text-slate-600" />
-          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Kelola Fasilitas &amp; Inventaris</h2>
+          <h2 className="text-[11px] font-black text-slate-700 uppercase tracking-wider sm:text-xs">Kelola Fasilitas &amp; Inventaris</h2>
         </div>
         <LabFacilitiesEditor laboratoryId={lab.id} initialFacilities={facilities} />
       </div>
@@ -121,13 +121,13 @@ export default async function EditLabPage({ params }: Props) {
       <div>
         <div className="flex items-center gap-2 mb-3">
           <Users className="h-4 w-4 text-slate-600" />
-          <h2 className="text-xs font-black text-slate-700 uppercase tracking-wider">Penugasan Asisten Lab</h2>
+          <h2 className="text-[11px] font-black text-slate-700 uppercase tracking-wider sm:text-xs">Penugasan Asisten Lab</h2>
         </div>
         <LabAslabEditor laboratoryId={lab.id} initialAssignments={assignments} aslabCandidates={aslabCandidates} />
       </div>
 
       {/* Danger Zone */}
-      <div className="neo-card-red p-5">
+      <div className="neo-card-red p-4 sm:p-5">
         <h3 className="text-sm font-black uppercase tracking-wide mb-1">Zona Berbahaya</h3>
         <p className="text-xs font-bold opacity-90 mb-2">Tindakan di bawah bersifat permanen. Nonaktifkan lab terlebih dahulu sebelum menghapus.</p>
         <p className="text-[11px] font-bold opacity-75">Gunakan opsi &quot;Hapus Ruangan&quot; dari halaman Manajemen Lab (menu titik tiga pada kartu lab).</p>

@@ -94,7 +94,7 @@ export function LabAslabEditor({ laboratoryId, initialAssignments, aslabCandidat
         <span className="neo-badge bg-emerald-100 text-slate-900 text-[10px]">{assignments.length} aslab</span>
       </div>
 
-      <div className="p-5 space-y-4">
+      <div className="space-y-4 p-4 sm:p-5">
         {error && (
           <div className="flex items-center gap-2.5 rounded-xl bg-rose-50 border-2 border-slate-900 shadow-[2px_2px_0px_0px_#0f172a] px-4 py-3 text-xs font-bold text-rose-700" role="alert">
             <AlertCircle className="h-4 w-4 shrink-0" strokeWidth={2} />{error}
@@ -103,11 +103,11 @@ export function LabAslabEditor({ laboratoryId, initialAssignments, aslabCandidat
 
         {/* Assign form */}
         {available.length > 0 ? (
-          <div className="flex gap-2">
+          <div className="flex flex-col gap-2 sm:flex-row">
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              className="flex-1 rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none cursor-pointer"
+              className="min-h-11 min-w-0 flex-1 rounded-lg border-2 border-slate-900 bg-white px-3 py-2 text-xs font-bold text-slate-900 shadow-[2px_2px_0px_0px_#0f172a] focus:outline-none cursor-pointer"
             >
               <option value="">-- Pilih Aslab --</option>
               {available.map((c) => (
@@ -120,7 +120,7 @@ export function LabAslabEditor({ laboratoryId, initialAssignments, aslabCandidat
               type="button"
               onClick={handleAssign}
               disabled={!selectedId || loading}
-              className="neo-btn neo-btn-primary px-3 py-2 text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed"
+              className="neo-btn neo-btn-primary min-h-11 justify-center px-3 py-2 text-xs font-black disabled:opacity-50 disabled:cursor-not-allowed sm:shrink-0"
             >
               <Plus className="h-3.5 w-3.5" strokeWidth={2.5} />
               {loading ? 'Menugaskan…' : 'Tugaskan'}
@@ -158,7 +158,7 @@ export function LabAslabEditor({ laboratoryId, initialAssignments, aslabCandidat
                   type="button"
                   onClick={() => handleRemove(a.userId)}
                   disabled={removingId === a.userId}
-                  className="neo-btn px-2.5 py-1.5 text-[11px] font-black border-2 border-slate-900 bg-white text-rose-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-rose-50 disabled:opacity-50 shrink-0"
+                  className="neo-btn min-h-11 min-w-11 justify-center px-2.5 py-1.5 text-[11px] font-black border-2 border-slate-900 bg-white text-rose-600 shadow-[2px_2px_0px_0px_#0f172a] hover:bg-rose-50 disabled:opacity-50 shrink-0"
                 >
                   <Trash2 className="h-3 w-3" />{removingId === a.userId ? '…' : 'Hapus'}
                 </button>

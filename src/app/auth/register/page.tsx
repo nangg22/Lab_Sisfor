@@ -7,7 +7,7 @@ import Link from 'next/link'
 import {
   FlaskConical, UserPlus, AlertCircle,
   GraduationCap, Briefcase, Eye, EyeOff,
-  Mail, Lock, User, Hash,
+  Mail, Lock, User, Hash, ShieldCheck,
 } from 'lucide-react'
 
 type Role = 'mahasiswa' | 'dosen'
@@ -33,6 +33,16 @@ export default function RegisterPage() {
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
     setError(null)
+    const normalizedEmail = email.toLowerCase().trim()
+
+    if (role === 'mahasiswa' && !normalizedEmail.endsWith('@student.uisi.ac.id')) {
+      setError('Mahasiswa wajib mendaftar menggunakan email resmi @student.uisi.ac.id.')
+      return
+    }
+    if (role === 'dosen' && (!normalizedEmail.endsWith('@uisi.ac.id') || normalizedEmail.endsWith('@student.uisi.ac.id'))) {
+      setError('Dosen wajib mendaftar menggunakan email resmi @uisi.ac.id (bukan @student.uisi.ac.id).')
+      return
+    }
     if (password.length < 8) {
       setError('Kata sandi minimal 8 karakter.')
       return
@@ -42,7 +52,7 @@ export default function RegisterPage() {
     const res = await fetch('/api/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ fullName, institutionalId, email, password, role }),
+      body: JSON.stringify({ fullName, institutionalId, email: normalizedEmail, password, role }),
     })
 
     const data = await res.json()
@@ -87,7 +97,26 @@ export default function RegisterPage() {
           <div className="auth-card-stripe" aria-hidden="true" />
 
           <div className="auth-card-body">
-            <h1 className="auth-card-heading">Buat Akun</h1>
+            <h1 className="auth-card-heading">Buat Akun UISI</h1>
+
+            <div
+              style={{
+                background: '#eff6ff',
+                border: '1.5px solid #bfdbfe',
+                borderRadius: '10px',
+                padding: '10px 12px',
+                marginBottom: '14px',
+                fontSize: '0.75rem',
+                color: '#1e3a8a',
+                lineHeight: 1.5,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: 800, marginBottom: '2px' }}>
+                <ShieldCheck className="h-4 w-4 shrink-0" aria-hidden="true" />
+                Khusus Sivitas Akademika UISI
+              </div>
+              Untuk menjaga keamanan barang &amp; inventaris lab: Mahasiswa wajib memakai <strong>@student.uisi.ac.id</strong> dan Dosen wajib memakai <strong>@uisi.ac.id</strong>.
+            </div>
 
             {verificationUrl && (
               <div className="auth-error" role="status" style={{ background: '#ecfdf5', borderColor: '#a7f3d0', color: '#047857' }}>
@@ -177,7 +206,7 @@ export default function RegisterPage() {
               {/* Email */}
               <div className="auth-field">
                 <label htmlFor="email" className="auth-label">
-                  Email <span className="auth-required" aria-hidden="true">*</span>
+                  Email UISI <span className="auth-required" aria-hidden="true">*</span>
                 </label>
                 <div className="auth-input-wrap">
                   <Mail className="auth-input-icon" aria-hidden="true" />
@@ -186,12 +215,17 @@ export default function RegisterPage() {
                     type="email"
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
-                    placeholder="nama@uisi.ac.id"
+                    placeholder={role === 'mahasiswa' ? 'nama@student.uisi.ac.id' : 'nama@uisi.ac.id'}
                     required
                     autoComplete="email"
                     className="auth-input"
                   />
                 </div>
+                <p className="auth-field-hint">
+                  {role === 'mahasiswa'
+                    ? 'Wajib menggunakan email mahasiswa @student.uisi.ac.id'
+                    : 'Wajib menggunakan email dosen @uisi.ac.id'}
+                </p>
               </div>
 
               {/* Password */}

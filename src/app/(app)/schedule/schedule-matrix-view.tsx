@@ -158,9 +158,9 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
   return (
     <div className="space-y-5">
       {/* ── 1. Google Calendar Style Navigation & Control Toolbar ── */}
-      <div className="neo-card p-4 sm:p-5 bg-white flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="neo-card p-3 sm:p-5 bg-white flex flex-col md:flex-row md:items-center justify-between gap-3 sm:gap-4">
         {/* Date Selector & Prev/Next */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center rounded-lg border border-slate-200 bg-white shadow-sm overflow-hidden">
             <button
               onClick={() => changeDate(-1)}
@@ -174,7 +174,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                 const today = new Date().toLocaleDateString('sv-SE')
                 router.push(`/schedule?date=${today}`)
               }}
-              className="px-3.5 py-1.5 text-xs font-black text-slate-900 hover:bg-slate-100 transition-colors uppercase tracking-wider"
+              className="px-2.5 py-1.5 text-[11px] font-black text-slate-900 hover:bg-slate-100 transition-colors uppercase tracking-wider sm:px-3.5 sm:text-xs"
             >
               Hari Ini
             </button>
@@ -187,12 +187,12 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
             </button>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex min-w-0 items-center gap-2">
             <input
               type="date"
               value={selectedDate}
               onChange={handleDirectDate}
-              className="rounded-lg border border-slate-200 bg-amber-200 px-3 py-1.5 text-xs font-black text-slate-950 shadow-sm focus:outline-none"
+              className="w-[9.5rem] rounded-lg border border-slate-200 bg-amber-200 px-2.5 py-1.5 text-[11px] font-black text-slate-950 shadow-sm focus:outline-none sm:w-auto sm:px-3 sm:text-xs"
             />
             <span className="hidden sm:inline text-xs font-black text-slate-800">
               {formatDate(selectedDate)}
@@ -201,14 +201,14 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
         </div>
 
         {/* Lab Filter Dropdown & Admin Block Modal */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
           <div className="flex items-center gap-2">
             <ListFilter className="h-4 w-4 text-slate-600" />
             <select
               value={selectedLabId}
               onChange={(e) => setSelectedLabId(e.target.value)}
               aria-label="Filter laboratorium"
-              className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-black text-slate-900 shadow-sm focus:outline-none cursor-pointer"
+              className="max-w-full rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-[11px] font-black text-slate-900 shadow-sm focus:outline-none cursor-pointer sm:px-3 sm:text-xs"
             >
               <option value="ALL">Semua Laboratorium ({labs.length})</option>
               {labs.map((l) => (
@@ -248,16 +248,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
         </div>
 
         <div className="overflow-x-auto w-full">
-          <div className="sticky top-0 z-10 min-w-[900px] flex border-b border-slate-200 bg-amber-50 text-[11px] font-black text-slate-900 uppercase">
+          <div className="sticky top-0 z-10 flex min-w-[720px] border-b border-slate-200 bg-amber-50 text-[10px] font-black uppercase text-slate-900 md:min-w-[900px] md:text-[11px]">
             {/* Time gutter header */}
-            <div className="sticky left-0 z-20 w-20 shrink-0 p-3 border-r border-slate-200 bg-amber-50 text-center">
+            <div className="sticky left-0 z-20 w-14 shrink-0 border-r border-slate-200 bg-amber-50 p-2 text-center md:w-20 md:p-3">
               Waktu
             </div>
             {/* Lab column headers */}
             {displayedLabs.map((lab) => (
               <div
                 key={lab.id}
-                className="flex-1 p-3 border-r border-slate-200 last:border-r-0 flex flex-col justify-center text-center"
+                className="flex-1 border-r border-slate-200 p-2 text-center last:border-r-0 md:p-3"
               >
                 <span className="text-xs font-black text-slate-950 truncate">{lab.name}</span>
                 <span className="text-[10px] text-slate-600 font-bold truncate">
@@ -268,16 +268,16 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
           </div>
 
           {/* Timetable Body (Rows per Hour) */}
-          <div className="min-w-[900px] divide-y divide-slate-200" onPointerUp={finishSelection} onPointerCancel={() => setDragSelection(null)}>
+          <div className="min-w-[720px] divide-y divide-slate-200" onPointerUp={finishSelection} onPointerCancel={() => setDragSelection(null)}>
             {HOURS.map((hour) => {
               const hourStr = hour.toString().padStart(2, '0')
               const hourTime = `${hourStr}:00:00`
               const nextHourTime = `${(hour + 1).toString().padStart(2, '0')}:00:00`
 
               return (
-                <div key={hour} className="flex min-h-[64px]">
+                <div key={hour} className="flex min-h-[52px] md:min-h-[64px]">
                   {/* Time label column */}
-                  <div className="sticky left-0 z-10 w-20 shrink-0 p-2.5 border-r border-slate-200 text-center bg-slate-50 flex items-start justify-center">
+                  <div className="sticky left-0 z-10 flex w-14 shrink-0 items-start justify-center border-r border-slate-200 bg-slate-50 p-2 text-center md:w-20 md:p-2.5">
                     <span className="text-[11px] font-black text-slate-700">
                       {hourStr}:00
                     </span>
