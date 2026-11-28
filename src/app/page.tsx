@@ -73,7 +73,7 @@ export default async function HomePage() {
                 <item.Icon className="h-5 w-5" strokeWidth={2.5} />
               </div>
               <h3 className="font-black text-sm tracking-tight">{item.title}</h3>
-              <p className="text-xs font-bold opacity-80 leading-relaxed">{item.desc}</p>
+              <p className="text-sm font-semibold leading-relaxed">{item.desc}</p>
             </div>
           ))}
         </div>

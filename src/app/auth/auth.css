@@ -334,7 +334,7 @@
   transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
 }
 .auth-input::placeholder {
-  color: #94a3b8;
+  color: #64748b;
   font-weight: 400;
 }
 .auth-input:hover {
@@ -511,12 +511,34 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-    scroll-behavior: auto !important;
+  .auth-page { scroll-behavior: auto; }
+  .auth-page::before,
+  .auth-page::after,
+  .auth-bg-blob,
+  .auth-logo-icon,
+  .auth-logo-icon::before,
+  .auth-logo-icon::after,
+  .auth-card,
+  .auth-card-stripe,
+  .auth-error,
+  .auth-field,
+  .auth-submit-wrap,
+  .auth-spinner {
+    animation: none !important;
+  }
+  .auth-wrap,
+  .auth-card,
+  .auth-field,
+  .auth-submit-wrap {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+  .auth-submit,
+  .auth-input,
+  .auth-eye-btn,
+  .auth-link,
+  .auth-role-option {
+    transition: none;
   }
 }

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
-import { Bell, CheckCheck, CheckCircle2, XCircle, FileText, Megaphone } from 'lucide-react'
+import { Bell, CheckCheck, CheckCircle2, XCircle, FileText, Megaphone, X } from 'lucide-react'
 import { formatDateTime } from '@/lib/utils'
 
 interface NotificationItem {
@@ -26,6 +26,10 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const [notifications, setNotifications] = useState<NotificationItem[]>([])
   const [unreadCount, setUnreadCount] = useState(0)
+  const triggerRef = useRef<HTMLButtonElement>(null)
+  const dialogRef = useRef<HTMLDivElement>(null)
+  const closeRef = useRef<HTMLButtonElement>(null)
+  const openedRef = useRef(false)
 
   async function fetchNotifications() {
     try {
@@ -51,11 +55,42 @@ export function NotificationBell() {
 
   useEffect(() => {
     if (!open) return
-    function handleEscape(event: KeyboardEvent) {
-      if (event.key === 'Escape') setOpen(false)
+    closeRef.current?.focus()
+
+    function handleDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setOpen(false)
+        return
+      }
+      if (event.key !== 'Tab' || !dialogRef.current) return
+
+      const focusable = Array.from(
+        dialogRef.current.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null)
+      if (focusable.length === 0) return
+
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
     }
-    window.addEventListener('keydown', handleEscape)
-    return () => window.removeEventListener('keydown', handleEscape)
+
+    document.addEventListener('keydown', handleDialogKeyDown)
+    return () => document.removeEventListener('keydown', handleDialogKeyDown)
+  }, [open])
+
+  useEffect(() => {
+    if (open || !openedRef.current) return
+    triggerRef.current?.focus()
+    openedRef.current = false
   }, [open])
 
   async function markAllAsRead() {
@@ -70,6 +105,7 @@ export function NotificationBell() {
 
   function handleToggle() {
     if (!open && unreadCount > 0) markAllAsRead()
+    if (!open) openedRef.current = true
     setOpen(!open)
   }
 
@@ -77,6 +113,7 @@ export function NotificationBell() {
     <div className="relative">
       <button
         type="button"
+        ref={triggerRef}
         onClick={handleToggle}
         className="relative flex h-9 w-9 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-700 shadow-sm hover:bg-amber-300 hover:text-slate-900 transition-colors duration-150"
         title="Notifikasi"
@@ -96,6 +133,7 @@ export function NotificationBell() {
         <>
           <div className="fixed inset-0 z-30 bg-slate-900/20 backdrop-blur-[1px]" onClick={() => setOpen(false)} />
           <div
+            ref={dialogRef}
             role="dialog"
             aria-modal="true"
             aria-labelledby="notification-dialog-title"
@@ -111,24 +149,36 @@ export function NotificationBell() {
             />
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-slate-50">
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <Bell className="h-4 w-4 text-slate-700" strokeWidth={2} />
-                <span id="notification-dialog-title" className="font-black text-sm text-slate-900 uppercase tracking-tight">Notifikasi</span>
+                <span id="notification-dialog-title" className="truncate font-black text-sm text-slate-900 uppercase tracking-tight">Notifikasi</span>
                 {unreadCount > 0 && (
                   <span className="rounded-full bg-rose-500 px-2 py-0.5 text-[10px] font-black text-white border border-slate-200 shadow-sm">
                     {unreadCount} baru
                   </span>
                 )}
               </div>
-              {notifications.length > 0 && (
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllAsRead}
+                    className="flex items-center gap-1 text-xs text-blue-700 hover:text-blue-800 font-bold"
+                  >
+                    <CheckCheck className="h-3.5 w-3.5" strokeWidth={2} />
+                    Tandai dibaca
+                  </button>
+                )}
                 <button
-                  onClick={markAllAsRead}
-                  className="flex items-center gap-1 text-xs text-blue-600 hover:text-blue-700 font-bold"
+                  ref={closeRef}
+                  type="button"
+                  onClick={() => setOpen(false)}
+                  aria-label="Tutup notifikasi"
+                  className="flex h-9 w-9 items-center justify-center rounded-lg text-slate-500 hover:bg-slate-200 hover:text-slate-900 focus-visible:outline-slate-900"
                 >
-                  <CheckCheck className="h-3.5 w-3.5" strokeWidth={2} />
-                  Tandai dibaca
+                  <X className="h-4 w-4" aria-hidden="true" />
                 </button>
-              )}
+              </div>
             </div>
 
             {/* List */}

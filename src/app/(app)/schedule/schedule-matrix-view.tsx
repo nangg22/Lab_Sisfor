@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { BlockLabModal } from './block-lab-modal'
 import {
@@ -63,6 +63,9 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
     labLocation: string
   } | null>(null)
   const [dragSelection, setDragSelection] = useState<{ labId: string; startHour: number; endHour: number } | null>(null)
+  const eventDialogRef = useRef<HTMLDivElement>(null)
+  const eventCloseRef = useRef<HTMLButtonElement>(null)
+  const eventTriggerRef = useRef<HTMLElement | null>(null)
 
   // Navigate Date
   function changeDate(days: number) {
@@ -107,6 +110,50 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
     router.push(`/bookings/new?lab=${dragSelection.labId}&date=${selectedDate}&start=${first.toString().padStart(2, '0')}:00&end=${(last + 1).toString().padStart(2, '0')}:00`)
     setDragSelection(null)
   }
+
+  useEffect(() => {
+    if (!activeEvent) {
+      eventTriggerRef.current?.focus()
+      eventTriggerRef.current = null
+      return
+    }
+    eventCloseRef.current?.focus()
+
+    function handleDialogKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        event.preventDefault()
+        setActiveEvent(null)
+        return
+      }
+      if (event.key !== 'Tab' || !eventDialogRef.current) return
+      const focusable = Array.from(
+        eventDialogRef.current.querySelectorAll<HTMLElement>(
+          'button, a[href], input, select, textarea, [tabindex]:not([tabindex="-1"])',
+        ),
+      ).filter((element) => !element.hasAttribute('disabled') && element.offsetParent !== null)
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', handleDialogKeyDown)
+    return () => document.removeEventListener('keydown', handleDialogKeyDown)
+  }, [activeEvent])
+
+  useEffect(() => {
+    function cancelSelection() {
+      setDragSelection(null)
+    }
+    window.addEventListener('blur', cancelSelection)
+    return () => window.removeEventListener('blur', cancelSelection)
+  }, [])
 
   return (
     <div className="space-y-5">
@@ -266,16 +313,19 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                             const isStartHour = parseInt(b.startTime.split(':')[0], 10) === hour
 
                             return (
-                              <div
+                              <button
+                                type="button"
                                 key={b.id}
-                                onClick={() =>
+                                onClick={(event) => {
+                                  eventTriggerRef.current = event.currentTarget
                                   setActiveEvent({
                                     booking: b,
                                     labName: lab.name,
                                     labLocation: lab.location,
                                   })
-                                }
-                                className={`w-full rounded-md border px-2.5 py-1.5 shadow-sm cursor-pointer transition-colors ${colorClass}`}
+                                }}
+                                aria-label={`${isBlocked ? 'Maintenance' : b.purpose}, ${lab.name}, ${b.startTime.slice(0, 5)} sampai ${b.endTime.slice(0, 5)}`}
+                                className={`w-full rounded-md border px-2.5 py-1.5 text-left shadow-sm cursor-pointer transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-slate-950 ${colorClass}`}
                               >
                                 <div className="flex items-center justify-between gap-1">
                                   <span className="text-[11px] font-black truncate">
@@ -290,26 +340,29 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                                     Oleh: {b.userName}
                                   </p>
                                 )}
-                              </div>
+                              </button>
                             )
                           })
                         ) : (
                           // Slot Kosong (Bisa di-klik untuk ajukan peminjaman)
-                          <div
-                            role="button"
-                            tabIndex={0}
+                          <button
+                            type="button"
                             onPointerDown={(event) => {
                               event.currentTarget.setPointerCapture(event.pointerId)
                               setDragSelection({ labId: lab.id, startHour: hour, endHour: hour })
                             }}
                             onKeyDown={(event) => {
-                              if (event.key === 'Enter' || event.key === ' ') router.push(`/bookings/new?lab=${lab.id}&date=${selectedDate}&start=${hourStr}:00`)
+                              if (event.key === 'Enter' || event.key === ' ') {
+                                event.preventDefault()
+                                router.push(`/bookings/new?lab=${lab.id}&date=${selectedDate}&start=${hourStr}:00`)
+                              }
                             }}
+                            aria-label={`Pilih slot ${lab.name} pada ${hourStr}:00`}
                             className={`w-full h-full min-h-[50px] flex items-center justify-center transition-all rounded-md border border-dashed text-[10px] font-bold select-none touch-none cursor-crosshair ${isPreview ? (hasPreviewConflict ? 'bg-rose-100 border-rose-500 text-rose-700 animate-pulse' : 'bg-amber-200/80 border-amber-500 text-slate-900 shadow-inner backdrop-blur-sm') : 'opacity-0 group-hover:opacity-100 bg-emerald-50 border-emerald-500 text-emerald-700'}`}
                             title={isPreview ? `${selection!.duration} jam${hasPreviewConflict ? ' — bentrok' : ''}` : `Geser untuk memilih waktu mulai ${lab.name} ${hourStr}:00`}
                           >
                             {isPreview ? `${selection!.duration} jam${hasPreviewConflict ? ' · Bentrok' : ' · Lepas untuk pilih'}` : '+ Geser untuk pilih'}
-                          </div>
+                          </button>
                         )}
                       </div>
                     )
@@ -324,7 +377,7 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
       {/* ── 3. Google Calendar Event Detail Modal / Slide-in ── */}
       {activeEvent && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-xs animate-in fade-in">
-          <div className="neo-card max-w-md w-full bg-white p-6 shadow-sm border border-slate-200 animate-in zoom-in-95">
+          <div ref={eventDialogRef} role="dialog" aria-modal="true" aria-labelledby="schedule-event-dialog-title" className="neo-card max-w-md w-full bg-white p-6 shadow-sm border border-slate-200 animate-in zoom-in-95">
             {/* Modal Header */}
             <div className="flex items-start justify-between pb-3 border-b border-slate-200">
               <div className="flex items-center gap-2.5">
@@ -332,12 +385,15 @@ export function ScheduleMatrixView({ labs, bookings, selectedDate, isAdmin }: Pr
                   <CalendarIcon className="h-4 w-4 text-slate-950" />
                 </div>
                 <div>
-                  <h3 className="text-sm font-black text-slate-900">Detail Pemakaian Laboratorium</h3>
+                  <h3 id="schedule-event-dialog-title" className="text-sm font-black text-slate-900">Detail Pemakaian Laboratorium</h3>
                   <span className="text-[11px] font-bold text-slate-500">Google Calendar View</span>
                 </div>
               </div>
               <button
+                ref={eventCloseRef}
+                type="button"
                 onClick={() => setActiveEvent(null)}
+                aria-label="Tutup detail pemakaian"
                 className="p-1 rounded-md text-slate-500 hover:text-slate-950 hover:bg-slate-100 transition-colors border border-transparent hover:border-slate-200"
               >
                 <X className="h-5 w-5" />
